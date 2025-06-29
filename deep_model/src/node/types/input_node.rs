@@ -6,29 +6,33 @@
 
 use std::rc::Rc;
 
-use ndarray::Array2;
+use ndarray::Array1;
 
 use crate::node::{Data, Node, NodeRef};
 
-pub struct WeightNode<'a> {
+pub struct InputNode<'a> {
     inputs: Vec<NodeRef<'a>>,
     outputs: Vec<NodeRef<'a>>,
-    weights: Data,
+    data: Data,
 }
 
-impl<'a> WeightNode<'a> {
-    pub fn new(dim: (usize, usize)) -> WeightNode<'a> {
-        let weights: Data = Data::MatrixF32(Array2::zeros(dim));
+impl<'a> InputNode<'a> {
+    pub fn new(dim: usize) -> InputNode<'a> {
+        let data: Data = Data::VectorF32(Array1::zeros(dim));
 
-        return WeightNode {
+        return InputNode {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            weights,
+            data,
         };
+    }
+
+    pub fn set_data(&mut self, input: Array1<f32>) {
+        self.data = Data::VectorF32(input);
     }
 }
 
-impl<'a> Node<'a> for WeightNode<'a> {
+impl<'a> Node<'a> for InputNode<'a> {
     fn add_output(&mut self, output: NodeRef<'a>) {
         self.outputs.push(Rc::clone(&output));
     }
@@ -42,7 +46,7 @@ impl<'a> Node<'a> for WeightNode<'a> {
     }
 
     fn get_data(&self) -> &Data {
-        &self.weights
+        &self.data
     }
 
     fn apply_operation(&mut self) {}
