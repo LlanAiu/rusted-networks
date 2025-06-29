@@ -2,6 +2,8 @@
 
 // external
 
+use std::{cell::RefCell, rc::Rc};
+
 use ndarray::{Array1, Array2};
 
 // internal
@@ -22,16 +24,18 @@ impl Data {
     }
 }
 
+pub type NodeRef<'a> = Rc<RefCell<dyn Node<'a> + 'a>>;
+
 pub trait Node<'a> {
-    fn add_output(&mut self, output: &'a dyn Node<'a>);
+    fn add_output(&mut self, output: NodeRef<'a>);
 
-    fn get_inputs(&self) -> &Vec<&dyn Node<'a>>;
+    fn get_inputs(&self) -> &Vec<NodeRef<'a>>;
 
-    fn get_outputs(&self) -> &Vec<&dyn Node<'a>>;
+    fn get_outputs(&self) -> &Vec<NodeRef<'a>>;
 
     fn get_data(&self) -> &Data;
 
-    fn apply_operation(&self);
+    fn apply_operation(&mut self);
 
     fn get_jacobian(&self) -> Data;
 }

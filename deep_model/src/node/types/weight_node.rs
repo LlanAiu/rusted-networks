@@ -4,7 +4,7 @@
 
 // internal
 
-use crate::node::{Data, Node};
+use crate::node::{Data, Node, NodeRef};
 
 pub struct WeightNode<'a> {
     outputs: Vec<&'a dyn Node<'a>>,
@@ -12,15 +12,15 @@ pub struct WeightNode<'a> {
 }
 
 impl<'a> Node<'a> for WeightNode<'a> {
-    fn add_output(&mut self, output: &'a dyn Node<'a>) {
+    fn add_output(&mut self, output: NodeRef<'a>) {
         todo!()
     }
 
-    fn get_inputs(&self) -> &Vec<&dyn Node<'a>> {
+    fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
         todo!()
     }
 
-    fn get_outputs(&self) -> &Vec<&dyn Node<'a>> {
+    fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
         todo!()
     }
 
@@ -28,7 +28,7 @@ impl<'a> Node<'a> for WeightNode<'a> {
         todo!()
     }
 
-    fn apply_operation(&self) {
+    fn apply_operation(&mut self) {
         todo!()
     }
 
