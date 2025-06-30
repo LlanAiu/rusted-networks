@@ -7,35 +7,35 @@ use ndarray::Array1;
 // internal
 use crate::node::{Data, Node, NodeRef};
 
-pub struct InputNode<'a> {
+pub struct BiasNode<'a> {
     inputs: Vec<NodeRef<'a>>,
     outputs: Vec<NodeRef<'a>>,
     data: Data,
     dim: usize,
 }
 
-impl<'a> InputNode<'a> {
-    pub fn new(dim: usize) -> InputNode<'a> {
+impl<'a> BiasNode<'a> {
+    pub fn new(dim: usize) -> BiasNode<'a> {
         let data: Data = Data::VectorF32(Array1::zeros(dim));
 
-        return InputNode {
+        BiasNode {
             inputs: Vec::new(),
             outputs: Vec::new(),
             data,
             dim,
-        };
+        }
     }
 
     pub fn set_data(&mut self, input: Array1<f32>) {
         if input.dim() == self.dim {
             self.data = Data::VectorF32(input);
         } else {
-            println!("[INPUT] dimension mismatch, skipping reassignment");
+            println!("[BIAS] dimension mismatch, skipping reassignment");
         }
     }
 }
 
-impl<'a> Node<'a> for InputNode<'a> {
+impl<'a> Node<'a> for BiasNode<'a> {
     fn add_output(&mut self, output: NodeRef<'a>) {
         self.outputs.push(Rc::clone(&output));
     }

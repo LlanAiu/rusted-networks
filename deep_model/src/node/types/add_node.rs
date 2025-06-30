@@ -2,33 +2,32 @@
 use std::{mem::take, rc::Rc};
 
 // external
-use ndarray::Array2;
+use ndarray::Array1;
 
 // internal
 use crate::node::{Data, Node, NodeRef};
 
-pub struct MultiplyNode<'a> {
+pub struct AddNode<'a> {
     inputs: Vec<NodeRef<'a>>,
     outputs: Vec<NodeRef<'a>>,
     data: Data,
 }
 
-impl<'a> MultiplyNode<'a> {
-    pub fn new() -> MultiplyNode<'a> {
-        return MultiplyNode {
+impl<'a> AddNode<'a> {
+    pub fn new() -> AddNode<'a> {
+        AddNode {
             inputs: Vec::new(),
             outputs: Vec::new(),
             data: Data::None,
-        };
+        }
     }
 
-    fn add_input(&mut self, this: NodeRef<'a>, input: NodeRef<'a>) {
-        input.borrow_mut().add_output(Rc::clone(&this));
-        self.inputs.push(input);
+    pub fn add_input(&mut self, input: NodeRef<'a>) {
+        self.inputs.push(Rc::clone(&input));
     }
 }
 
-impl<'a> Node<'a> for MultiplyNode<'a> {
+impl<'a> Node<'a> for AddNode<'a> {
     fn add_output(&mut self, output: NodeRef<'a>) {
         self.outputs.push(Rc::clone(&output));
     }
@@ -53,19 +52,19 @@ impl<'a> Node<'a> for MultiplyNode<'a> {
         let mut first_ref = self.inputs.get(0).unwrap().borrow_mut();
         let first_data = first_ref.get_data();
 
-        if let Data::MatrixF32(matrix) = first_data {
-            let mut product: Array2<f32> = matrix;
+        if let Data::VectorF32(vec) = first_data {
+            let mut sum: Array1<f32> = vec;
 
             for i in 1..self.inputs.len() {
                 let mut node_ref = self.inputs.get(i).unwrap().borrow_mut();
-                let data = node_ref.get_data();
+                let data_one = node_ref.get_data();
 
-                if let Data::MatrixF32(matrix) = data {
-                    product = product.dot(&matrix);
+                if let Data::VectorF32(vec) = data_one {
+                    sum += &vec;
                 }
             }
 
-            self.data = Data::MatrixF32(product);
+            self.data = Data::VectorF32(sum);
         }
     }
 

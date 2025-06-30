@@ -1,30 +1,37 @@
 // builtin
+use std::{mem::take, rc::Rc};
 
 // external
-
-// internal
-
-use std::rc::Rc;
-
 use ndarray::Array2;
 
+// internal
 use crate::node::{Data, Node, NodeRef};
 
 pub struct WeightNode<'a> {
     inputs: Vec<NodeRef<'a>>,
     outputs: Vec<NodeRef<'a>>,
-    weights: Data,
+    data: Data,
+    dim: (usize, usize),
 }
 
 impl<'a> WeightNode<'a> {
     pub fn new(dim: (usize, usize)) -> WeightNode<'a> {
-        let weights: Data = Data::MatrixF32(Array2::zeros(dim));
+        let weights: Data = Data::MatrixF32(Array2::ones(dim));
 
         return WeightNode {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            weights,
+            data: weights,
+            dim,
         };
+    }
+
+    pub fn set_data(&mut self, input: Array2<f32>) {
+        if input.dim() == self.dim {
+            self.data = Data::MatrixF32(input);
+        } else {
+            println!("[WEIGHT] dimension mismatch, skipping reassignment");
+        }
     }
 }
 
@@ -41,8 +48,8 @@ impl<'a> Node<'a> for WeightNode<'a> {
         &self.outputs
     }
 
-    fn get_data(&self) -> &Data {
-        &self.weights
+    fn get_data(&mut self) -> Data {
+        take(&mut self.data)
     }
 
     fn apply_operation(&mut self) {}

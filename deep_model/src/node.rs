@@ -1,9 +1,7 @@
 // builtin
-
-// external
-
 use std::{cell::RefCell, rc::Rc};
 
+// external
 use ndarray::{Array1, Array2};
 
 // internal
@@ -13,6 +11,7 @@ pub mod types;
 pub enum Data {
     VectorF32(Array1<f32>),
     MatrixF32(Array2<f32>),
+    None,
 }
 
 impl Data {
@@ -20,7 +19,14 @@ impl Data {
         match self {
             Data::VectorF32(_) => "VectorF32",
             Data::MatrixF32(_) => "MatrixF32",
+            Data::None => "None",
         }
+    }
+}
+
+impl Default for Data {
+    fn default() -> Self {
+        Data::None
     }
 }
 
@@ -33,7 +39,7 @@ pub trait Node<'a> {
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>>;
 
-    fn get_data(&self) -> &Data;
+    fn get_data(&mut self) -> Data;
 
     fn apply_operation(&mut self);
 
