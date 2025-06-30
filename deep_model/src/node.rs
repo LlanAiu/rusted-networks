@@ -5,6 +5,7 @@ use std::{cell::RefCell, rc::Rc};
 use ndarray::{Array1, Array2};
 
 // internal
+pub mod activation;
 pub mod types;
 
 #[derive(Debug)]

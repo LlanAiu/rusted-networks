@@ -22,8 +22,9 @@ impl<'a> AddNode<'a> {
         }
     }
 
-    pub fn add_input(&mut self, input: NodeRef<'a>) {
-        self.inputs.push(Rc::clone(&input));
+    fn add_input(&mut self, this: NodeRef<'a>, input: NodeRef<'a>) {
+        input.borrow_mut().add_output(Rc::clone(&this));
+        self.inputs.push(input);
     }
 }
 
