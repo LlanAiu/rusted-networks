@@ -14,30 +14,29 @@ pub struct ActivationNode<'a> {
 }
 
 impl<'a> ActivationNode<'a> {
-    pub fn new(function: ActivationFunction) -> ActivationNode<'a> {
+    pub fn new(function_name: &str) -> ActivationNode<'a> {
         ActivationNode {
             inputs: Vec::new(),
             outputs: Vec::new(),
             data: Data::None,
-            function,
+            function: ActivationFunction::new(function_name),
         }
     }
+}
 
-    fn add_input(&mut self, this: NodeRef<'a>, input: NodeRef<'a>) {
-        input.borrow_mut().add_output(Rc::clone(&this));
+impl<'a> Node<'a> for ActivationNode<'a> {
+    fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
+        input.borrow_mut().add_output(this);
 
         if self.inputs.len() > 0 {
             self.inputs.clear();
             println!("[ACTIVATION] reassigning previously set input node");
         }
-
-        self.inputs.push(input);
+        self.inputs.push(Rc::clone(input));
     }
-}
 
-impl<'a> Node<'a> for ActivationNode<'a> {
-    fn add_output(&mut self, output: NodeRef<'a>) {
-        self.outputs.push(Rc::clone(&output));
+    fn add_output(&mut self, output: &NodeRef<'a>) {
+        self.outputs.push(Rc::clone(output));
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
@@ -58,6 +57,10 @@ impl<'a> Node<'a> for ActivationNode<'a> {
             return;
         }
 
+        for input in &self.inputs {
+            input.borrow_mut().apply_operation();
+        }
+
         let mut input_ref = self.inputs.get(0).unwrap().borrow_mut();
         let mut data = input_ref.get_data();
 
@@ -68,5 +71,9 @@ impl<'a> Node<'a> for ActivationNode<'a> {
 
     fn get_jacobian(&self) -> Data {
         todo!()
+    }
+
+    fn set_data(&mut self, data: Data) {
+        panic!("[ACTIVATION] Unsupported Operation: Cannot set data of an operation node");
     }
 }

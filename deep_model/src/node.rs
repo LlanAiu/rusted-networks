@@ -34,11 +34,15 @@ impl Default for Data {
 pub type NodeRef<'a> = Rc<RefCell<dyn Node<'a> + 'a>>;
 
 pub trait Node<'a> {
-    fn add_output(&mut self, output: NodeRef<'a>);
+    fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>);
+
+    fn add_output(&mut self, output: &NodeRef<'a>);
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>>;
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>>;
+
+    fn set_data(&mut self, data: Data);
 
     fn get_data(&mut self) -> Data;
 

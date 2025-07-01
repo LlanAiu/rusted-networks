@@ -2,7 +2,6 @@
 use std::{mem::take, rc::Rc};
 
 // external
-use ndarray::Array2;
 
 // internal
 use crate::node::{Data, Node, NodeRef};
@@ -15,29 +14,21 @@ pub struct WeightNode<'a> {
 }
 
 impl<'a> WeightNode<'a> {
-    pub fn new(dim: (usize, usize)) -> WeightNode<'a> {
-        let weights: Data = Data::MatrixF32(Array2::ones(dim));
-
+    pub fn new(input_size: usize, output_size: usize) -> WeightNode<'a> {
         return WeightNode {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            data: weights,
-            dim,
+            data: Data::None,
+            dim: (output_size, input_size),
         };
-    }
-
-    pub fn set_data(&mut self, input: Array2<f32>) {
-        if input.dim() == self.dim {
-            self.data = Data::MatrixF32(input);
-        } else {
-            println!("[WEIGHT] dimension mismatch, skipping reassignment");
-        }
     }
 }
 
 impl<'a> Node<'a> for WeightNode<'a> {
-    fn add_output(&mut self, output: NodeRef<'a>) {
-        self.outputs.push(Rc::clone(&output));
+    fn add_input(&mut self, _this: &NodeRef<'a>, _input: &NodeRef<'a>) {}
+
+    fn add_output(&mut self, output: &NodeRef<'a>) {
+        self.outputs.push(Rc::clone(output));
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
@@ -46,6 +37,16 @@ impl<'a> Node<'a> for WeightNode<'a> {
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
         &self.outputs
+    }
+
+    fn set_data(&mut self, input: Data) {
+        if let Data::MatrixF32(matrix) = input {
+            if matrix.dim() == self.dim {
+                self.data = Data::MatrixF32(matrix);
+                return;
+            }
+        }
+        println!("[WEIGHT] type or dimension mismatch, skipping reassignment");
     }
 
     fn get_data(&mut self) -> Data {

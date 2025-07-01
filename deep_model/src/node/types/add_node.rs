@@ -21,16 +21,16 @@ impl<'a> AddNode<'a> {
             data: Data::None,
         }
     }
-
-    fn add_input(&mut self, this: NodeRef<'a>, input: NodeRef<'a>) {
-        input.borrow_mut().add_output(Rc::clone(&this));
-        self.inputs.push(input);
-    }
 }
 
 impl<'a> Node<'a> for AddNode<'a> {
-    fn add_output(&mut self, output: NodeRef<'a>) {
-        self.outputs.push(Rc::clone(&output));
+    fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
+        input.borrow_mut().add_output(this);
+        self.inputs.push(Rc::clone(input));
+    }
+
+    fn add_output(&mut self, output: &NodeRef<'a>) {
+        self.outputs.push(Rc::clone(output));
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
@@ -48,6 +48,10 @@ impl<'a> Node<'a> for AddNode<'a> {
     fn apply_operation(&mut self) {
         if self.inputs.len() == 0 {
             return;
+        }
+
+        for input in &self.inputs {
+            input.borrow_mut().apply_operation();
         }
 
         let mut first_ref = self.inputs.get(0).unwrap().borrow_mut();
@@ -71,5 +75,9 @@ impl<'a> Node<'a> for AddNode<'a> {
 
     fn get_jacobian(&self) -> Data {
         todo!()
+    }
+
+    fn set_data(&mut self, data: Data) {
+        panic!("[ADD] Unsupported Operation: Cannot set data of an operation node");
     }
 }
