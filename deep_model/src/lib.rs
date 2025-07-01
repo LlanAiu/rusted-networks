@@ -46,8 +46,6 @@ mod tests {
         let weight_arr: Array2<f32> = arr2(&[[1.0, 2.0, 3.0], [3.0, 2.0, 1.0]]);
         weights.borrow_mut().set_data(Data::MatrixF32(weight_arr));
 
-        multiply.borrow_mut().apply_operation();
-        add.borrow_mut().apply_operation();
         activation.borrow_mut().apply_operation();
 
         let end_data: Data = activation.borrow_mut().get_data();

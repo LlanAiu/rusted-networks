@@ -70,6 +70,8 @@ impl<'a> Node<'a> for AddNode<'a> {
             }
 
             self.data = Data::VectorF32(sum);
+        } else {
+            self.data = Data::None;
         }
     }
 
