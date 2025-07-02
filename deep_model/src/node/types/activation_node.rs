@@ -1,24 +1,21 @@
 // builtin
-use std::{mem::take, rc::Rc};
 
 // external
 
 // internal
-use crate::node::{activation::activation_function::ActivationFunction, Data, Node, NodeRef};
+use crate::node::{
+    activation::activation_function::ActivationFunction, node_base::NodeBase, Data, Node, NodeRef,
+};
 
 pub struct ActivationNode<'a> {
-    inputs: Vec<NodeRef<'a>>,
-    outputs: Vec<NodeRef<'a>>,
-    data: Data,
+    base: NodeBase<'a>,
     function: ActivationFunction,
 }
 
 impl<'a> ActivationNode<'a> {
     pub fn new(function_name: &str) -> ActivationNode<'a> {
         ActivationNode {
-            inputs: Vec::new(),
-            outputs: Vec::new(),
-            data: Data::None,
+            base: NodeBase::new(),
             function: ActivationFunction::new(function_name),
         }
     }
@@ -26,54 +23,54 @@ impl<'a> ActivationNode<'a> {
 
 impl<'a> Node<'a> for ActivationNode<'a> {
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
-        input.borrow_mut().add_output(this);
-
-        if self.inputs.len() > 0 {
-            self.inputs.clear();
-            println!("[ACTIVATION] reassigning previously set input node");
+        if self.base.get_inputs().len() == 0 {
+            self.base.add_input(this, input);
+        } else {
+            println!("[ACTIVATION] Cannot add more than one input, skipping assignment");
         }
-        self.inputs.push(Rc::clone(input));
     }
 
     fn add_output(&mut self, output: &NodeRef<'a>) {
-        self.outputs.push(Rc::clone(output));
+        self.base.add_output(output);
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.inputs
+        self.base.get_inputs()
     }
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.outputs
+        self.base.get_outputs()
     }
 
     fn get_data(&mut self) -> Data {
-        take(&mut self.data)
+        self.base.get_data()
     }
 
     fn apply_operation(&mut self) {
-        if self.inputs.len() == 0 {
+        if self.get_inputs().len() == 0 {
             println!("[ACTIVATION] Tried to apply operation on no inputs");
             return;
         }
 
-        for input in &self.inputs {
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        for input in &inputs {
             input.borrow_mut().apply_operation();
         }
 
-        let mut input_ref = self.inputs.get(0).unwrap().borrow_mut();
-        let mut data = input_ref.get_data();
+        let mut input_ref = inputs.get(0).unwrap().borrow_mut();
 
+        let mut data = input_ref.get_data();
         self.function.apply_all(&mut data);
 
-        self.data = data;
+        self.base.set_data(data);
     }
 
     fn get_jacobian(&self) -> Data {
         todo!()
     }
 
-    fn set_data(&mut self, data: Data) {
+    fn set_data(&mut self, _data: Data) {
         panic!("[ACTIVATION] Unsupported Operation: Cannot set data of an operation node");
     }
 }

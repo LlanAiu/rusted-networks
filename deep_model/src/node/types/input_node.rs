@@ -1,24 +1,19 @@
 // builtin
-use std::{mem::take, rc::Rc};
 
 // external
 
 // internal
-use crate::node::{Data, Node, NodeRef};
+use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
 
 pub struct InputNode<'a> {
-    inputs: Vec<NodeRef<'a>>,
-    outputs: Vec<NodeRef<'a>>,
-    data: Data,
+    base: NodeBase<'a>,
     dim: usize,
 }
 
 impl<'a> InputNode<'a> {
     pub fn new(dim: usize) -> InputNode<'a> {
         return InputNode {
-            inputs: Vec::new(),
-            outputs: Vec::new(),
-            data: Data::None,
+            base: NodeBase::new(),
             dim,
         };
     }
@@ -28,21 +23,21 @@ impl<'a> Node<'a> for InputNode<'a> {
     fn add_input(&mut self, _this: &NodeRef<'a>, _input: &NodeRef<'a>) {}
 
     fn add_output(&mut self, output: &NodeRef<'a>) {
-        self.outputs.push(Rc::clone(output));
+        self.base.add_output(output);
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.inputs
+        self.base.get_inputs()
     }
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.outputs
+        self.base.get_outputs()
     }
 
     fn set_data(&mut self, input: Data) {
         if let Data::VectorF32(vec) = input {
             if vec.dim() == self.dim {
-                self.data = Data::VectorF32(vec);
+                self.base.set_data(Data::VectorF32(vec));
                 return;
             }
         }
@@ -50,7 +45,7 @@ impl<'a> Node<'a> for InputNode<'a> {
     }
 
     fn get_data(&mut self) -> Data {
-        take(&mut self.data)
+        self.base.get_data()
     }
 
     fn apply_operation(&mut self) {}

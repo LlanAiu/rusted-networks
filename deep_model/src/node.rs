@@ -6,6 +6,7 @@ use ndarray::{Array1, Array2};
 
 // internal
 pub mod activation;
+pub mod node_base;
 pub mod types;
 
 #[derive(Debug)]

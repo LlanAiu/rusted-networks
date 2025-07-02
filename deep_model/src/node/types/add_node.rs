@@ -1,67 +1,63 @@
 // builtin
-use std::{mem::take, rc::Rc};
 
 // external
 use ndarray::Array1;
 
 // internal
-use crate::node::{Data, Node, NodeRef};
+use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
 
 pub struct AddNode<'a> {
-    inputs: Vec<NodeRef<'a>>,
-    outputs: Vec<NodeRef<'a>>,
-    data: Data,
+    base: NodeBase<'a>,
 }
 
 impl<'a> AddNode<'a> {
     pub fn new() -> AddNode<'a> {
         AddNode {
-            inputs: Vec::new(),
-            outputs: Vec::new(),
-            data: Data::None,
+            base: NodeBase::new(),
         }
     }
 }
 
 impl<'a> Node<'a> for AddNode<'a> {
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
-        input.borrow_mut().add_output(this);
-        self.inputs.push(Rc::clone(input));
+        self.base.add_input(this, input);
     }
 
     fn add_output(&mut self, output: &NodeRef<'a>) {
-        self.outputs.push(Rc::clone(output));
+        self.base.add_output(output);
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.inputs
+        self.base.get_inputs()
     }
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.outputs
+        self.base.get_outputs()
     }
 
     fn get_data(&mut self) -> Data {
-        take(&mut self.data)
+        self.base.get_data()
     }
 
     fn apply_operation(&mut self) {
-        if self.inputs.len() == 0 {
+        if self.get_inputs().len() == 0 {
             return;
         }
 
-        for input in &self.inputs {
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        for input in &inputs {
             input.borrow_mut().apply_operation();
         }
 
-        let mut first_ref = self.inputs.get(0).unwrap().borrow_mut();
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
         let first_data = first_ref.get_data();
 
         if let Data::VectorF32(vec) = first_data {
             let mut sum: Array1<f32> = vec;
 
-            for i in 1..self.inputs.len() {
-                let mut node_ref = self.inputs.get(i).unwrap().borrow_mut();
+            for i in 1..inputs.len() {
+                let mut node_ref = inputs[i].borrow_mut();
                 let data_one = node_ref.get_data();
 
                 if let Data::VectorF32(vec) = data_one {
@@ -69,9 +65,9 @@ impl<'a> Node<'a> for AddNode<'a> {
                 }
             }
 
-            self.data = Data::VectorF32(sum);
+            self.base.set_data(Data::VectorF32(sum));
         } else {
-            self.data = Data::None;
+            self.base.set_data(Data::None);
         }
     }
 
@@ -79,7 +75,7 @@ impl<'a> Node<'a> for AddNode<'a> {
         todo!()
     }
 
-    fn set_data(&mut self, data: Data) {
+    fn set_data(&mut self, _data: Data) {
         panic!("[ADD] Unsupported Operation: Cannot set data of an operation node");
     }
 }

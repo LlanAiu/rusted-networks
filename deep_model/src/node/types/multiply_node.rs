@@ -1,32 +1,27 @@
 // builtin
-use std::{mem::take, rc::Rc};
 
 // external
 use ndarray::{Array1, Array2, Axis};
 
 // internal
-use crate::node::{Data, Node, NodeRef};
+use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
 
 pub struct MultiplyNode<'a> {
-    inputs: Vec<NodeRef<'a>>,
-    outputs: Vec<NodeRef<'a>>,
-    data: Data,
+    base: NodeBase<'a>,
 }
 
 impl<'a> MultiplyNode<'a> {
     pub fn new() -> MultiplyNode<'a> {
-        return MultiplyNode {
-            inputs: Vec::new(),
-            outputs: Vec::new(),
-            data: Data::None,
-        };
+        MultiplyNode {
+            base: NodeBase::new(),
+        }
     }
 
     fn update_data(&self, matrix: Array2<f32>) -> Data {
         let mut product: Array2<f32> = matrix;
 
-        for i in 1..self.inputs.len() {
-            let mut node_ref = self.inputs.get(i).unwrap().borrow_mut();
+        for i in 1..self.base.get_inputs().len() {
+            let mut node_ref = self.base.get_inputs().get(i).unwrap().borrow_mut();
             let data = node_ref.get_data();
 
             match data {
@@ -47,57 +42,59 @@ impl<'a> MultiplyNode<'a> {
 
 impl<'a> Node<'a> for MultiplyNode<'a> {
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
-        input.borrow_mut().add_output(this);
-        self.inputs.push(Rc::clone(input));
+        self.base.add_input(this, input);
     }
 
     fn add_output(&mut self, output: &NodeRef<'a>) {
-        self.outputs.push(Rc::clone(output));
+        self.base.add_output(output);
     }
 
     fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.inputs
+        self.base.get_inputs()
     }
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
-        &self.outputs
+        self.base.get_outputs()
     }
 
     fn get_data(&mut self) -> Data {
-        take(&mut self.data)
+        self.base.get_data()
     }
 
     fn apply_operation(&mut self) {
-        if self.inputs.len() == 0 {
+        if self.get_inputs().len() == 0 {
             return;
         }
 
-        for input in &self.inputs {
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        for input in &inputs {
             input.borrow_mut().apply_operation();
         }
 
-        let mut first_ref = self.inputs.get(0).unwrap().borrow_mut();
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
         let first_data = first_ref.get_data();
+        let mut res: Data = Data::None;
 
         match first_data {
             Data::MatrixF32(matrix) => {
-                self.data = self.update_data(matrix);
+                res = self.update_data(matrix);
             }
             Data::VectorF32(vec) => {
                 let matrix = vec.insert_axis(Axis(1));
-                self.data = self.update_data(matrix);
+                res = self.update_data(matrix);
             }
-            Data::None => {
-                self.data = Data::None;
-            }
+            _ => {}
         }
+
+        self.base.set_data(res);
     }
 
     fn get_jacobian(&self) -> Data {
         todo!()
     }
 
-    fn set_data(&mut self, data: Data) {
-        panic!("[MATMUL] Unsupported Operation: Cannot set data of an operation node");
+    fn set_data(&mut self, _data: Data) {
+        println!("[MATMUL] Unsupported Operation: Cannot set data of an operation node");
     }
 }
