@@ -9,7 +9,7 @@ pub mod activation;
 pub mod node_base;
 pub mod types;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Data {
     VectorF32(Array1<f32>),
     MatrixF32(Array2<f32>),

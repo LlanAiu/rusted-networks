@@ -4,6 +4,7 @@
 
 // internal
 pub mod node;
+pub mod unit;
 
 #[cfg(test)]
 mod tests {

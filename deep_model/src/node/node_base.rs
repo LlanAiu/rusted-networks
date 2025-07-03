@@ -41,7 +41,11 @@ impl<'a> NodeBase<'a> {
     }
 
     pub fn get_data(&mut self) -> Data {
-        take(&mut self.data)
+        if self.outputs.len() <= 1 {
+            take(&mut self.data)
+        } else {
+            self.data.clone()
+        }
     }
 
     pub fn set_data(&mut self, data: Data) {
