@@ -21,11 +21,9 @@ pub trait Unit<'a> {
 
     fn get_output_node(&self) -> &NodeRef<'a>;
 
-    fn set_data(&mut self, data: Data);
+    fn set_biases(&mut self, data: Data);
 
-    fn get_data(&mut self) -> Data;
+    fn set_weights(&mut self, data: Data);
 
-    fn feedforward(&mut self);
-
-    fn get_jacobian(&self);
+    fn set_input_data(&mut self, data: Data);
 }

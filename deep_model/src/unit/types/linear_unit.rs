@@ -19,6 +19,8 @@ use crate::{
 
 pub struct LinearUnit<'a> {
     base: UnitBase<'a>,
+    weights: NodeRef<'a>,
+    biases: NodeRef<'a>,
 }
 
 impl<'a> LinearUnit<'a> {
@@ -39,6 +41,8 @@ impl<'a> LinearUnit<'a> {
 
         LinearUnit {
             base: UnitBase::new(&multiply, &activation),
+            weights,
+            biases,
         }
     }
 }
@@ -64,19 +68,13 @@ impl<'a> Unit<'a> for LinearUnit<'a> {
         self.base.get_output_node()
     }
 
-    fn set_data(&mut self, data: Data) {
-        todo!()
+    fn set_biases(&mut self, data: Data) {
+        self.biases.borrow_mut().set_data(data);
     }
 
-    fn get_data(&mut self) -> Data {
-        todo!()
+    fn set_weights(&mut self, data: Data) {
+        self.weights.borrow_mut().set_data(data);
     }
 
-    fn feedforward(&mut self) {
-        todo!()
-    }
-
-    fn get_jacobian(&self) {
-        todo!()
-    }
+    fn set_input_data(&mut self, _data: Data) {}
 }
