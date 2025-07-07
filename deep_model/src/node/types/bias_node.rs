@@ -8,13 +8,15 @@ use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
 pub struct BiasNode<'a> {
     base: NodeBase<'a>,
     dim: usize,
+    learning_rate: f32,
 }
 
 impl<'a> BiasNode<'a> {
-    pub fn new(dim: usize) -> BiasNode<'a> {
+    pub fn new(dim: usize, learning_rate: f32) -> BiasNode<'a> {
         BiasNode {
             base: NodeBase::new(),
             dim,
+            learning_rate,
         }
     }
 }
@@ -56,8 +58,8 @@ impl<'a> Node<'a> for BiasNode<'a> {
     }
 
     fn apply_jacobian(&mut self) {
-        //TODO: BIAS UPDATE
         self.base.reset_grad_count();
+        self.base.process_gradient(self.learning_rate);
     }
 
     fn should_process_backprop(&self) -> bool {

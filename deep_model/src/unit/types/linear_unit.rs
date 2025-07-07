@@ -25,8 +25,12 @@ pub struct LinearUnit<'a> {
 
 impl<'a> LinearUnit<'a> {
     pub fn new(function: &str, input_size: usize, output_size: usize) -> LinearUnit<'a> {
-        let weights: NodeRef = Rc::new(RefCell::new(WeightNode::new(input_size, output_size)));
-        let biases: NodeRef = Rc::new(RefCell::new(BiasNode::new(output_size)));
+        let weights: NodeRef = Rc::new(RefCell::new(WeightNode::new(
+            input_size,
+            output_size,
+            0.001,
+        )));
+        let biases: NodeRef = Rc::new(RefCell::new(BiasNode::new(output_size, 0.001)));
 
         let multiply: NodeRef = Rc::new(RefCell::new(MultiplyNode::new()));
         let add: NodeRef = Rc::new(RefCell::new(AddNode::new()));

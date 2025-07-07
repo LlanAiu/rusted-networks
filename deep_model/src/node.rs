@@ -48,6 +48,58 @@ impl Data {
             Data::None => other.clone(),
         }
     }
+
+    pub fn minus(&self, other: &Data) -> Data {
+        match self {
+            Data::VectorF32(this) => {
+                if let Data::VectorF32(vec) = other {
+                    if vec.dim() == this.dim() {
+                        return Data::VectorF32(this - vec);
+                    }
+                }
+                Data::None
+            }
+            Data::MatrixF32(this) => {
+                if let Data::MatrixF32(matrix) = other {
+                    if matrix.dim() == this.dim() {
+                        return Data::MatrixF32(this - matrix);
+                    }
+                }
+                Data::None
+            }
+            Data::None => other.clone().scale(-1.0),
+        }
+    }
+
+    pub fn times(&self, other: &Data) -> Data {
+        match self {
+            Data::VectorF32(this) => {
+                if let Data::VectorF32(vec) = other {
+                    if vec.dim() == this.dim() {
+                        return Data::VectorF32(this * vec);
+                    }
+                }
+                Data::None
+            }
+            Data::MatrixF32(this) => {
+                if let Data::MatrixF32(matrix) = other {
+                    if matrix.dim() == this.dim() {
+                        return Data::MatrixF32(this * matrix);
+                    }
+                }
+                Data::None
+            }
+            Data::None => Data::None,
+        }
+    }
+
+    pub fn scale(&self, scalar: f32) -> Data {
+        match self {
+            Data::VectorF32(this) => Data::VectorF32(this * scalar),
+            Data::MatrixF32(this) => Data::MatrixF32(this * scalar),
+            Data::None => Data::None,
+        }
+    }
 }
 
 impl Default for Data {

@@ -75,4 +75,8 @@ impl<'a> NodeBase<'a> {
     pub fn get_gradient(&self) -> &Data {
         &self.grad
     }
+
+    pub fn process_gradient(&mut self, learning_rate: f32) {
+        self.data.minus(&self.grad.scale(learning_rate));
+    }
 }

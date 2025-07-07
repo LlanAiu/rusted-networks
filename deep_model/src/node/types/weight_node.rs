@@ -8,13 +8,15 @@ use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
 pub struct WeightNode<'a> {
     base: NodeBase<'a>,
     dim: (usize, usize),
+    learning_rate: f32,
 }
 
 impl<'a> WeightNode<'a> {
-    pub fn new(input_size: usize, output_size: usize) -> WeightNode<'a> {
+    pub fn new(input_size: usize, output_size: usize, learning_rate: f32) -> WeightNode<'a> {
         WeightNode {
             base: NodeBase::new(),
             dim: (output_size, input_size),
+            learning_rate,
         }
     }
 }
@@ -56,8 +58,8 @@ impl<'a> Node<'a> for WeightNode<'a> {
     }
 
     fn apply_jacobian(&mut self) {
-        //TODO: WEIGHT UPDATE
         self.base.reset_grad_count();
+        self.base.process_gradient(self.learning_rate);
     }
 
     fn should_process_backprop(&self) -> bool {

@@ -83,7 +83,6 @@ impl<'a> Node<'a> for AddNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        //TODO: CALCULATIONS (WRT node)
         for node in self.get_inputs() {
             node.borrow_mut().add_gradient(self.base.get_gradient());
             if node.borrow().should_process_backprop() {
