@@ -50,7 +50,17 @@ impl<'a> Node<'a> for BiasNode<'a> {
 
     fn apply_operation(&mut self) {}
 
-    fn get_jacobian(&self) -> Data {
-        todo!()
+    fn add_gradient(&mut self, grad: &Data) {
+        self.base.increment_grad_count();
+        self.base.add_to_gradient(grad);
+    }
+
+    fn apply_jacobian(&mut self) {
+        //TODO: BIAS UPDATE
+        self.base.reset_grad_count();
+    }
+
+    fn should_process_backprop(&self) -> bool {
+        self.base.should_process_backprop()
     }
 }

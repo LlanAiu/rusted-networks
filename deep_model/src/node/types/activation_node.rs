@@ -66,11 +66,28 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         self.base.set_data(data);
     }
 
-    fn get_jacobian(&self) -> Data {
-        todo!()
-    }
-
     fn set_data(&mut self, _data: Data) {
         panic!("[ACTIVATION] Unsupported Operation: Cannot set data of an operation node");
+    }
+
+    fn add_gradient(&mut self, grad: &Data) {
+        self.base.increment_grad_count();
+        self.base.add_to_gradient(grad);
+    }
+
+    fn apply_jacobian(&mut self) {
+        self.base.reset_grad_count();
+
+        //TODO: CALCULATIONS
+        for node in self.get_inputs() {
+            node.borrow_mut().add_gradient(self.base.get_gradient());
+            if node.borrow().should_process_backprop() {
+                node.borrow_mut().apply_jacobian();
+            }
+        }
+    }
+
+    fn should_process_backprop(&self) -> bool {
+        self.base.should_process_backprop()
     }
 }

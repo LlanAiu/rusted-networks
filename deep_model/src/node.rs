@@ -26,6 +26,30 @@ impl Data {
     }
 }
 
+impl Data {
+    pub fn sum(&self, other: &Data) -> Data {
+        match self {
+            Data::VectorF32(this) => {
+                if let Data::VectorF32(vec) = other {
+                    if vec.dim() == this.dim() {
+                        return Data::VectorF32(this + vec);
+                    }
+                }
+                Data::None
+            }
+            Data::MatrixF32(this) => {
+                if let Data::MatrixF32(matrix) = other {
+                    if matrix.dim() == this.dim() {
+                        return Data::MatrixF32(this + matrix);
+                    }
+                }
+                Data::None
+            }
+            Data::None => other.clone(),
+        }
+    }
+}
+
 impl Default for Data {
     fn default() -> Self {
         Data::None
@@ -49,5 +73,9 @@ pub trait Node<'a> {
 
     fn apply_operation(&mut self);
 
-    fn get_jacobian(&self) -> Data;
+    fn add_gradient(&mut self, grad: &Data);
+
+    fn apply_jacobian(&mut self);
+
+    fn should_process_backprop(&self) -> bool;
 }

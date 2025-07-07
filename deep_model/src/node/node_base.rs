@@ -10,6 +10,8 @@ pub struct NodeBase<'a> {
     inputs: Vec<NodeRef<'a>>,
     outputs: Vec<NodeRef<'a>>,
     data: Data,
+    grad_count: usize,
+    grad: Data,
 }
 
 impl<'a> NodeBase<'a> {
@@ -18,6 +20,8 @@ impl<'a> NodeBase<'a> {
             inputs: Vec::new(),
             outputs: Vec::new(),
             data: Data::None,
+            grad_count: 0,
+            grad: Data::None,
         }
     }
 }
@@ -46,5 +50,29 @@ impl<'a> NodeBase<'a> {
 
     pub fn set_data(&mut self, data: Data) {
         self.data = data;
+    }
+
+    pub fn reset_grad_count(&mut self) {
+        self.grad_count = 0;
+    }
+
+    pub fn increment_grad_count(&mut self) {
+        self.grad_count += 1;
+    }
+
+    pub fn should_process_backprop(&self) -> bool {
+        self.grad_count == self.outputs.len()
+    }
+
+    pub fn reset_gradient(&mut self) {
+        self.grad = Data::None;
+    }
+
+    pub fn add_to_gradient(&mut self, component: &Data) {
+        self.grad = self.grad.sum(component);
+    }
+
+    pub fn get_gradient(&self) -> &Data {
+        &self.grad
     }
 }
