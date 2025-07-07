@@ -17,32 +17,63 @@ impl<'a> MultiplyNode<'a> {
         }
     }
 
-    fn update_data(&self, matrix: Array2<f32>) -> Data {
+    fn update_data(&self, matrix: Array2<f32>, other_data: Data) -> Data {
         let mut product: Array2<f32> = matrix;
 
-        for i in 1..self.base.get_inputs().len() {
-            let mut node_ref = self.base.get_inputs().get(i).unwrap().borrow_mut();
-            let data = node_ref.get_data();
-
-            match data {
-                Data::MatrixF32(matrix) => {
-                    product = product.dot(&matrix);
-                }
-                Data::VectorF32(vec) => {
-                    product = product.dot(&vec.insert_axis(Axis(1)));
-                }
-                _ => {}
-            };
-        }
+        match other_data {
+            Data::MatrixF32(matrix) => {
+                product = product.dot(&matrix);
+            }
+            Data::VectorF32(vec) => {
+                product = product.dot(&vec.insert_axis(Axis(1)));
+            }
+            _ => {}
+        };
 
         let product_vec: Array1<f32> = product.remove_axis(Axis(1));
         Data::VectorF32(product_vec)
+    }
+
+    fn propogate_gradient_of(&self, node_index: usize, other_index: usize) {
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        let prev_gradient = match self.base.get_gradient() {
+            Data::VectorF32(vec) => vec.view().insert_axis(Axis(1)),
+            Data::MatrixF32(matrix) => matrix.view(),
+            Data::None => {
+                panic!("[MATMUL] Invalid previous gradient, was Data::None");
+            }
+        };
+
+        let mut node_ref = inputs.get(node_index).unwrap().borrow_mut();
+        let mut other_ref = inputs.get(other_index).unwrap().borrow_mut();
+
+        //CHECK MULTS (pretty sure dims are mismatched)
+        match other_ref.get_data() {
+            Data::VectorF32(vec) => {
+                let grad = vec.insert_axis(Axis(1)).dot(&prev_gradient);
+                node_ref.add_gradient(&Data::MatrixF32(grad));
+            }
+            Data::MatrixF32(matrix) => {
+                let grad = matrix.dot(&prev_gradient);
+                node_ref.add_gradient(&Data::VectorF32(grad.remove_axis(Axis(1))));
+            }
+            Data::None => {}
+        }
+
+        if node_ref.should_process_backprop() {
+            node_ref.apply_jacobian();
+        }
     }
 }
 
 impl<'a> Node<'a> for MultiplyNode<'a> {
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
-        self.base.add_input(this, input);
+        if self.base.get_inputs().len() < 2 {
+            self.base.add_input(this, input);
+        } else {
+            println!("[MATMUL] Node's maximum input capacity (2) reached. Skipping assignment, consider using an extra node instead.");
+        }
     }
 
     fn add_output(&mut self, output: &NodeRef<'a>) {
@@ -62,7 +93,7 @@ impl<'a> Node<'a> for MultiplyNode<'a> {
     }
 
     fn apply_operation(&mut self) {
-        if self.get_inputs().len() == 0 {
+        if self.get_inputs().len() != 2 {
             return;
         }
 
@@ -76,13 +107,16 @@ impl<'a> Node<'a> for MultiplyNode<'a> {
         let first_data = first_ref.get_data();
         let mut res: Data = Data::None;
 
+        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
+        let second_data = second_ref.get_data();
+
         match first_data {
             Data::MatrixF32(matrix) => {
-                res = self.update_data(matrix);
+                res = self.update_data(matrix, second_data);
             }
             Data::VectorF32(vec) => {
                 let matrix = vec.insert_axis(Axis(1));
-                res = self.update_data(matrix);
+                res = self.update_data(matrix, second_data);
             }
             _ => {}
         }
@@ -102,13 +136,8 @@ impl<'a> Node<'a> for MultiplyNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        //TODO: CALCULATIONS (WRT each node)
-        for node in self.get_inputs() {
-            node.borrow_mut().add_gradient(self.base.get_gradient());
-            if node.borrow().should_process_backprop() {
-                node.borrow_mut().apply_jacobian();
-            }
-        }
+        self.propogate_gradient_of(0, 1);
+        self.propogate_gradient_of(1, 0);
     }
 
     fn should_process_backprop(&self) -> bool {
