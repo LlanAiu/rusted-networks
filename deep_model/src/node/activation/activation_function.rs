@@ -46,7 +46,15 @@ impl ActivationFunction {
         }
     }
 
-    pub fn diff_all(&self, data: &Data) -> Data {
-        todo!()
+    pub fn diff_all(&self, data: &mut Data) {
+        match data {
+            Data::VectorF32(vec) => {
+                vec.mapv_inplace(|f| self.activation_type.diff(f));
+            }
+            Data::MatrixF32(matrix) => {
+                matrix.mapv_inplace(|f| self.activation_type.diff(f));
+            }
+            _ => {}
+        }
     }
 }

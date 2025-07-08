@@ -1,7 +1,7 @@
 // builtin
 
 // external
-use ndarray::{Array1, Array2, Axis};
+use ndarray::{Array1, Array2, ArrayView2, Axis};
 
 // internal
 use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
@@ -37,7 +37,7 @@ impl<'a> MultiplyNode<'a> {
     fn propogate_gradient_of(&self, node_index: usize, other_index: usize) {
         let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
 
-        let prev_gradient = match self.base.get_gradient() {
+        let prev_gradient: ArrayView2<f32> = match self.base.get_gradient() {
             Data::VectorF32(vec) => vec.view().insert_axis(Axis(1)),
             Data::MatrixF32(matrix) => matrix.view(),
             Data::None => {
@@ -48,14 +48,14 @@ impl<'a> MultiplyNode<'a> {
         let mut node_ref = inputs.get(node_index).unwrap().borrow_mut();
         let mut other_ref = inputs.get(other_index).unwrap().borrow_mut();
 
-        //CHECK MULTS (pretty sure dims are mismatched)
         match other_ref.get_data() {
             Data::VectorF32(vec) => {
-                let grad = vec.insert_axis(Axis(1)).dot(&prev_gradient);
+                let matrix = vec.insert_axis(Axis(1));
+                let grad = prev_gradient.dot(&matrix.t());
                 node_ref.add_gradient(&Data::MatrixF32(grad));
             }
             Data::MatrixF32(matrix) => {
-                let grad = matrix.dot(&prev_gradient);
+                let grad = matrix.t().dot(&prev_gradient);
                 node_ref.add_gradient(&Data::VectorF32(grad.remove_axis(Axis(1))));
             }
             Data::None => {}

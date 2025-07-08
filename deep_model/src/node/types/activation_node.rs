@@ -79,9 +79,10 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         self.base.reset_grad_count();
 
         for node in self.get_inputs() {
-            let grad_term = self.function.diff_all(&node.borrow_mut().get_data());
+            let mut grad = node.borrow_mut().get_data();
+            self.function.diff_all(&mut grad);
             node.borrow_mut()
-                .add_gradient(&grad_term.times(self.base.get_gradient()));
+                .add_gradient(&grad.times(self.base.get_gradient()));
             if node.borrow().should_process_backprop() {
                 node.borrow_mut().apply_jacobian();
             }

@@ -18,7 +18,10 @@ impl ActivationType for ReLUActivation {
     }
 
     fn diff(&self, input: f32) -> f32 {
-        todo!()
+        if input < 0.0 {
+            return 0.0;
+        }
+        1.0
     }
 
     fn name(&self) -> &str {
