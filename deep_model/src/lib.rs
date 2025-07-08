@@ -3,6 +3,7 @@
 // external
 
 // internal
+pub mod data;
 pub mod network;
 pub mod node;
 pub mod unit;
@@ -14,7 +15,7 @@ mod tests {
     use ndarray::{arr1, arr2, Array1, Array2};
 
     use crate::{
-        node::Data,
+        data::Data,
         unit::{
             types::{input_unit::InputUnit, linear_unit::LinearUnit},
             UnitRef,
@@ -80,8 +81,6 @@ mod tests {
 
         output.borrow_mut().apply_operation();
 
-        let end_data: Data = output.borrow_mut().get_data();
-
-        println!("{:?}", end_data);
+        todo!()
     }
 }

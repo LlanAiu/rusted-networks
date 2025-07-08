@@ -4,7 +4,8 @@ use std::rc::Rc;
 // external
 
 // internal
-use crate::node::{Data, NodeRef};
+use crate::data::Data;
+use crate::node::NodeRef;
 
 pub struct NodeBase<'a> {
     inputs: Vec<NodeRef<'a>>,

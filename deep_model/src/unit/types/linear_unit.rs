@@ -7,12 +7,13 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
+    data::Data,
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
             multiply_node::MultiplyNode, weight_node::WeightNode,
         },
-        Data, NodeRef,
+        NodeRef,
     },
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };

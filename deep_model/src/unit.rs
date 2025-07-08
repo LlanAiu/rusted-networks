@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc::Rc};
 // external
 
 // internal
-use crate::node::{Data, NodeRef};
+use crate::{data::Data, node::NodeRef};
 pub mod types;
 pub mod unit_base;
 

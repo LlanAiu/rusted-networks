@@ -7,7 +7,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    node::{types::input_node::InputNode, Data, NodeRef},
+    data::Data,
+    node::{types::input_node::InputNode, NodeRef},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 

@@ -3,7 +3,7 @@
 // external
 
 // internal
-use crate::node::Data;
+use crate::data::Data;
 
 pub trait Network {
     fn feedforward(&self, input: Data);

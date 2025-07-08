@@ -3,8 +3,9 @@
 // external
 
 // internal
+use crate::data::Data;
 use crate::node::{
-    activation::activation_function::ActivationFunction, node_base::NodeBase, Data, Node, NodeRef,
+    activation::activation_function::ActivationFunction, node_base::NodeBase, Node, NodeRef,
 };
 
 pub struct ActivationNode<'a> {

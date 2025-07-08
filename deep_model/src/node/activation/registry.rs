@@ -4,11 +4,10 @@ use std::{
     sync::{OnceLock, RwLock},
 };
 
-use crate::node::activation::{activation_function::ActivationType, types::relu::ReLUActivation};
-
 // external
 
 // internal
+use crate::node::activation::{activation_function::ActivationType, types::relu::ReLUActivation};
 
 pub fn init_registry() {
     if REGISTRY_INSTANCE.get().is_none() {

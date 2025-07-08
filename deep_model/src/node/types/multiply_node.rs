@@ -4,7 +4,8 @@
 use ndarray::{Array1, Array2, ArrayView2, Axis};
 
 // internal
-use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
+use crate::data::Data;
+use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct MultiplyNode<'a> {
     base: NodeBase<'a>,

@@ -3,7 +3,8 @@
 // external
 
 // internal
-use crate::node::{node_base::NodeBase, Data, Node, NodeRef};
+use crate::data::Data;
+use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct WeightNode<'a> {
     base: NodeBase<'a>,
