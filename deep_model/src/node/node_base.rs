@@ -78,6 +78,6 @@ impl<'a> NodeBase<'a> {
     }
 
     pub fn process_gradient(&mut self, learning_rate: f32) {
-        self.data.minus(&self.grad.scale(learning_rate));
+        self.data.minus(&self.grad.scale_f32(learning_rate));
     }
 }

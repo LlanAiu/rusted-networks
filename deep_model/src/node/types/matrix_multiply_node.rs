@@ -1,48 +1,33 @@
 // builtin
 
 // external
-use ndarray::{Array1, Array2, ArrayView2, Axis};
+use ndarray::{ArrayView2, Axis};
 
 // internal
 use crate::data::Data;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
-pub struct MultiplyNode<'a> {
+pub struct MatrixMultiplyNode<'a> {
     base: NodeBase<'a>,
 }
 
-impl<'a> MultiplyNode<'a> {
-    pub fn new() -> MultiplyNode<'a> {
-        MultiplyNode {
+impl<'a> MatrixMultiplyNode<'a> {
+    pub fn new() -> MatrixMultiplyNode<'a> {
+        MatrixMultiplyNode {
             base: NodeBase::new(),
         }
-    }
-
-    fn update_data(&self, matrix: Array2<f32>, other_data: Data) -> Data {
-        let mut product: Array2<f32> = matrix;
-
-        match other_data {
-            Data::MatrixF32(matrix) => {
-                product = product.dot(&matrix);
-            }
-            Data::VectorF32(vec) => {
-                product = product.dot(&vec.insert_axis(Axis(1)));
-            }
-            _ => {}
-        };
-
-        let product_vec: Array1<f32> = product.remove_axis(Axis(1));
-        Data::VectorF32(product_vec)
     }
 
     fn propogate_gradient_of(&self, node_index: usize, other_index: usize) {
         let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
 
-        let prev_gradient: ArrayView2<f32> = match self.base.get_gradient() {
+        let grad_data = self.base.get_gradient();
+        let prev_gradient: ArrayView2<f32> = match grad_data {
             Data::VectorF32(vec) => vec.view().insert_axis(Axis(1)),
             Data::MatrixF32(matrix) => matrix.view(),
-            Data::None => {
-                panic!("[MATMUL] Invalid previous gradient, was Data::None");
+            _ => {
+                let variant_name = grad_data.variant_name();
+                panic!("[MATMUL] Invalid previous gradient, was {variant_name}");
             }
         };
 
@@ -59,7 +44,10 @@ impl<'a> MultiplyNode<'a> {
                 let grad = matrix.t().dot(&prev_gradient);
                 node_ref.add_gradient(&Data::VectorF32(grad.remove_axis(Axis(1))));
             }
-            Data::None => {}
+            _ => {
+                let variant_name = grad_data.variant_name();
+                panic!("[MATMUL] Invalid input data type for backprop, was {variant_name}");
+            }
         }
 
         if node_ref.should_process_backprop() {
@@ -68,7 +56,7 @@ impl<'a> MultiplyNode<'a> {
     }
 }
 
-impl<'a> Node<'a> for MultiplyNode<'a> {
+impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
         if self.base.get_inputs().len() < 2 {
             self.base.add_input(this, input);
@@ -106,21 +94,11 @@ impl<'a> Node<'a> for MultiplyNode<'a> {
 
         let mut first_ref = inputs.get(0).unwrap().borrow_mut();
         let first_data = first_ref.get_data();
-        let mut res: Data = Data::None;
 
         let mut second_ref = inputs.get(1).unwrap().borrow_mut();
         let second_data = second_ref.get_data();
 
-        match first_data {
-            Data::MatrixF32(matrix) => {
-                res = self.update_data(matrix, second_data);
-            }
-            Data::VectorF32(vec) => {
-                let matrix = vec.insert_axis(Axis(1));
-                res = self.update_data(matrix, second_data);
-            }
-            _ => {}
-        }
+        let res: Data = first_data.dot(&second_data);
 
         self.base.set_data(res);
     }

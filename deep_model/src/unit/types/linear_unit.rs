@@ -11,7 +11,7 @@ use crate::{
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
-            multiply_node::MultiplyNode, weight_node::WeightNode,
+            matrix_multiply_node::MatrixMultiplyNode, weight_node::WeightNode,
         },
         NodeRef,
     },
@@ -33,7 +33,7 @@ impl<'a> LinearUnit<'a> {
         )));
         let biases: NodeRef = Rc::new(RefCell::new(BiasNode::new(output_size, 0.001)));
 
-        let multiply: NodeRef = Rc::new(RefCell::new(MultiplyNode::new()));
+        let multiply: NodeRef = Rc::new(RefCell::new(MatrixMultiplyNode::new()));
         let add: NodeRef = Rc::new(RefCell::new(AddNode::new()));
         let activation: NodeRef = Rc::new(RefCell::new(ActivationNode::new(function)));
 
