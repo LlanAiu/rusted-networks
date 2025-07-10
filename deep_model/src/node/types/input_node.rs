@@ -51,9 +51,8 @@ impl<'a> Node<'a> for InputNode<'a> {
 
     fn apply_operation(&mut self) {}
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, _grad: &Data) {
         self.base.increment_grad_count();
-        self.base.add_to_gradient(grad);
     }
 
     fn apply_jacobian(&mut self) {
