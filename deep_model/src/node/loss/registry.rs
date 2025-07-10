@@ -7,35 +7,33 @@ use std::{
 // external
 
 // internal
-use crate::node::activation::{activation_function::ActivationType, types::relu::ReLUActivation};
+use crate::node::loss::loss_function::LossType;
 
-pub fn init_activation_registry() {
+pub fn init_loss_registry() {
     if REGISTRY_INSTANCE.get().is_none() {
-        let activation_registry: ActivationRegistry = ActivationRegistry::init();
+        let activation_registry: LossRegistry = LossRegistry::init();
 
         REGISTRY_INSTANCE
             .set(RwLock::new(activation_registry))
             .unwrap();
-
-        ActivationRegistry::register(ReLUActivation.name(), Box::new(ReLUActivation));
     }
 }
 
 #[derive(Debug)]
-pub struct ActivationRegistry {
-    registry: HashMap<String, Box<dyn ActivationType>>,
+pub struct LossRegistry {
+    registry: HashMap<String, Box<dyn LossType>>,
 }
 
-static REGISTRY_INSTANCE: OnceLock<RwLock<ActivationRegistry>> = OnceLock::new();
+static REGISTRY_INSTANCE: OnceLock<RwLock<LossRegistry>> = OnceLock::new();
 
-impl ActivationRegistry {
-    fn init() -> ActivationRegistry {
-        let hmap: HashMap<String, Box<dyn ActivationType>> = HashMap::new();
+impl LossRegistry {
+    fn init() -> LossRegistry {
+        let hmap: HashMap<String, Box<dyn LossType>> = HashMap::new();
 
-        ActivationRegistry { registry: hmap }
+        LossRegistry { registry: hmap }
     }
 
-    pub fn get(name: &str) -> Box<dyn ActivationType> {
+    pub fn get(name: &str) -> Box<dyn LossType> {
         let guard = REGISTRY_INSTANCE
             .get()
             .expect("Tried to use registry prior to initialization")
@@ -49,7 +47,7 @@ impl ActivationRegistry {
             .expect("Failed to fetch activation function from registry")
     }
 
-    pub fn register(name: &str, func: Box<dyn ActivationType>) {
+    pub fn register(name: &str, func: Box<dyn LossType>) {
         let mut guard = REGISTRY_INSTANCE
             .get()
             .expect("Tried to use registry prior to initialization")

@@ -6,6 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 // internal
 use crate::data::Data;
 pub mod activation;
+pub mod loss;
 pub mod node_base;
 pub mod types;
 

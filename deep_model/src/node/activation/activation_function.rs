@@ -6,7 +6,7 @@ use std::fmt::Debug;
 
 // internal
 use crate::data::Data;
-use crate::node::activation::registry::{init_registry, Registry};
+use crate::node::activation::registry::{init_activation_registry, ActivationRegistry};
 
 pub trait ActivationType: Send + Sync + Debug {
     fn apply(&self, input: f32) -> f32;
@@ -24,10 +24,10 @@ pub struct ActivationFunction {
 
 impl ActivationFunction {
     pub fn new(activation_type: &str) -> ActivationFunction {
-        init_registry();
+        init_activation_registry();
 
         ActivationFunction {
-            activation_type: Registry::get(activation_type),
+            activation_type: ActivationRegistry::get(activation_type),
         }
     }
 
