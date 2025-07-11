@@ -65,7 +65,7 @@ impl<'a> Node<'a> for LossNode<'a> {
         let mut second_ref = inputs.get(1).unwrap().borrow_mut();
         let second_data = second_ref.get_data();
 
-        let data = self.function.apply(second_data, first_data);
+        let data = self.function.apply(&second_data, &first_data);
 
         self.base.set_data(data);
     }
@@ -81,8 +81,33 @@ impl<'a> Node<'a> for LossNode<'a> {
 
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
+        let grad = self.base.get_gradient();
 
-        todo!()
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        for input in &inputs {
+            input.borrow_mut().apply_operation();
+        }
+
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
+        let first_data = first_ref.get_data();
+
+        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
+        let second_data = second_ref.get_data();
+
+        let expected_grad = self.function.get_jacobian(&first_data, &second_data, true);
+        second_ref.add_gradient(&expected_grad.dot(grad));
+
+        if second_ref.should_process_backprop() {
+            second_ref.apply_jacobian();
+        }
+
+        let actual_grad = self.function.get_jacobian(&first_data, &second_data, false);
+        first_ref.add_gradient(&actual_grad.dot(grad));
+
+        if first_ref.should_process_backprop() {
+            first_ref.apply_jacobian();
+        }
     }
 
     fn should_process_backprop(&self) -> bool {

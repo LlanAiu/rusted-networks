@@ -10,9 +10,9 @@ use crate::{
 };
 
 pub trait LossType: Send + Sync + Debug {
-    fn apply(&self, expected: Data, actual: Data) -> Data;
+    fn apply(&self, expected: &Data, actual: &Data) -> Data;
 
-    fn diff(&self, expected: Data, actual: Data) -> Data;
+    fn diff(&self, expected: &Data, actual: &Data, wrt_expected: bool) -> Data;
 
     fn name(&self) -> &str;
 
@@ -32,11 +32,11 @@ impl LossFunction {
         }
     }
 
-    pub fn apply(&self, expected: Data, actual: Data) -> Data {
+    pub fn apply(&self, expected: &Data, actual: &Data) -> Data {
         self.loss_type.apply(expected, actual)
     }
 
-    pub fn get_jacobian(&self, expected: Data, actual: Data) -> Data {
-        self.loss_type.diff(expected, actual)
+    pub fn get_jacobian(&self, expected: &Data, actual: &Data, wrt_expected: bool) -> Data {
+        self.loss_type.diff(expected, actual, wrt_expected)
     }
 }
