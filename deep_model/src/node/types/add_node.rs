@@ -5,6 +5,7 @@ use ndarray::Array1;
 
 // internal
 use crate::data::Data;
+use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct AddNode<'a> {
@@ -20,6 +21,10 @@ impl<'a> AddNode<'a> {
 }
 
 impl<'a> Node<'a> for AddNode<'a> {
+    fn get_type(&self) -> NodeType {
+        NodeType::Operation
+    }
+
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
         self.base.add_input(this, input);
     }

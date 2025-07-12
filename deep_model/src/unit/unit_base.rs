@@ -20,8 +20,8 @@ impl<'a> UnitBase<'a> {
         UnitBase {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            input_node: Rc::clone(input),
-            output_node: Rc::clone(output),
+            input_node: NodeRef::clone(input),
+            output_node: NodeRef::clone(output),
         }
     }
 

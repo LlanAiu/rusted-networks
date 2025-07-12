@@ -19,11 +19,12 @@ pub struct InputUnit<'a> {
 
 impl<'a> InputUnit<'a> {
     pub fn new(input_size: usize) -> InputUnit<'a> {
-        let input: NodeRef = Rc::new(RefCell::new(InputNode::new(input_size)));
+        let input = Rc::new(RefCell::new(InputNode::new(input_size)));
+        let input_ref = NodeRef::new(input);
 
         InputUnit {
-            base: UnitBase::new(&input, &input),
-            input,
+            base: UnitBase::new(&input_ref, &input_ref),
+            input: input_ref,
         }
     }
 }

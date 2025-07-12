@@ -4,6 +4,7 @@
 
 // internal
 use crate::data::Data;
+use crate::node::NodeType;
 use crate::node::{
     activation::activation_function::ActivationFunction, node_base::NodeBase, Node, NodeRef,
 };
@@ -23,6 +24,10 @@ impl<'a> ActivationNode<'a> {
 }
 
 impl<'a> Node<'a> for ActivationNode<'a> {
+    fn get_type(&self) -> NodeType {
+        NodeType::Operation
+    }
+
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
         if self.base.get_inputs().len() == 0 {
             self.base.add_input(this, input);

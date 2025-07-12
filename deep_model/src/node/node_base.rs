@@ -1,5 +1,4 @@
 // builtin
-use std::rc::Rc;
 
 // external
 
@@ -30,11 +29,11 @@ impl<'a> NodeBase<'a> {
 impl<'a> NodeBase<'a> {
     pub fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
         input.borrow_mut().add_output(this);
-        self.inputs.push(Rc::clone(input));
+        self.inputs.push(NodeRef::clone(input));
     }
 
     pub fn add_output(&mut self, output: &NodeRef<'a>) {
-        self.outputs.push(Rc::clone(output));
+        self.outputs.push(NodeRef::clone(output));
     }
 
     pub fn get_inputs(&self) -> &Vec<NodeRef<'a>> {

@@ -5,6 +5,7 @@
 // internal
 use crate::data::Data;
 use crate::node::loss::loss_function::LossFunction;
+use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct LossNode<'a> {
@@ -22,12 +23,37 @@ impl<'a> LossNode<'a> {
 }
 
 impl<'a> Node<'a> for LossNode<'a> {
-    //INPUTS MUST BE ADDED IN THE ORDER OF: PREDICTED, ACTUAL
+    fn get_type(&self) -> NodeType {
+        NodeType::Operation
+    }
+
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
-        if self.base.get_inputs().len() < 2 {
-            self.base.add_input(this, input);
-        } else {
-            println!("[LOSS] Node's maximum input capacity (2) reached. Skipping assignment.");
+        match input.get_type() {
+            NodeType::Operation | NodeType::ExpectedResponse => {
+                let inputs = self.base.get_inputs().len();
+                match inputs {
+                    0 => {
+                        self.base.add_input(this, input);
+                    }
+                    1 => {
+                        let node = self.base.get_inputs().get(0).unwrap();
+                        if node.get_type() != input.get_type() {
+                            self.base.add_input(this, input);
+                        } else {
+                            println!("[LOSS] Node's maximum input capacity for type {} reached (1). Skipping assignment.", input.get_type());
+                        }
+                    }
+                    _ => {
+                        println!("[LOSS] Node's maximum input capacity reached (2). Skipping assignment.");
+                    }
+                }
+            }
+            _ => {
+                println!(
+                    "[LOSS] Tried to assign unsupported input type to loss node: {}",
+                    input.get_type()
+                );
+            }
         }
     }
 
@@ -49,7 +75,10 @@ impl<'a> Node<'a> for LossNode<'a> {
 
     fn apply_operation(&mut self) {
         if self.get_inputs().len() != 2 {
-            println!("[ACTIVATION] Tried to apply operation on no inputs");
+            println!(
+                "[LOSS] Expected 2 Inputs but got {}, terminating feedforward operation",
+                self.get_inputs().len()
+            );
             return;
         }
 
@@ -59,15 +88,19 @@ impl<'a> Node<'a> for LossNode<'a> {
             input.borrow_mut().apply_operation();
         }
 
-        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
-        let first_data = first_ref.get_data();
+        let first_ref = inputs.get(0).unwrap();
+        let first_data = first_ref.borrow_mut().get_data();
 
-        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
-        let second_data = second_ref.get_data();
+        let second_ref = inputs.get(1).unwrap();
+        let second_data = second_ref.borrow_mut().get_data();
 
-        let data = self.function.apply(&second_data, &first_data);
-
-        self.base.set_data(data);
+        if first_ref.get_type() == NodeType::ExpectedResponse {
+            let data = self.function.apply(&first_data, &second_data);
+            self.base.set_data(data);
+        } else {
+            let data = self.function.apply(&second_data, &first_data);
+            self.base.set_data(data);
+        }
     }
 
     fn set_data(&mut self, _data: Data) {
@@ -85,28 +118,34 @@ impl<'a> Node<'a> for LossNode<'a> {
 
         let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
 
-        for input in &inputs {
-            input.borrow_mut().apply_operation();
+        let first_ref = inputs.get(0).unwrap();
+        let first_data = first_ref.borrow_mut().get_data();
+
+        let second_ref = inputs.get(1).unwrap();
+        let second_data = second_ref.borrow_mut().get_data();
+
+        if first_ref.get_type() == NodeType::Operation {
+            let expected_grad = self.function.get_jacobian(&second_data, &first_data, true);
+            second_ref
+                .borrow_mut()
+                .add_gradient(&expected_grad.dot(grad));
+
+            let actual_grad = self.function.get_jacobian(&second_data, &first_data, false);
+            first_ref.borrow_mut().add_gradient(&actual_grad.dot(grad));
+        } else {
+            let expected_grad = self.function.get_jacobian(&first_data, &second_data, true);
+            first_ref
+                .borrow_mut()
+                .add_gradient(&expected_grad.dot(grad));
+
+            let actual_grad = self.function.get_jacobian(&first_data, &second_data, false);
+            second_ref.borrow_mut().add_gradient(&actual_grad.dot(grad));
         }
 
-        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
-        let first_data = first_ref.get_data();
-
-        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
-        let second_data = second_ref.get_data();
-
-        let expected_grad = self.function.get_jacobian(&first_data, &second_data, true);
-        second_ref.add_gradient(&expected_grad.dot(grad));
-
-        if second_ref.should_process_backprop() {
-            second_ref.apply_jacobian();
-        }
-
-        let actual_grad = self.function.get_jacobian(&first_data, &second_data, false);
-        first_ref.add_gradient(&actual_grad.dot(grad));
-
-        if first_ref.should_process_backprop() {
-            first_ref.apply_jacobian();
+        for input in inputs {
+            if input.borrow().should_process_backprop() {
+                input.borrow_mut().apply_jacobian();
+            }
         }
     }
 

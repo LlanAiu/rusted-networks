@@ -4,6 +4,7 @@
 
 // internal
 use crate::data::Data;
+use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct WeightNode<'a> {
@@ -23,6 +24,10 @@ impl<'a> WeightNode<'a> {
 }
 
 impl<'a> Node<'a> for WeightNode<'a> {
+    fn get_type(&self) -> NodeType {
+        NodeType::Parameter
+    }
+
     fn add_input(&mut self, _this: &NodeRef<'a>, _input: &NodeRef<'a>) {}
 
     fn add_output(&mut self, output: &NodeRef<'a>) {

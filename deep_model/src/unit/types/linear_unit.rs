@@ -26,28 +26,35 @@ pub struct LinearUnit<'a> {
 
 impl<'a> LinearUnit<'a> {
     pub fn new(function: &str, input_size: usize, output_size: usize) -> LinearUnit<'a> {
-        let weights: NodeRef = Rc::new(RefCell::new(WeightNode::new(
+        let weights = Rc::new(RefCell::new(WeightNode::new(
             input_size,
             output_size,
             0.001,
         )));
-        let biases: NodeRef = Rc::new(RefCell::new(BiasNode::new(output_size, 0.001)));
+        let biases = Rc::new(RefCell::new(BiasNode::new(output_size, 0.001)));
+        let matmul = Rc::new(RefCell::new(MatrixMultiplyNode::new()));
+        let add = Rc::new(RefCell::new(AddNode::new()));
+        let activation = Rc::new(RefCell::new(ActivationNode::new(function)));
 
-        let multiply: NodeRef = Rc::new(RefCell::new(MatrixMultiplyNode::new()));
-        let add: NodeRef = Rc::new(RefCell::new(AddNode::new()));
-        let activation: NodeRef = Rc::new(RefCell::new(ActivationNode::new(function)));
+        let weights_ref: NodeRef = NodeRef::new(weights);
+        let biases_ref: NodeRef = NodeRef::new(biases);
+        let matmul_ref: NodeRef = NodeRef::new(matmul);
+        let add_ref: NodeRef = NodeRef::new(add);
+        let activation_ref: NodeRef = NodeRef::new(activation);
 
-        multiply.borrow_mut().add_input(&multiply, &weights);
+        matmul_ref.borrow_mut().add_input(&matmul_ref, &weights_ref);
 
-        add.borrow_mut().add_input(&add, &multiply);
-        add.borrow_mut().add_input(&add, &biases);
+        add_ref.borrow_mut().add_input(&add_ref, &matmul_ref);
+        add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
 
-        activation.borrow_mut().add_input(&activation, &add);
+        activation_ref
+            .borrow_mut()
+            .add_input(&activation_ref, &add_ref);
 
         LinearUnit {
-            base: UnitBase::new(&multiply, &activation),
-            weights,
-            biases,
+            base: UnitBase::new(&matmul_ref, &activation_ref),
+            weights: weights_ref,
+            biases: biases_ref,
         }
     }
 }

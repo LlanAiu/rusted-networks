@@ -5,6 +5,7 @@ use ndarray::{ArrayView2, Axis};
 
 // internal
 use crate::data::Data;
+use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct MatrixMultiplyNode<'a> {
@@ -57,6 +58,10 @@ impl<'a> MatrixMultiplyNode<'a> {
 }
 
 impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
+    fn get_type(&self) -> NodeType {
+        NodeType::Operation
+    }
+
     fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
         if self.base.get_inputs().len() < 2 {
             self.base.add_input(this, input);
