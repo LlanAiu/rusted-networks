@@ -32,7 +32,7 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         if self.base.get_inputs().len() == 0 {
             self.base.add_input(this, input);
         } else {
-            println!("[ACTIVATION] Cannot add more than one input, skipping assignment");
+            println!("[ACTIVATION] Node's maximum input capacity reached (1). Skipping assignment, consider using an extra node instead.");
         }
     }
 
