@@ -27,6 +27,10 @@ impl<'a> InputUnit<'a> {
             input: input_ref,
         }
     }
+
+    pub fn set_input_data(&self, data: Data) {
+        self.input.borrow_mut().set_data(data);
+    }
 }
 
 impl<'a> Unit<'a> for InputUnit<'a> {
@@ -48,13 +52,5 @@ impl<'a> Unit<'a> for InputUnit<'a> {
 
     fn get_output_node(&self) -> &NodeRef<'a> {
         self.base.get_output_node()
-    }
-
-    fn set_biases(&mut self, _data: Data) {}
-
-    fn set_weights(&mut self, _data: Data) {}
-
-    fn set_input_data(&mut self, data: Data) {
-        self.input.borrow_mut().set_data(data);
     }
 }

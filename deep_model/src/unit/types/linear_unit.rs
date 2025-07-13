@@ -57,6 +57,14 @@ impl<'a> LinearUnit<'a> {
             biases: biases_ref,
         }
     }
+
+    pub fn set_biases(&self, data: Data) {
+        self.biases.borrow_mut().set_data(data);
+    }
+
+    pub fn set_weights(&self, data: Data) {
+        self.weights.borrow_mut().set_data(data);
+    }
 }
 
 impl<'a> Unit<'a> for LinearUnit<'a> {
@@ -79,14 +87,4 @@ impl<'a> Unit<'a> for LinearUnit<'a> {
     fn get_output_node(&self) -> &NodeRef<'a> {
         self.base.get_output_node()
     }
-
-    fn set_biases(&mut self, data: Data) {
-        self.biases.borrow_mut().set_data(data);
-    }
-
-    fn set_weights(&mut self, data: Data) {
-        self.weights.borrow_mut().set_data(data);
-    }
-
-    fn set_input_data(&mut self, _data: Data) {}
 }
