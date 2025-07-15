@@ -9,21 +9,22 @@ use crate::{
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
-            matrix_multiply_node::MatrixMultiplyNode, weight_node::WeightNode,
+            matrix_multiply_node::MatrixMultiplyNode, softmax_node::SoftmaxNode,
+            weight_node::WeightNode,
         },
         NodeRef,
     },
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
-pub struct LinearUnit<'a> {
+pub struct SoftmaxUnit<'a> {
     base: UnitBase<'a>,
     weights: NodeRef<'a>,
     biases: NodeRef<'a>,
 }
 
-impl<'a> LinearUnit<'a> {
-    pub fn new(function: &str, input_size: usize, output_size: usize) -> LinearUnit<'a> {
+impl<'a> SoftmaxUnit<'a> {
+    pub fn new(function: &str, input_size: usize, output_size: usize) -> SoftmaxUnit<'a> {
         let weights = Rc::new(RefCell::new(WeightNode::new(
             input_size,
             output_size,
@@ -33,12 +34,14 @@ impl<'a> LinearUnit<'a> {
         let matmul = Rc::new(RefCell::new(MatrixMultiplyNode::new()));
         let add = Rc::new(RefCell::new(AddNode::new()));
         let activation = Rc::new(RefCell::new(ActivationNode::new(function)));
+        let softmax = Rc::new(RefCell::new(SoftmaxNode::new()));
 
         let weights_ref: NodeRef = NodeRef::new(weights);
         let biases_ref: NodeRef = NodeRef::new(biases);
         let matmul_ref: NodeRef = NodeRef::new(matmul);
         let add_ref: NodeRef = NodeRef::new(add);
         let activation_ref: NodeRef = NodeRef::new(activation);
+        let softmax_ref: NodeRef = NodeRef::new(softmax);
 
         matmul_ref.borrow_mut().add_input(&matmul_ref, &weights_ref);
 
@@ -49,8 +52,12 @@ impl<'a> LinearUnit<'a> {
             .borrow_mut()
             .add_input(&activation_ref, &add_ref);
 
-        LinearUnit {
-            base: UnitBase::new(&matmul_ref, &activation_ref),
+        softmax_ref
+            .borrow_mut()
+            .add_input(&softmax_ref, &activation_ref);
+
+        SoftmaxUnit {
+            base: UnitBase::new(&matmul_ref, &softmax_ref),
             weights: weights_ref,
             biases: biases_ref,
         }
@@ -65,7 +72,7 @@ impl<'a> LinearUnit<'a> {
     }
 }
 
-impl<'a> Unit<'a> for LinearUnit<'a> {
+impl<'a> Unit<'a> for SoftmaxUnit<'a> {
     fn add_input(&mut self, this: &UnitRef<'a>, input: &UnitRef<'a>) {
         self.base.add_input(this, input);
     }
