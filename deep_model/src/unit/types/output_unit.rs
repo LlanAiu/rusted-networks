@@ -1,5 +1,4 @@
 // builtin
-use std::{cell::RefCell, rc::Rc};
 
 // external
 
@@ -20,11 +19,8 @@ pub struct OutputUnit<'a> {
 
 impl<'a> OutputUnit<'a> {
     pub fn new(output_dim: usize, loss_type: &str) -> OutputUnit<'a> {
-        let loss_node = Rc::new(RefCell::new(LossNode::new(loss_type)));
-        let response_node = Rc::new(RefCell::new(ExpectedResponseNode::new(output_dim)));
-
-        let loss_ref: NodeRef = NodeRef::new(loss_node);
-        let response_ref: NodeRef = NodeRef::new(response_node);
+        let loss_ref: NodeRef = NodeRef::new(LossNode::new(loss_type));
+        let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim));
 
         loss_ref.borrow_mut().add_input(&loss_ref, &response_ref);
 

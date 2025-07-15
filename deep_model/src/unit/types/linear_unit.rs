@@ -1,5 +1,4 @@
 // builtin
-use std::{cell::RefCell, rc::Rc};
 
 // external
 
@@ -24,21 +23,11 @@ pub struct LinearUnit<'a> {
 
 impl<'a> LinearUnit<'a> {
     pub fn new(function: &str, input_size: usize, output_size: usize) -> LinearUnit<'a> {
-        let weights = Rc::new(RefCell::new(WeightNode::new(
-            input_size,
-            output_size,
-            0.001,
-        )));
-        let biases = Rc::new(RefCell::new(BiasNode::new(output_size, 0.001)));
-        let matmul = Rc::new(RefCell::new(MatrixMultiplyNode::new()));
-        let add = Rc::new(RefCell::new(AddNode::new()));
-        let activation = Rc::new(RefCell::new(ActivationNode::new(function)));
-
-        let weights_ref: NodeRef = NodeRef::new(weights);
-        let biases_ref: NodeRef = NodeRef::new(biases);
-        let matmul_ref: NodeRef = NodeRef::new(matmul);
-        let add_ref: NodeRef = NodeRef::new(add);
-        let activation_ref: NodeRef = NodeRef::new(activation);
+        let weights_ref: NodeRef = NodeRef::new(WeightNode::new(input_size, output_size, 0.001));
+        let biases_ref: NodeRef = NodeRef::new(BiasNode::new(output_size, 0.001));
+        let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
+        let add_ref: NodeRef = NodeRef::new(AddNode::new());
+        let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
 
         matmul_ref.borrow_mut().add_input(&matmul_ref, &weights_ref);
 

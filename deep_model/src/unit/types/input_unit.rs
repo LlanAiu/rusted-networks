@@ -3,9 +3,6 @@
 // external
 
 // internal
-
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     data::Data,
     node::{types::input_node::InputNode, NodeRef},
@@ -19,8 +16,7 @@ pub struct InputUnit<'a> {
 
 impl<'a> InputUnit<'a> {
     pub fn new(input_size: usize) -> InputUnit<'a> {
-        let input = Rc::new(RefCell::new(InputNode::new(input_size)));
-        let input_ref = NodeRef::new(input);
+        let input_ref = NodeRef::new(InputNode::new(input_size));
 
         InputUnit {
             base: UnitBase::new(&input_ref, &input_ref),

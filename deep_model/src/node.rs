@@ -14,8 +14,6 @@ pub mod loss;
 pub mod node_base;
 pub mod types;
 
-// pub type NodeRef<'a> = Rc<RefCell<dyn Node<'a> + 'a>>;
-
 #[derive(Clone)]
 pub struct NodeRef<'a> {
     reference: Rc<RefCell<dyn Node<'a> + 'a>>,
@@ -23,10 +21,10 @@ pub struct NodeRef<'a> {
 }
 
 impl<'a> NodeRef<'a> {
-    pub fn new(node: Rc<RefCell<dyn Node<'a> + 'a>>) -> NodeRef<'a> {
-        let node_type: NodeType = node.borrow().get_type();
+    pub fn new(node: impl Node<'a> + 'a) -> NodeRef<'a> {
+        let node_type: NodeType = node.get_type();
         NodeRef {
-            reference: node,
+            reference: Rc::new(RefCell::new(node)),
             node_type,
         }
     }
