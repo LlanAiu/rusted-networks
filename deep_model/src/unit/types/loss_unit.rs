@@ -12,19 +12,19 @@ use crate::{
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
-pub struct OutputUnit<'a> {
+pub struct LossUnit<'a> {
     base: UnitBase<'a>,
     response_node: NodeRef<'a>,
 }
 
-impl<'a> OutputUnit<'a> {
-    pub fn new(output_dim: usize, loss_type: &str) -> OutputUnit<'a> {
+impl<'a> LossUnit<'a> {
+    pub fn new(output_dim: usize, loss_type: &str) -> LossUnit<'a> {
         let loss_ref: NodeRef = NodeRef::new(LossNode::new(loss_type));
         let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim));
 
         loss_ref.borrow_mut().add_input(&loss_ref, &response_ref);
 
-        OutputUnit {
+        LossUnit {
             base: UnitBase::new(&loss_ref, &loss_ref),
             response_node: response_ref,
         }
@@ -35,7 +35,7 @@ impl<'a> OutputUnit<'a> {
     }
 }
 
-impl<'a> Unit<'a> for OutputUnit<'a> {
+impl<'a> Unit<'a> for LossUnit<'a> {
     fn add_input(&mut self, this: &UnitRef<'a>, input: &UnitRef<'a>) {
         self.base.add_input(this, input);
     }

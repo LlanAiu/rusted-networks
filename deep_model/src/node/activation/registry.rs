@@ -38,23 +38,23 @@ impl ActivationRegistry {
     pub fn get(name: &str) -> Box<dyn ActivationType> {
         let guard = REGISTRY_INSTANCE
             .get()
-            .expect("Tried to use registry prior to initialization")
+            .expect("[ACTIVATION] Tried to use registry prior to initialization")
             .read()
-            .expect("Failed to acquire read lock on registry");
+            .expect("[ACTIVATION] Failed to acquire read lock on registry");
 
         guard
             .registry
             .get(name)
             .map(|f| f.copy())
-            .expect("Failed to fetch activation function from registry")
+            .expect("[ACTIVATION] Failed to fetch activation function from registry")
     }
 
     pub fn register(name: &str, func: Box<dyn ActivationType>) {
         let mut guard = REGISTRY_INSTANCE
             .get()
-            .expect("Tried to use registry prior to initialization")
+            .expect("[ACTIVATION] Tried to use registry prior to initialization")
             .write()
-            .expect("Failed to acquire write lock on registry");
+            .expect("[ACTIVATION] Failed to acquire write lock on registry");
 
         guard.registry.insert(name.to_string(), func);
     }

@@ -7,7 +7,7 @@ use std::{
 // external
 
 // internal
-use crate::node::loss::loss_function::LossType;
+use crate::node::loss::{loss_function::LossType, types::base_cross_entropy::BaseCrossEntropy};
 
 pub fn init_loss_registry() {
     if REGISTRY_INSTANCE.get().is_none() {
@@ -16,6 +16,8 @@ pub fn init_loss_registry() {
         REGISTRY_INSTANCE
             .set(RwLock::new(activation_registry))
             .unwrap();
+
+        LossRegistry::register(BaseCrossEntropy.name(), Box::new(BaseCrossEntropy));
     }
 }
 
@@ -36,23 +38,23 @@ impl LossRegistry {
     pub fn get(name: &str) -> Box<dyn LossType> {
         let guard = REGISTRY_INSTANCE
             .get()
-            .expect("Tried to use registry prior to initialization")
+            .expect("[LOSS] Tried to use registry prior to initialization")
             .read()
-            .expect("Failed to acquire read lock on registry");
+            .expect("[LOSS] Failed to acquire read lock on registry");
 
         guard
             .registry
             .get(name)
             .map(|f| f.copy())
-            .expect("Failed to fetch activation function from registry")
+            .expect("[LOSS] Failed to fetch function from registry")
     }
 
     pub fn register(name: &str, func: Box<dyn LossType>) {
         let mut guard = REGISTRY_INSTANCE
             .get()
-            .expect("Tried to use registry prior to initialization")
+            .expect("[LOSS] Tried to use registry prior to initialization")
             .write()
-            .expect("Failed to acquire write lock on registry");
+            .expect("[LOSS] Failed to acquire write lock on registry");
 
         guard.registry.insert(name.to_string(), func);
     }

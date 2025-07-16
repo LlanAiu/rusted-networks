@@ -57,6 +57,12 @@ where
         this_ref.borrow_mut().add_input(&this_ref, &input_ref);
     }
 
+    pub fn add_input_ref(&self, input: &UnitRef<'a>) {
+        let this_ref = self.get_ref();
+
+        this_ref.borrow_mut().add_input(&this_ref, input);
+    }
+
     pub fn get_ref(&self) -> UnitRef<'a> {
         Rc::clone(&self.unit) as Rc<RefCell<dyn Unit<'a> + 'a>>
     }
