@@ -3,13 +3,16 @@
 // external
 
 // internal
-
-use crate::unit::{
-    types::{
-        input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
-        softmax_unit::SoftmaxUnit,
+use crate::{
+    data::Data,
+    network::Network,
+    unit::{
+        types::{
+            input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
+            softmax_unit::SoftmaxUnit,
+        },
+        Unit, UnitContainer, UnitRef,
     },
-    UnitContainer, UnitRef,
 };
 
 pub struct SimpleClassifierNetwork<'a> {
@@ -57,5 +60,23 @@ impl<'a> SimpleClassifierNetwork<'a> {
             inference,
             loss,
         }
+    }
+}
+
+impl Network for SimpleClassifierNetwork<'_> {
+    fn feedforward(&self, input: Data) {
+        self.input.borrow_mut().set_input_data(input);
+
+        let inference_node = self.inference.borrow();
+        let inference_ref = inference_node.get_output_node();
+
+        inference_ref.borrow_mut().apply_operation();
+    }
+
+    fn backprop(&self) {
+        let loss_unit = self.loss.borrow();
+        let loss_node = loss_unit.get_output_node();
+
+        loss_node.borrow_mut().apply_jacobian();
     }
 }
