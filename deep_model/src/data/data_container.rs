@@ -3,7 +3,12 @@
 // external
 
 // internal
-use crate::data::{data_container::operations::plus::ContainerPlus, Data};
+use crate::data::{
+    data_container::operations::{
+        matmul::ContainerMatMul, minus::ContainerMinus, plus::ContainerPlus, times::ContainerTimes,
+    },
+    Data,
+};
 pub mod operations;
 
 #[derive(Clone)]
@@ -86,6 +91,96 @@ impl DataContainer {
             }
             _ => {
                 DataContainer::warn_operation(self, other, "PLUS");
+                DataContainer::Empty
+            }
+        }
+    }
+
+    pub fn minus(&self, other: &DataContainer) -> DataContainer {
+        match (self, other) {
+            (DataContainer::Batch(batch1), DataContainer::Batch(batch2)) => {
+                ContainerMinus::subtract_batches(batch1, batch2)
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerMinus::subtract_batch_data(batch, data)
+            }
+            (DataContainer::Inference(data1), DataContainer::Inference(data2)) => {
+                ContainerMinus::subtract_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Inference(data1), DataContainer::Parameter(data2)) => {
+                ContainerMinus::subtract_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Parameter(data), DataContainer::Batch(batch)) => {
+                ContainerMinus::subtract_data_batch(data, batch)
+            }
+            (DataContainer::Parameter(data1), DataContainer::Inference(data2)) => {
+                ContainerMinus::subtract_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Parameter(data1), DataContainer::Parameter(data2)) => {
+                ContainerMinus::subtract_data(data1, data2, ContainerType::Parameter)
+            }
+            _ => {
+                DataContainer::warn_operation(self, other, "MINUS");
+                DataContainer::Empty
+            }
+        }
+    }
+
+    pub fn times(&self, other: &DataContainer) -> DataContainer {
+        match (self, other) {
+            (DataContainer::Batch(batch1), DataContainer::Batch(batch2)) => {
+                ContainerTimes::multiply_batches(batch1, batch2)
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerTimes::multiply_batch_data(batch, data)
+            }
+            (DataContainer::Inference(data1), DataContainer::Inference(data2)) => {
+                ContainerTimes::multiply_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Inference(data1), DataContainer::Parameter(data2)) => {
+                ContainerTimes::multiply_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Parameter(data), DataContainer::Batch(batch)) => {
+                ContainerTimes::multiply_batch_data(batch, data)
+            }
+            (DataContainer::Parameter(data1), DataContainer::Inference(data2)) => {
+                ContainerTimes::multiply_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Parameter(data1), DataContainer::Parameter(data2)) => {
+                ContainerTimes::multiply_data(data1, data2, ContainerType::Parameter)
+            }
+            _ => {
+                DataContainer::warn_operation(self, other, "PLUS");
+                DataContainer::Empty
+            }
+        }
+    }
+
+    pub fn matmul(&self, other: &DataContainer) -> DataContainer {
+        match (self, other) {
+            (DataContainer::Batch(batch1), DataContainer::Batch(batch2)) => {
+                ContainerMatMul::matmul_batches(batch1, batch2)
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerMatMul::matmul_batch_data(batch, data)
+            }
+            (DataContainer::Inference(data1), DataContainer::Inference(data2)) => {
+                ContainerMatMul::matmul_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Inference(data1), DataContainer::Parameter(data2)) => {
+                ContainerMatMul::matmul_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Parameter(data), DataContainer::Batch(batch)) => {
+                ContainerMatMul::matmul_data_batch(data, batch)
+            }
+            (DataContainer::Parameter(data1), DataContainer::Inference(data2)) => {
+                ContainerMatMul::matmul_data(data1, data2, ContainerType::Inference)
+            }
+            (DataContainer::Parameter(data1), DataContainer::Parameter(data2)) => {
+                ContainerMatMul::matmul_data(data1, data2, ContainerType::Parameter)
+            }
+            _ => {
+                DataContainer::warn_operation(self, other, "MINUS");
                 DataContainer::Empty
             }
         }

@@ -5,7 +5,7 @@ use ndarray::{Array1, Array2};
 
 // internal
 use crate::data::operations::{
-    dot::DataMatMul, minus::DataMinus, plus::DataPlus, times::DataTimes,
+    matmul::DataMatMul, minus::DataMinus, plus::DataPlus, times::DataTimes,
 };
 pub mod data_container;
 pub mod operations;
