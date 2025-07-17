@@ -103,7 +103,7 @@ impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
         let mut second_ref = inputs.get(1).unwrap().borrow_mut();
         let second_data = second_ref.get_data();
 
-        let res: Data = first_data.dot(&second_data);
+        let res: Data = first_data.matmul(&second_data);
 
         self.base.set_data(res);
     }

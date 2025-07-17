@@ -69,14 +69,15 @@ impl<'a> NodeBase<'a> {
     }
 
     pub fn add_to_gradient(&mut self, component: &Data) {
-        self.grad = self.grad.sum(component);
+        self.grad = self.grad.plus(component);
     }
 
     pub fn get_gradient(&self) -> &Data {
         &self.grad
     }
 
+    // TODO: SWAP LEARNING RATE TO USE DATA FORMAT + TIMES
     pub fn process_gradient(&mut self, learning_rate: f32) {
-        self.data.minus(&self.grad.scale_f32(learning_rate));
+        self.data.minus(&self.grad);
     }
 }

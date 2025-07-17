@@ -127,7 +127,7 @@ impl<'a> Node<'a> for SoftmaxNode<'a> {
             let grad = SoftmaxNode::softmax_jacobian(vec);
 
             node.borrow_mut()
-                .add_gradient(&grad.dot(self.base.get_gradient()));
+                .add_gradient(&grad.matmul(self.base.get_gradient()));
         } else {
             println!(
                 "[SOFTMAX] Invalid data type. Expected Data::VectorF32 but got {}",
