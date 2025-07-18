@@ -8,7 +8,7 @@ use std::{
 // external
 
 // internal
-use crate::data::{data_container::DataContainer, Data};
+use crate::data::data_container::DataContainer;
 pub mod activation;
 pub mod loss;
 pub mod node_base;

@@ -2,6 +2,7 @@
 
 // external
 
+use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
 use crate::node::NodeType;
@@ -48,7 +49,7 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         self.base.get_outputs()
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
@@ -72,11 +73,11 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         self.base.set_data(data);
     }
 
-    fn set_data(&mut self, _data: Data) {
+    fn set_data(&mut self, _data: DataContainer) {
         panic!("[ACTIVATION] Unsupported Operation: Cannot set data of an operation node");
     }
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }

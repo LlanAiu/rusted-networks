@@ -11,7 +11,7 @@ use crate::data::{
 };
 pub mod operations;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum DataContainer {
     Batch(Vec<Data>),
     Inference(Data),

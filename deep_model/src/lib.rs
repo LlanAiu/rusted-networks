@@ -13,7 +13,7 @@ mod tests {
     use ndarray::{arr1, arr2, Array1, Array2};
 
     use crate::{
-        data::Data,
+        data::{data_container::DataContainer, Data},
         unit::{
             types::{input_unit::InputUnit, loss_unit::LossUnit, softmax_unit::SoftmaxUnit},
             Unit, UnitContainer,
@@ -43,7 +43,7 @@ mod tests {
 
         output.borrow_mut().apply_operation();
 
-        let end_data: Data = output.borrow_mut().get_data();
+        let end_data: DataContainer = output.borrow_mut().get_data();
 
         println!("{:?}", end_data);
     }
@@ -76,7 +76,7 @@ mod tests {
 
         output.borrow_mut().apply_operation();
 
-        let end_data: Data = output.borrow_mut().get_data();
+        let end_data: DataContainer = output.borrow_mut().get_data();
 
         println!("{:?}", end_data);
     }

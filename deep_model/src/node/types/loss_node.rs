@@ -4,7 +4,6 @@
 
 use crate::data::data_container::DataContainer;
 // internal
-use crate::data::Data;
 use crate::node::loss::loss_function::LossFunction;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};

@@ -5,14 +5,19 @@ use std::fmt::Debug;
 
 // internal
 use crate::{
-    data::Data,
+    data::data_container::DataContainer,
     node::loss::registry::{init_loss_registry, LossRegistry},
 };
 
 pub trait LossType: Send + Sync + Debug {
-    fn apply(&self, expected: &Data, actual: &Data) -> Data;
+    fn apply(&self, expected: &DataContainer, actual: &DataContainer) -> DataContainer;
 
-    fn diff(&self, expected: &Data, actual: &Data, wrt_expected: bool) -> Data;
+    fn diff(
+        &self,
+        expected: &DataContainer,
+        actual: &DataContainer,
+        wrt_expected: bool,
+    ) -> DataContainer;
 
     fn name(&self) -> &str;
 
@@ -32,11 +37,16 @@ impl LossFunction {
         }
     }
 
-    pub fn apply(&self, expected: &Data, actual: &Data) -> Data {
+    pub fn apply(&self, expected: &DataContainer, actual: &DataContainer) -> DataContainer {
         self.loss_type.apply(expected, actual)
     }
 
-    pub fn get_jacobian(&self, expected: &Data, actual: &Data, wrt_expected: bool) -> Data {
+    pub fn get_jacobian(
+        &self,
+        expected: &DataContainer,
+        actual: &DataContainer,
+        wrt_expected: bool,
+    ) -> DataContainer {
         self.loss_type.diff(expected, actual, wrt_expected)
     }
 }
