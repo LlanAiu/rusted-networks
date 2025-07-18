@@ -55,6 +55,10 @@ impl DataContainer {
             DataContainer::Empty => "Empty",
         }
     }
+
+    pub fn zero() -> DataContainer {
+        DataContainer::Parameter(Data::zero())
+    }
 }
 
 impl DataContainer {
@@ -207,6 +211,24 @@ impl DataContainer {
             DataContainer::Inference(data) => DataContainer::Inference(func(data)),
             DataContainer::Parameter(data) => DataContainer::Parameter(func(data)),
             _ => DataContainer::Empty,
+        }
+    }
+
+    pub fn average_batch(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                if batch.len() == 0 {
+                    return DataContainer::Empty;
+                }
+                let len_scale: f32 = 1.0 / batch.len() as f32;
+                let mut average: Data = Data::zero();
+                for data in batch {
+                    average = average.plus(&data);
+                }
+                average = average.times(&Data::ScalarF32(len_scale));
+                DataContainer::Parameter(average)
+            }
+            _ => self.clone(),
         }
     }
 }

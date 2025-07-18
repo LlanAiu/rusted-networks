@@ -2,16 +2,16 @@
 
 // external
 
+use crate::data::data_container::DataContainer;
 // internal
-use crate::data::Data;
 use crate::node::NodeRef;
 
 pub struct NodeBase<'a> {
     inputs: Vec<NodeRef<'a>>,
     outputs: Vec<NodeRef<'a>>,
-    data: Data,
+    data: DataContainer,
     grad_count: usize,
-    grad: Data,
+    grad: DataContainer,
 }
 
 impl<'a> NodeBase<'a> {
@@ -19,9 +19,9 @@ impl<'a> NodeBase<'a> {
         NodeBase {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            data: Data::None,
+            data: DataContainer::zero(),
             grad_count: 0,
-            grad: Data::None,
+            grad: DataContainer::zero(),
         }
     }
 }
@@ -44,11 +44,11 @@ impl<'a> NodeBase<'a> {
         &self.outputs
     }
 
-    pub fn get_data(&mut self) -> Data {
+    pub fn get_data(&mut self) -> DataContainer {
         self.data.clone()
     }
 
-    pub fn set_data(&mut self, data: Data) {
+    pub fn set_data(&mut self, data: DataContainer) {
         self.data = data;
     }
 
@@ -65,19 +65,20 @@ impl<'a> NodeBase<'a> {
     }
 
     pub fn reset_gradient(&mut self) {
-        self.grad = Data::None;
+        self.grad = DataContainer::zero();
     }
 
-    pub fn add_to_gradient(&mut self, component: &Data) {
+    pub fn add_to_gradient(&mut self, component: &DataContainer) {
         self.grad = self.grad.plus(component);
     }
 
-    pub fn get_gradient(&self) -> &Data {
+    pub fn get_gradient(&self) -> &DataContainer {
         &self.grad
     }
 
     // TODO: SWAP LEARNING RATE TO USE DATA FORMAT + TIMES
-    pub fn process_gradient(&mut self, learning_rate: f32) {
-        self.data.minus(&self.grad);
+    pub fn process_gradient(&mut self, learning_rate: &DataContainer) {
+        self.data
+            .minus(&self.grad.average_batch().times(learning_rate));
     }
 }
