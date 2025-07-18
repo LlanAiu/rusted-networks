@@ -185,4 +185,28 @@ impl DataContainer {
             }
         }
     }
+
+    pub fn apply_function_ref(&self, func: impl Fn(&Data) -> Data) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                let mapped: Vec<Data> = batch.iter().map(|f| func(f)).collect();
+                DataContainer::Batch(mapped)
+            }
+            DataContainer::Inference(data) => DataContainer::Inference(func(data)),
+            DataContainer::Parameter(data) => DataContainer::Parameter(func(data)),
+            _ => DataContainer::Empty,
+        }
+    }
+
+    pub fn apply_function(self, func: impl Fn(Data) -> Data) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                let mapped: Vec<Data> = batch.iter().map(|f| func(f.to_owned())).collect();
+                DataContainer::Batch(mapped)
+            }
+            DataContainer::Inference(data) => DataContainer::Inference(func(data)),
+            DataContainer::Parameter(data) => DataContainer::Parameter(func(data)),
+            _ => DataContainer::Empty,
+        }
+    }
 }
