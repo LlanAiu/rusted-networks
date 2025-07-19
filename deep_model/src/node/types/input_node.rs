@@ -1,19 +1,19 @@
 // builtin
 
 // external
+use crate::data::data_container::DataContainer;
 
 // internal
-use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct InputNode<'a> {
     base: NodeBase<'a>,
-    dim: usize,
+    dim: &'a [usize],
 }
 
 impl<'a> InputNode<'a> {
-    pub fn new(dim: usize) -> InputNode<'a> {
+    pub fn new(dim: &'a [usize]) -> InputNode<'a> {
         return InputNode {
             base: NodeBase::new(),
             dim,
@@ -40,23 +40,21 @@ impl<'a> Node<'a> for InputNode<'a> {
         self.base.get_outputs()
     }
 
-    fn set_data(&mut self, input: Data) {
-        if let Data::VectorF32(vec) = input {
-            if vec.dim() == self.dim {
-                self.base.set_data(Data::VectorF32(vec));
-                return;
-            }
+    fn set_data(&mut self, input: DataContainer) {
+        if input.dim().1 == self.dim {
+            self.base.set_data(input);
+            return;
         }
         println!("[INPUT] type or dimension mismatch, skipping reassignment");
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
     fn apply_operation(&mut self) {}
 
-    fn add_gradient(&mut self, _grad: &Data) {
+    fn add_gradient(&mut self, _grad: &DataContainer) {
         self.base.increment_grad_count();
     }
 

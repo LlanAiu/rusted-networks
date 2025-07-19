@@ -2,6 +2,7 @@
 
 // external
 
+use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
 use crate::node::NodeType;
@@ -10,7 +11,7 @@ use crate::node::{node_base::NodeBase, Node, NodeRef};
 pub struct BiasNode<'a> {
     base: NodeBase<'a>,
     dim: usize,
-    learning_rate: f32,
+    learning_rate: DataContainer,
 }
 
 impl<'a> BiasNode<'a> {
@@ -18,7 +19,7 @@ impl<'a> BiasNode<'a> {
         BiasNode {
             base: NodeBase::new(),
             dim,
-            learning_rate,
+            learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
         }
     }
 }
@@ -42,30 +43,31 @@ impl<'a> Node<'a> for BiasNode<'a> {
         self.base.get_outputs()
     }
 
-    fn set_data(&mut self, input: Data) {
-        if let Data::VectorF32(vec) = input {
+    fn set_data(&mut self, input: DataContainer) {
+        if let DataContainer::Parameter(Data::VectorF32(vec)) = input {
             if vec.dim() == self.dim {
-                self.base.set_data(Data::VectorF32(vec));
+                let container = DataContainer::Parameter(Data::VectorF32(vec));
+                self.base.set_data(container);
                 return;
             }
         }
         println!("[BIAS] type or dimension mismatch, skipping reassignment");
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
     fn apply_operation(&mut self) {}
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }
 
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
-        self.base.process_gradient(self.learning_rate);
+        self.base.process_gradient(&self.learning_rate);
     }
 
     fn should_process_backprop(&self) -> bool {

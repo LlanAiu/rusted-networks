@@ -231,4 +231,18 @@ impl DataContainer {
             _ => self.clone(),
         }
     }
+
+    pub fn dim(&self) -> (usize, &[usize]) {
+        match self {
+            DataContainer::Batch(batch) => {
+                if batch.len() == 0 {
+                    return (0, &[]);
+                }
+                return (batch.len(), batch[0].dim());
+            }
+            DataContainer::Inference(data) => (1, data.dim()),
+            DataContainer::Parameter(data) => (1, data.dim()),
+            DataContainer::Empty => (0, &[]),
+        }
+    }
 }

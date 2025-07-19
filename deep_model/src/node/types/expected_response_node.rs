@@ -2,6 +2,7 @@
 
 // external
 
+use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
 use crate::node::NodeType;
@@ -40,23 +41,24 @@ impl<'a> Node<'a> for ExpectedResponseNode<'a> {
         self.base.get_outputs()
     }
 
-    fn set_data(&mut self, input: Data) {
-        if let Data::VectorF32(vec) = input {
+    fn set_data(&mut self, input: DataContainer) {
+        if let DataContainer::Parameter(Data::VectorF32(vec)) = input {
             if vec.dim() == self.dim {
-                self.base.set_data(Data::VectorF32(vec));
+                let container = DataContainer::Parameter(Data::VectorF32(vec));
+                self.base.set_data(container);
                 return;
             }
         }
         println!("[RESPONSE] type or dimension mismatch, skipping reassignment");
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
     fn apply_operation(&mut self) {}
 
-    fn add_gradient(&mut self, _grad: &Data) {
+    fn add_gradient(&mut self, _grad: &DataContainer) {
         self.base.increment_grad_count();
     }
 

@@ -1,10 +1,9 @@
 // builtin
 
 // external
-use ndarray::Array1;
 
 // internal
-use crate::data::Data;
+use crate::data::data_container::DataContainer;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
@@ -41,7 +40,7 @@ impl<'a> Node<'a> for AddNode<'a> {
         self.base.get_outputs()
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
@@ -57,31 +56,22 @@ impl<'a> Node<'a> for AddNode<'a> {
         }
 
         let mut first_ref = inputs.get(0).unwrap().borrow_mut();
-        let first_data = first_ref.get_data();
+        let mut sum = first_ref.get_data();
 
-        if let Data::VectorF32(vec) = first_data {
-            let mut sum: Array1<f32> = vec;
-
-            for i in 1..inputs.len() {
-                let mut node_ref = inputs[i].borrow_mut();
-                let data_one = node_ref.get_data();
-
-                if let Data::VectorF32(vec) = data_one {
-                    sum += &vec;
-                }
-            }
-
-            self.base.set_data(Data::VectorF32(sum));
-        } else {
-            self.base.set_data(Data::None);
+        for i in 1..inputs.len() {
+            let mut node_ref = inputs[i].borrow_mut();
+            let data_one = node_ref.get_data();
+            sum = sum.plus(&data_one);
         }
+
+        self.base.set_data(sum);
     }
 
-    fn set_data(&mut self, _data: Data) {
+    fn set_data(&mut self, _data: DataContainer) {
         panic!("[ADD] Unsupported Operation: Cannot set data of an operation node");
     }
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }

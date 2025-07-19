@@ -152,6 +152,15 @@ impl Data {
             }
         }
     }
+
+    pub fn dim(&self) -> &[usize] {
+        match self {
+            Data::ScalarF32(_) => &[1],
+            Data::VectorF32(vec) => vec.shape(),
+            Data::MatrixF32(matrix) => matrix.shape(),
+            Data::None => &[],
+        }
+    }
 }
 
 impl Default for Data {
