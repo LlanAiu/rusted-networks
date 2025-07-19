@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    data::Data,
+    data::data_container::DataContainer,
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
@@ -51,11 +51,11 @@ impl<'a> SoftmaxUnit<'a> {
         }
     }
 
-    pub fn set_biases(&self, data: Data) {
+    pub fn set_biases(&self, data: DataContainer) {
         self.biases.borrow_mut().set_data(data);
     }
 
-    pub fn set_weights(&self, data: Data) {
+    pub fn set_weights(&self, data: DataContainer) {
         self.weights.borrow_mut().set_data(data);
     }
 }

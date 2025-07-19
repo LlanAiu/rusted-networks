@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    data::Data,
+    data::data_container::DataContainer,
     network::Network,
     unit::{
         types::{
@@ -22,10 +22,11 @@ pub struct SimpleClassifierNetwork<'a> {
     loss: UnitContainer<'a, LossUnit<'a>>,
 }
 
+// TODO: Find a more elegant way to handle input/output dimensions (either restrict to 1D or find a way to handle higher dims)
 impl<'a> SimpleClassifierNetwork<'a> {
     pub fn new(
-        input_size: usize,
-        output_size: usize,
+        input_size: &'a [usize],
+        output_size: &'a [usize],
         hidden_sizes: Vec<usize>,
     ) -> SimpleClassifierNetwork<'a> {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(input_size));
@@ -33,7 +34,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
             UnitContainer::new(LossUnit::new(output_size, "base_cross_entropy"));
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
-        let mut prev_width = input_size;
+        let mut prev_width = input_size[0];
         let mut prev_unit: UnitRef = input.get_ref();
 
         for i in 0..hidden_sizes.len() {
@@ -51,7 +52,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
         }
 
         let inference: UnitContainer<SoftmaxUnit> =
-            UnitContainer::new(SoftmaxUnit::new("relu", prev_width, output_size));
+            UnitContainer::new(SoftmaxUnit::new("relu", prev_width, output_size[0]));
         inference.add_input_ref(&prev_unit);
 
         SimpleClassifierNetwork {
@@ -64,7 +65,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
 }
 
 impl Network for SimpleClassifierNetwork<'_> {
-    fn feedforward(&self, input: Data) {
+    fn feedforward(&self, input: DataContainer) {
         self.input.borrow_mut().set_input_data(input);
 
         let inference_node = self.inference.borrow();

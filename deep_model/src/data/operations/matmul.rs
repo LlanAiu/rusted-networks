@@ -62,7 +62,7 @@ impl DataMatMul {
         let vector_row = vector.view().insert_axis(Axis(0));
         let res = vector_row.dot(matrix);
 
-        Data::MatrixF32(res)
+        Data::VectorF32(res.remove_axis(Axis(0)))
     }
 
     pub fn matmul_matrix_vector(matrix: &Array2<f32>, vector: &Array1<f32>) -> Data {
@@ -74,6 +74,6 @@ impl DataMatMul {
         let vector_col = vector.view().insert_axis(Axis(1));
         let res = matrix.dot(&vector_col);
 
-        Data::MatrixF32(res)
+        Data::VectorF32(res.remove_axis(Axis(1)))
     }
 }

@@ -4,17 +4,16 @@
 
 use crate::data::data_container::DataContainer;
 // internal
-use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct ExpectedResponseNode<'a> {
     base: NodeBase<'a>,
-    dim: usize,
+    dim: &'a [usize],
 }
 
 impl<'a> ExpectedResponseNode<'a> {
-    pub fn new(dim: usize) -> ExpectedResponseNode<'a> {
+    pub fn new(dim: &'a [usize]) -> ExpectedResponseNode<'a> {
         return ExpectedResponseNode {
             base: NodeBase::new(),
             dim,
@@ -42,14 +41,16 @@ impl<'a> Node<'a> for ExpectedResponseNode<'a> {
     }
 
     fn set_data(&mut self, input: DataContainer) {
-        if let DataContainer::Parameter(Data::VectorF32(vec)) = input {
-            if vec.dim() == self.dim {
-                let container = DataContainer::Parameter(Data::VectorF32(vec));
-                self.base.set_data(container);
-                return;
+        match input {
+            DataContainer::Parameter(_) | DataContainer::Empty => {
+                println!("[RESPONSE] type or dimension mismatch, skipping reassignment");
+            }
+            _ => {
+                if input.dim().1 == self.dim {
+                    self.base.set_data(input);
+                }
             }
         }
-        println!("[RESPONSE] type or dimension mismatch, skipping reassignment");
     }
 
     fn get_data(&mut self) -> DataContainer {

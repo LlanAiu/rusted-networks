@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    data::Data,
+    data::data_container::DataContainer,
     node::{types::input_node::InputNode, NodeRef},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
@@ -15,7 +15,7 @@ pub struct InputUnit<'a> {
 }
 
 impl<'a> InputUnit<'a> {
-    pub fn new(input_size: usize) -> InputUnit<'a> {
+    pub fn new(input_size: &'a [usize]) -> InputUnit<'a> {
         let input_ref = NodeRef::new(InputNode::new(input_size));
 
         InputUnit {
@@ -24,7 +24,7 @@ impl<'a> InputUnit<'a> {
         }
     }
 
-    pub fn set_input_data(&self, data: Data) {
+    pub fn set_input_data(&self, data: DataContainer) {
         self.input.borrow_mut().set_data(data);
     }
 }
