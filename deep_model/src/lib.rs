@@ -123,8 +123,7 @@ mod tests {
 
     #[test]
     fn network_test() {
-        let classifier: SimpleClassifierNetwork =
-            SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
+        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
         let input_arr2: Array1<f32> = arr1(&[0.3, 0.8, 0.2]);
@@ -139,6 +138,22 @@ mod tests {
 
     #[test]
     fn backprop_test() {
-        todo!()
+        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
+
+        let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
+        let input_arr2: Array1<f32> = arr1(&[0.3, 0.8, 0.2]);
+        let input = DataContainer::Batch(vec![
+            Data::VectorF32(input_arr1),
+            Data::VectorF32(input_arr2),
+        ]);
+
+        let response_arr1: Array1<f32> = arr1(&[0.9, 0.1]);
+        let response_arr2: Array1<f32> = arr1(&[0.3, 0.7]);
+        let response = DataContainer::Batch(vec![
+            Data::VectorF32(response_arr1),
+            Data::VectorF32(response_arr2),
+        ]);
+
+        classifier.train(input, response);
     }
 }

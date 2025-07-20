@@ -59,6 +59,10 @@ impl DataContainer {
     pub fn zero() -> DataContainer {
         DataContainer::Parameter(Data::zero())
     }
+
+    pub fn one() -> DataContainer {
+        DataContainer::Parameter(Data::one())
+    }
 }
 
 impl DataContainer {

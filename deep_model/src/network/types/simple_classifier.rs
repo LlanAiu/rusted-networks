@@ -66,6 +66,8 @@ impl<'a> SimpleClassifierNetwork<'a> {
             UnitContainer::new(SoftmaxUnit::new("relu", prev_width, output_size[0]));
         inference.add_input_ref(&prev_unit);
 
+        loss.add_input(&inference);
+
         SimpleClassifierNetwork {
             input,
             _hidden: hidden,
@@ -104,6 +106,7 @@ impl Network for SimpleClassifierNetwork<'_> {
 
         loss_node.borrow_mut().apply_operation();
 
+        loss_node.borrow_mut().add_gradient(&DataContainer::one());
         loss_node.borrow_mut().apply_jacobian();
     }
 }

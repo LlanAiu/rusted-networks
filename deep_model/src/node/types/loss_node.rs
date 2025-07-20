@@ -128,22 +128,22 @@ impl<'a> Node<'a> for LossNode<'a> {
             let expected_grad = self.function.get_jacobian(&second_data, &first_data, true);
             second_ref
                 .borrow_mut()
-                .add_gradient(&expected_grad.matmul(grad));
+                .add_gradient(&expected_grad.times(grad));
 
             let actual_grad = self.function.get_jacobian(&second_data, &first_data, false);
             first_ref
                 .borrow_mut()
-                .add_gradient(&actual_grad.matmul(grad));
+                .add_gradient(&actual_grad.times(grad));
         } else {
             let expected_grad = self.function.get_jacobian(&first_data, &second_data, true);
             first_ref
                 .borrow_mut()
-                .add_gradient(&expected_grad.matmul(grad));
+                .add_gradient(&expected_grad.times(grad));
 
             let actual_grad = self.function.get_jacobian(&first_data, &second_data, false);
             second_ref
                 .borrow_mut()
-                .add_gradient(&actual_grad.matmul(grad));
+                .add_gradient(&actual_grad.times(grad));
         }
 
         for input in inputs {

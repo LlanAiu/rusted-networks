@@ -23,6 +23,10 @@ impl Data {
         Data::ScalarF32(0.0)
     }
 
+    pub fn one() -> Data {
+        Data::ScalarF32(1.0)
+    }
+
     fn warn_operation(this: &Data, other: &Data, operation: &str) {
         let this_type = this.variant_name();
         let other_type = other.variant_name();
