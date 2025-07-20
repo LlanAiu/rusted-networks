@@ -14,6 +14,7 @@ mod tests {
 
     use approx::abs_diff_eq;
     use ndarray::{arr1, arr2, Array1, Array2};
+    use rand::random_range;
 
     use crate::{
         data::{data_container::DataContainer, Data},
@@ -126,7 +127,6 @@ mod tests {
         let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
-        let input_arr2: Array1<f32> = arr1(&[0.3, 0.8, 0.2]);
         let input = DataContainer::Inference(Data::VectorF32(input_arr1));
 
         let layers = classifier.get_hidden_layers();
@@ -147,13 +147,55 @@ mod tests {
             Data::VectorF32(input_arr2),
         ]);
 
-        let response_arr1: Array1<f32> = arr1(&[0.9, 0.1]);
-        let response_arr2: Array1<f32> = arr1(&[0.3, 0.7]);
+        let response_arr1: Array1<f32> = arr1(&[0.1795, 0.8205]);
+        let response_arr2: Array1<f32> = arr1(&[0.5474, 0.4526]);
         let response = DataContainer::Batch(vec![
             Data::VectorF32(response_arr1),
             Data::VectorF32(response_arr2),
         ]);
 
         classifier.train(input, response);
+    }
+
+    #[test]
+    fn quadratic_test() {
+        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
+
+        let test_arr: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
+        let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let before_output = classifier.predict(before_data);
+        println!("Before: {:?}", before_output);
+
+        for _i in 1..15 {
+            let mut inputs = Vec::new();
+            let mut responses = Vec::new();
+
+            for _j in 1..8 {
+                let x = random_range(0.0..1.0);
+                let y = random_range(0.0..1.0);
+                let z = random_range(0.0..1.0);
+
+                inputs.push(Data::VectorF32(arr1(&[x, y, z])));
+
+                let mut o1 = x + y;
+                let mut o2 = y + z;
+
+                let sum = f32::exp(o1) + f32::exp(o2);
+
+                o1 = f32::exp(o1) / sum;
+                o2 = f32::exp(o2) / sum;
+
+                responses.push(Data::VectorF32(arr1(&[o1, o2])));
+            }
+
+            let input = DataContainer::Batch(inputs);
+            let response = DataContainer::Batch(responses);
+
+            classifier.train(input, response);
+        }
+
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = classifier.predict(after_data);
+        println!("After: {:?}", after_output);
     }
 }

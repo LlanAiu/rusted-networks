@@ -76,9 +76,10 @@ impl<'a> NodeBase<'a> {
         &self.grad
     }
 
-    // TODO: SWAP LEARNING RATE TO USE DATA FORMAT + TIMES
     pub fn process_gradient(&mut self, learning_rate: &DataContainer) {
-        self.data
-            .minus(&self.grad.average_batch().times(learning_rate));
+        let update = self.grad.average_batch().times(learning_rate);
+        println!("Gradient update: {:?}", update);
+
+        self.data = self.data.minus(&update);
     }
 }
