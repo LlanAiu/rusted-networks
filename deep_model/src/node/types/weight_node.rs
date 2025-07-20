@@ -2,6 +2,10 @@
 
 // external
 
+use ndarray::Array2;
+use ndarray_rand::rand_distr::Uniform;
+use ndarray_rand::RandomExt;
+
 use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
@@ -16,8 +20,15 @@ pub struct WeightNode<'a> {
 
 impl<'a> WeightNode<'a> {
     pub fn new(input_size: usize, output_size: usize, learning_rate: f32) -> WeightNode<'a> {
+        let mut base = NodeBase::new();
+
+        let scale = f32::sqrt(6.0 / (input_size + output_size) as f32);
+        let initial_weights: Array2<f32> =
+            Array2::random((output_size, input_size), Uniform::new(-scale, scale));
+        base.set_data(DataContainer::Parameter(Data::MatrixF32(initial_weights)));
+
         WeightNode {
-            base: NodeBase::new(),
+            base,
             dim: (output_size, input_size),
             learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
         }

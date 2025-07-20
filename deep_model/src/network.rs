@@ -7,7 +7,7 @@ pub mod types;
 use crate::data::data_container::DataContainer;
 
 pub trait Network {
-    fn feedforward(&self, input: DataContainer);
+    fn predict(&self, input: DataContainer) -> DataContainer;
 
-    fn backprop(&self);
+    fn train(&self, input: DataContainer, response: DataContainer);
 }

@@ -17,7 +17,7 @@ use crate::{
 
 pub struct SimpleClassifierNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
-    hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
+    _hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
 }
@@ -29,6 +29,10 @@ impl<'a> SimpleClassifierNetwork<'a> {
         output_size: &'a [usize],
         hidden_sizes: Vec<usize>,
     ) -> SimpleClassifierNetwork<'a> {
+        if input_size.len() != 1 || output_size.len() != 1 {
+            panic!("[SIMPLE_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
+        }
+
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(input_size));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(output_size, "base_cross_entropy"));
@@ -38,7 +42,14 @@ impl<'a> SimpleClassifierNetwork<'a> {
         let mut prev_unit: UnitRef = input.get_ref();
 
         for i in 0..hidden_sizes.len() {
-            let width = hidden_sizes.get(i).expect("Failed to get layer width");
+            let width = hidden_sizes
+                .get(i)
+                .expect("[SIMPLE_CLASSIFIER] Failed to get layer width");
+
+            if *width == 0 {
+                println!("[SIMPLE_CLASSIFIER] got layer with 0 width, skipping creation...");
+                continue;
+            }
 
             let hidden_unit: UnitContainer<LinearUnit> =
                 UnitContainer::new(LinearUnit::new("relu", prev_width, *width));
@@ -57,26 +68,41 @@ impl<'a> SimpleClassifierNetwork<'a> {
 
         SimpleClassifierNetwork {
             input,
-            hidden,
+            _hidden: hidden,
             inference,
             loss,
         }
     }
 }
 
+impl<'a> SimpleClassifierNetwork<'a> {
+    pub fn get_hidden_layers(&self) -> usize {
+        self._hidden.len()
+    }
+}
+
 impl Network for SimpleClassifierNetwork<'_> {
-    fn feedforward(&self, input: DataContainer) {
+    fn predict(&self, input: DataContainer) -> DataContainer {
         self.input.borrow_mut().set_input_data(input);
 
-        let inference_node = self.inference.borrow();
-        let inference_ref = inference_node.get_output_node();
+        let inference_ref = self.inference.borrow();
+        let inference_node = inference_ref.get_output_node();
 
-        inference_ref.borrow_mut().apply_operation();
+        inference_node.borrow_mut().apply_operation();
+
+        let output = inference_node.borrow_mut().get_data();
+
+        output
     }
 
-    fn backprop(&self) {
-        let loss_unit = self.loss.borrow();
-        let loss_node = loss_unit.get_output_node();
+    fn train(&self, input: DataContainer, response: DataContainer) {
+        self.input.borrow().set_input_data(input);
+        self.loss.borrow().set_expected_response(response);
+
+        let loss_ref = self.loss.borrow();
+        let loss_node = loss_ref.get_output_node();
+
+        loss_node.borrow_mut().apply_operation();
 
         loss_node.borrow_mut().apply_jacobian();
     }

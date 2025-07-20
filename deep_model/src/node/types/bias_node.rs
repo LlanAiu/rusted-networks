@@ -2,6 +2,8 @@
 
 // external
 
+use ndarray::Array1;
+
 use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
@@ -16,8 +18,13 @@ pub struct BiasNode<'a> {
 
 impl<'a> BiasNode<'a> {
     pub fn new(dim: usize, learning_rate: f32) -> BiasNode<'a> {
+        let mut base = NodeBase::new();
+
+        let initial_biases: Array1<f32> = Array1::zeros(dim);
+        base.set_data(DataContainer::Parameter(Data::VectorF32(initial_biases)));
+
         BiasNode {
-            base: NodeBase::new(),
+            base,
             dim,
             learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
         }

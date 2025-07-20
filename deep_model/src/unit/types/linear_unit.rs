@@ -2,6 +2,8 @@
 
 // external
 
+use std::usize;
+
 // internal
 use crate::{
     data::data_container::DataContainer,
