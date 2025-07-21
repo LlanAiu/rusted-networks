@@ -10,54 +10,46 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct BaseCrossEntropy;
+pub struct MeanSquaredError;
 
-impl BaseCrossEntropy {
-    fn epsilon() -> f32 {
-        0.0000001
-    }
-
-    fn entropy(expected: &Data, actual: &Data) -> Data {
+impl MeanSquaredError {
+    fn error(expected: &Data, actual: &Data) -> Data {
         match (expected, actual) {
             (Data::VectorF32(ans), Data::VectorF32(pred)) => {
                 let ans_view = ans.view();
                 let pred_view = pred.view();
 
-                let result = BaseCrossEntropy::entropy_calc(ans_view, pred_view);
+                let result = MeanSquaredError::error_calc(ans_view, pred_view);
                 Data::ScalarF32(result)
             }
             (Data::MatrixF32(ans), Data::MatrixF32(pred)) => {
                 let ans_flat = ans.flatten();
                 let pred_flat = pred.flatten();
 
-                let result = BaseCrossEntropy::entropy_calc(ans_flat.view(), pred_flat.view());
+                let result = MeanSquaredError::error_calc(ans_flat.view(), pred_flat.view());
                 Data::ScalarF32(result)
             }
             _ => {
-                BaseCrossEntropy::warn_data(expected, actual);
+                MeanSquaredError::warn_data(expected, actual);
                 Data::None
             }
         }
     }
 
-    fn entropy_calc(expected: ArrayView1<f32>, actual: ArrayView1<f32>) -> f32 {
+    fn error_calc(expected: ArrayView1<f32>, actual: ArrayView1<f32>) -> f32 {
         let mut sum: f32 = 0.0;
+        let length: f32 = expected.dim() as f32;
 
         for (i, ans) in expected.iter().enumerate() {
-            let epsilon = BaseCrossEntropy::epsilon();
-            let mut pred = actual
+            let pred = actual
                 .get(i)
-                .expect("[CROSS_ENTROPY] Dimension mismatch between expected and actual data");
+                .expect("[SQUARED_ERROR] Dimension mismatch between expected and actual data");
 
-            if *pred <= epsilon {
-                pred = &epsilon;
-            }
-
-            let val = ans * f32::ln(*pred);
-            sum -= val;
+            let val = f32::powi(ans - pred, 2);
+            sum += val;
         }
 
-        sum
+        sum / (2.0 * length)
     }
 
     fn diff(expected: &Data, actual: &Data, wrt_expected: bool) -> Data {
@@ -66,7 +58,7 @@ impl BaseCrossEntropy {
                 let ans_view = ans.view();
                 let pred_view = pred.view();
 
-                let result = BaseCrossEntropy::diff_calc(ans_view, pred_view, wrt_expected);
+                let result = MeanSquaredError::diff_calc(ans_view, pred_view, wrt_expected);
                 Data::VectorF32(Array1::from_vec(result))
             }
             (Data::MatrixF32(ans), Data::MatrixF32(pred)) => {
@@ -76,15 +68,15 @@ impl BaseCrossEntropy {
                 let pred_flat = pred.flatten();
 
                 let result =
-                    BaseCrossEntropy::diff_calc(ans_flat.view(), pred_flat.view(), wrt_expected);
+                    MeanSquaredError::diff_calc(ans_flat.view(), pred_flat.view(), wrt_expected);
 
                 let matrix = Array2::from_shape_vec(dim, result)
-                    .expect("[CROSS_ENTROPY] Failed to coerce Jacobian into matrix format");
+                    .expect("[SQUARED_ERROR] Failed to coerce Jacobian into matrix format");
 
                 Data::MatrixF32(matrix)
             }
             _ => {
-                BaseCrossEntropy::warn_data(expected, actual);
+                MeanSquaredError::warn_data(expected, actual);
                 Data::None
             }
         }
@@ -95,14 +87,13 @@ impl BaseCrossEntropy {
         actual: ArrayView1<f32>,
         wrt_expected: bool,
     ) -> Vec<f32> {
-        let epsilon = BaseCrossEntropy::epsilon();
-        let mut result = Vec::with_capacity(expected.len());
+        let mut result: Vec<f32> = Vec::with_capacity(expected.len());
+        let length: f32 = expected.dim() as f32;
         for (&ans, &pred) in expected.iter().zip(actual.iter()) {
-            let pred_safe = if pred <= 0.0 { epsilon } else { pred };
             if wrt_expected {
-                result.push(-f32::ln(pred_safe));
+                result.push(-(ans - pred) / length);
             } else {
-                result.push(-ans / pred_safe);
+                result.push((ans - pred) / length);
             }
         }
         result
@@ -112,7 +103,7 @@ impl BaseCrossEntropy {
         let first_variant = first.container_name();
         let second_variant = second.container_name();
         println!(
-            "DataContainer::Empty returned for unsupported data container type pair for operation [CROSS_ENTROPY]: {first_variant} and {second_variant}"
+            "DataContainer::Empty returned for unsupported data container type pair for operation [SQUARED_ERROR]: {first_variant} and {second_variant}"
         )
     }
 
@@ -120,12 +111,12 @@ impl BaseCrossEntropy {
         let first_variant = first.variant_name();
         let second_variant = second.variant_name();
         println!(
-            "Data::None returned for unsupported data type pair for operation [CROSS_ENTROPY]: {first_variant} and {second_variant}"
+            "Data::None returned for unsupported data type pair for operation [SQUARED_ERROR]: {first_variant} and {second_variant}"
         )
     }
 }
 
-impl LossType for BaseCrossEntropy {
+impl LossType for MeanSquaredError {
     fn apply(&self, expected: &DataContainer, actual: &DataContainer) -> DataContainer {
         match (expected, actual) {
             (DataContainer::Batch(ans_batch), DataContainer::Batch(pred_batch)) => {
@@ -140,18 +131,18 @@ impl LossType for BaseCrossEntropy {
 
                 let mut new_batch: Vec<Data> = Vec::new();
                 for (ans, pred) in ans_batch.iter().zip(pred_batch.iter()) {
-                    new_batch.push(BaseCrossEntropy::entropy(ans, pred));
+                    new_batch.push(MeanSquaredError::error(ans, pred));
                 }
 
                 DataContainer::Batch(new_batch)
             }
             (DataContainer::Inference(ans), DataContainer::Inference(pred)) => {
-                let new_data = BaseCrossEntropy::entropy(ans, pred);
+                let new_data = MeanSquaredError::error(ans, pred);
 
                 DataContainer::Inference(new_data)
             }
             _ => {
-                BaseCrossEntropy::warn_containers(expected, actual);
+                MeanSquaredError::warn_containers(expected, actual);
                 DataContainer::Empty
             }
         }
@@ -176,28 +167,28 @@ impl LossType for BaseCrossEntropy {
 
                 let mut new_batch: Vec<Data> = Vec::new();
                 for (ans, pred) in ans_batch.iter().zip(pred_batch.iter()) {
-                    new_batch.push(BaseCrossEntropy::diff(ans, pred, wrt_expected));
+                    new_batch.push(MeanSquaredError::diff(ans, pred, wrt_expected));
                 }
 
                 DataContainer::Batch(new_batch)
             }
             (DataContainer::Inference(ans), DataContainer::Inference(pred)) => {
-                let new_data = BaseCrossEntropy::diff(ans, pred, wrt_expected);
+                let new_data = MeanSquaredError::diff(ans, pred, wrt_expected);
 
                 DataContainer::Inference(new_data)
             }
             _ => {
-                BaseCrossEntropy::warn_containers(expected, actual);
+                MeanSquaredError::warn_containers(expected, actual);
                 DataContainer::Empty
             }
         }
     }
 
     fn name(&self) -> &str {
-        "base_cross_entropy"
+        "mean_squared_error"
     }
 
     fn copy(&self) -> Box<dyn LossType> {
-        Box::new(BaseCrossEntropy)
+        Box::new(MeanSquaredError)
     }
 }

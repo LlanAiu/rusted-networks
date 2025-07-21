@@ -7,7 +7,10 @@ use std::{
 // external
 
 // internal
-use crate::node::activation::{activation_function::ActivationType, types::relu::ReLUActivation};
+use crate::node::activation::{
+    activation_function::ActivationType,
+    types::{none::LinearActivation, relu::ReLUActivation},
+};
 
 pub fn init_activation_registry() {
     if REGISTRY_INSTANCE.get().is_none() {
@@ -18,6 +21,7 @@ pub fn init_activation_registry() {
             .unwrap();
 
         ActivationRegistry::register(ReLUActivation.name(), Box::new(ReLUActivation));
+        ActivationRegistry::register(LinearActivation.name(), Box::new(LinearActivation));
     }
 }
 

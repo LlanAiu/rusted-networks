@@ -18,8 +18,13 @@ mod tests {
 
     use crate::{
         data::{data_container::DataContainer, Data},
-        network::types::simple_classifier::SimpleClassifierNetwork,
-        network::Network,
+        network::{
+            types::{
+                simple_classifier::SimpleClassifierNetwork,
+                simple_regressor::SimpleRegressorNetwork,
+            },
+            Network,
+        },
         unit::{
             types::{input_unit::InputUnit, loss_unit::LossUnit, softmax_unit::SoftmaxUnit},
             Unit, UnitContainer,
@@ -158,21 +163,35 @@ mod tests {
     }
 
     #[test]
-    fn quadratic_test() {
-        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
+    fn training_test() {
+        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[1], &[2], vec![5]);
 
-        let test_arr: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
+        let test_arr: Array1<f32> = arr1(&[0.2]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
-        for _i in 1..15 {
+        for _i in 1..20 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
             for _j in 1..8 {
-                inputs.push(Data::VectorF32(arr1(&[0.4, 0.1, 1.0])));
-                responses.push(Data::VectorF32(arr1(&[0.2, 0.8])));
+                let rand = random_range(0.0..1.0);
+                if rand >= 0.5 {
+                    let x: f32 = random_range(0.0..0.5);
+                    let y: f32 = random_range(0.0..1.0);
+                    let z: f32 = random_range(0.0..1.0);
+
+                    inputs.push(Data::VectorF32(arr1(&[x])));
+                    responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
+                } else {
+                    let x: f32 = random_range(0.5..1.0);
+                    let y: f32 = random_range(0.0..1.0);
+                    let z: f32 = random_range(0.0..1.0);
+
+                    inputs.push(Data::VectorF32(arr1(&[x])));
+                    responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
+                }
             }
 
             let input = DataContainer::Batch(inputs);
@@ -184,5 +203,46 @@ mod tests {
         let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
         let after_output = classifier.predict(after_data);
         println!("After: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[0.8]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = classifier.predict(after_data2);
+        println!("After 2: {:?}", after_output2);
+    }
+
+    #[test]
+    fn quadratic_test() {
+        let classifier: SimpleRegressorNetwork = SimpleRegressorNetwork::new(&[1], &[1], vec![4]);
+
+        let test_arr: Array1<f32> = arr1(&[2.0]);
+        let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let before_output = classifier.predict(before_data);
+        println!("Before: {:?}", before_output);
+
+        for _i in 1..20 {
+            let mut inputs = Vec::new();
+            let mut responses = Vec::new();
+
+            for _j in 1..8 {
+                let x: f32 = random_range(1.0..4.0);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[x * x])));
+            }
+
+            let input = DataContainer::Batch(inputs);
+            let response = DataContainer::Batch(responses);
+
+            classifier.train(input, response);
+        }
+
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = classifier.predict(after_data);
+        println!("After: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[3.0]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = classifier.predict(after_data2);
+        println!("After 2: {:?}", after_output2);
     }
 }
