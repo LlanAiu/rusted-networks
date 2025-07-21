@@ -171,21 +171,8 @@ mod tests {
             let mut responses = Vec::new();
 
             for _j in 1..8 {
-                let x = random_range(0.0..1.0);
-                let y = random_range(0.0..1.0);
-                let z = random_range(0.0..1.0);
-
-                inputs.push(Data::VectorF32(arr1(&[x, y, z])));
-
-                let mut o1 = x + y;
-                let mut o2 = y + z;
-
-                let sum = f32::exp(o1) + f32::exp(o2);
-
-                o1 = f32::exp(o1) / sum;
-                o2 = f32::exp(o2) / sum;
-
-                responses.push(Data::VectorF32(arr1(&[o1, o2])));
+                inputs.push(Data::VectorF32(arr1(&[0.4, 0.1, 1.0])));
+                responses.push(Data::VectorF32(arr1(&[0.2, 0.8])));
             }
 
             let input = DataContainer::Batch(inputs);

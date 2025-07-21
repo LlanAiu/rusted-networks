@@ -1,5 +1,7 @@
 // builtin
 
+use core::f32;
+
 // external
 use ndarray::Array2;
 
@@ -20,11 +22,19 @@ impl<'a> SoftmaxNode<'a> {
         }
     }
 
+    fn epsilon() -> f32 {
+        1e-7
+    }
+
     fn softmax(data: Data) -> Data {
         if let Data::VectorF32(mut vec) = data {
-            vec.mapv_inplace(|f| f32::exp(f));
+            let max = vec.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+            vec.mapv_inplace(|f| f32::exp(f - max));
 
-            let sum = vec.sum();
+            let mut sum = vec.sum();
+            if sum <= 0.0 {
+                sum = SoftmaxNode::epsilon();
+            }
 
             vec.mapv_inplace(|f| f / sum);
 
