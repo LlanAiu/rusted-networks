@@ -100,8 +100,30 @@ impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        self.propogate_gradient_of(0, 1);
-        self.propogate_gradient_of(1, 0);
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
+        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
+
+        let first_data = first_ref.get_data();
+        let second_data = second_ref.get_data();
+        let grad = self.base.get_gradient();
+
+        let first_grad = grad.matmul(&second_data.transpose());
+        let second_grad = first_data.transpose().matmul(grad);
+
+        first_ref.add_gradient(&first_grad);
+        second_ref.add_gradient(&second_grad);
+
+        if first_ref.should_process_backprop() {
+            first_ref.apply_jacobian();
+        }
+
+        if second_ref.should_process_backprop() {
+            second_ref.apply_jacobian();
+        }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

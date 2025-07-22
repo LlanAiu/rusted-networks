@@ -151,6 +151,8 @@ impl<'a> Node<'a> for SoftmaxNode<'a> {
         if node.borrow().should_process_backprop() {
             node.borrow_mut().apply_jacobian();
         }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

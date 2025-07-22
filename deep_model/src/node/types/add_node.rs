@@ -85,6 +85,8 @@ impl<'a> Node<'a> for AddNode<'a> {
                 node.borrow_mut().apply_jacobian();
             }
         }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

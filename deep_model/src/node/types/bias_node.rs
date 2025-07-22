@@ -75,6 +75,7 @@ impl<'a> Node<'a> for BiasNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
         self.base.process_gradient(&self.learning_rate);
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {
