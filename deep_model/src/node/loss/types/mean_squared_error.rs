@@ -40,11 +40,7 @@ impl MeanSquaredError {
         let mut sum: f32 = 0.0;
         let length: f32 = expected.dim() as f32;
 
-        for (i, ans) in expected.iter().enumerate() {
-            let pred = actual
-                .get(i)
-                .expect("[SQUARED_ERROR] Dimension mismatch between expected and actual data");
-
+        for (ans, pred) in expected.iter().zip(actual.iter()) {
             let val = f32::powi(ans - pred, 2);
             sum += val;
         }
@@ -89,11 +85,11 @@ impl MeanSquaredError {
     ) -> Vec<f32> {
         let mut result: Vec<f32> = Vec::with_capacity(expected.len());
         let length: f32 = expected.dim() as f32;
-        for (&ans, &pred) in expected.iter().zip(actual.iter()) {
+        for (ans, pred) in expected.iter().zip(actual.iter()) {
             if wrt_expected {
-                result.push(-(ans - pred) / length);
-            } else {
                 result.push((ans - pred) / length);
+            } else {
+                result.push(-(ans - pred) / length);
             }
         }
         result

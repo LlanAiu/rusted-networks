@@ -219,7 +219,7 @@ mod tests {
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
-        for _i in 1..20 {
+        for _i in 1..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 

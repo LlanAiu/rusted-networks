@@ -6,6 +6,7 @@ use ndarray::{Array1, Array2};
 // internal
 use crate::data::operations::{
     matmul::DataMatMul, minus::DataMinus, plus::DataPlus, times::DataTimes,
+    transpose::DataTranspose,
 };
 pub mod data_container;
 pub mod operations;
@@ -154,6 +155,15 @@ impl Data {
                 Data::warn_operation(self, other, "MATMUL");
                 Data::None
             }
+        }
+    }
+
+    pub fn transpose(&self) -> Data {
+        match self {
+            Data::ScalarF32(scalar) => DataTranspose::transpose_scalar(scalar),
+            Data::VectorF32(vector) => DataTranspose::transpose_vector(vector),
+            Data::MatrixF32(matrix) => DataTranspose::transpose_matrix(matrix),
+            Data::None => Data::None,
         }
     }
 

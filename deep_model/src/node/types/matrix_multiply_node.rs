@@ -17,24 +17,6 @@ impl<'a> MatrixMultiplyNode<'a> {
             base: NodeBase::new(),
         }
     }
-
-    fn propogate_gradient_of(&self, node_index: usize, other_index: usize) {
-        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
-
-        let grad_data = self.base.get_gradient();
-
-        let mut node_ref = inputs.get(node_index).unwrap().borrow_mut();
-        let mut other_ref = inputs.get(other_index).unwrap().borrow_mut();
-
-        let other_data = other_ref.get_data();
-        let grad = grad_data.matmul(&other_data);
-
-        node_ref.add_gradient(&grad);
-
-        if node_ref.should_process_backprop() {
-            node_ref.apply_jacobian();
-        }
-    }
 }
 
 impl<'a> Node<'a> for MatrixMultiplyNode<'a> {

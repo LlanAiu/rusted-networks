@@ -6,6 +6,7 @@
 use crate::data::{
     data_container::operations::{
         matmul::ContainerMatMul, minus::ContainerMinus, plus::ContainerPlus, times::ContainerTimes,
+        transpose::ContainerTranspose,
     },
     Data,
 };
@@ -191,6 +192,19 @@ impl DataContainer {
                 DataContainer::warn_operation(self, other, "MINUS");
                 DataContainer::Empty
             }
+        }
+    }
+
+    pub fn transpose(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => ContainerTranspose::transpose_batch(batch),
+            DataContainer::Inference(data) => {
+                ContainerTranspose::transpose_data(data, ContainerType::Inference)
+            }
+            DataContainer::Parameter(data) => {
+                ContainerTranspose::transpose_data(data, ContainerType::Parameter)
+            }
+            DataContainer::Empty => DataContainer::Empty,
         }
     }
 
