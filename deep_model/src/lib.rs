@@ -164,30 +164,26 @@ mod tests {
 
     #[test]
     fn training_test() {
-        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[1], &[2], vec![5]);
+        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[1], &[2], vec![3]);
 
-        let test_arr: Array1<f32> = arr1(&[0.2]);
+        let test_arr: Array1<f32> = arr1(&[-0.8]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
-        for _i in 1..20 {
+        for _i in 1..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
             for _j in 1..8 {
                 let rand = random_range(0.0..1.0);
-                if rand >= 0.5 {
-                    let x: f32 = random_range(0.0..0.5);
-                    let y: f32 = random_range(0.0..1.0);
-                    let z: f32 = random_range(0.0..1.0);
+                if rand < 0.5 {
+                    let x: f32 = random_range(-1.0..-0.5);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
                     responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
                 } else {
                     let x: f32 = random_range(0.5..1.0);
-                    let y: f32 = random_range(0.0..1.0);
-                    let z: f32 = random_range(0.0..1.0);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
                     responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));

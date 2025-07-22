@@ -53,8 +53,8 @@ impl BaseCrossEntropy {
                 pred = &epsilon;
             }
 
-            let val = ans * f32::ln(*pred);
-            sum -= val;
+            let val = -ans * f32::ln(*pred);
+            sum += val;
         }
 
         sum
@@ -98,7 +98,7 @@ impl BaseCrossEntropy {
         let epsilon = BaseCrossEntropy::epsilon();
         let mut result = Vec::with_capacity(expected.len());
         for (&ans, &pred) in expected.iter().zip(actual.iter()) {
-            let pred_safe = if pred <= 0.0 { epsilon } else { pred };
+            let pred_safe = if pred <= epsilon { epsilon } else { pred };
             if wrt_expected {
                 result.push(-f32::ln(pred_safe));
             } else {

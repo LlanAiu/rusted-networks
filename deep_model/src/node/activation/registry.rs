@@ -9,7 +9,7 @@ use std::{
 // internal
 use crate::node::activation::{
     activation_function::ActivationType,
-    types::{none::LinearActivation, relu::ReLUActivation},
+    types::{none::LinearActivation, relu::ReLUActivation, sigmoid::SigmoidActivation},
 };
 
 pub fn init_activation_registry() {
@@ -22,6 +22,7 @@ pub fn init_activation_registry() {
 
         ActivationRegistry::register(ReLUActivation.name(), Box::new(ReLUActivation));
         ActivationRegistry::register(LinearActivation.name(), Box::new(LinearActivation));
+        ActivationRegistry::register(SigmoidActivation.name(), Box::new(SigmoidActivation));
     }
 }
 
