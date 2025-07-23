@@ -20,6 +20,7 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{
             types::{
+                binary_classifier::BinaryClassiferNetwork,
                 simple_classifier::SimpleClassifierNetwork,
                 simple_regressor::SimpleRegressorNetwork,
             },
@@ -164,9 +165,9 @@ mod tests {
 
     #[test]
     fn training_test() {
-        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[1], &[2], vec![3]);
+        let classifier: BinaryClassiferNetwork = BinaryClassiferNetwork::new(&[1], vec![3]);
 
-        let test_arr: Array1<f32> = arr1(&[-0.8]);
+        let test_arr: Array1<f32> = arr1(&[-0.7]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
@@ -181,12 +182,12 @@ mod tests {
                     let x: f32 = random_range(-1.0..-0.5);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
-                    responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
+                    responses.push(Data::VectorF32(arr1(&[0.0])));
                 } else {
                     let x: f32 = random_range(0.5..1.0);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
-                    responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
+                    responses.push(Data::VectorF32(arr1(&[1.0])));
                 }
             }
 
@@ -200,7 +201,7 @@ mod tests {
         let after_output = classifier.predict(after_data);
         println!("After: {:?}", after_output);
 
-        let test_arr2: Array1<f32> = arr1(&[0.8]);
+        let test_arr2: Array1<f32> = arr1(&[0.6]);
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = classifier.predict(after_data2);
         println!("After 2: {:?}", after_output2);
