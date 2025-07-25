@@ -24,6 +24,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
         input_size: &'a [usize],
         output_size: &'a [usize],
         hidden_sizes: Vec<usize>,
+        learning_rate: f32,
     ) -> SimpleRegressorNetwork<'a> {
         if input_size.len() != 1 || output_size.len() != 1 {
             panic!("[SIMPLE_REGRESSOR] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
@@ -48,7 +49,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
             }
 
             let hidden_unit: UnitContainer<LinearUnit> =
-                UnitContainer::new(LinearUnit::new("relu", prev_width, *width));
+                UnitContainer::new(LinearUnit::new("relu", prev_width, *width, learning_rate));
 
             hidden_unit.add_input_ref(&prev_unit);
 
@@ -58,8 +59,12 @@ impl<'a> SimpleRegressorNetwork<'a> {
             hidden.push(hidden_unit);
         }
 
-        let inference: UnitContainer<LinearUnit> =
-            UnitContainer::new(LinearUnit::new("none", prev_width, output_size[0]));
+        let inference: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::new(
+            "none",
+            prev_width,
+            output_size[0],
+            learning_rate,
+        ));
         inference.add_input_ref(&prev_unit);
 
         loss.add_input(&inference);

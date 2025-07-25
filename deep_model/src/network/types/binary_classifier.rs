@@ -20,7 +20,11 @@ pub struct BinaryClassiferNetwork<'a> {
 }
 
 impl<'a> BinaryClassiferNetwork<'a> {
-    pub fn new(input_size: &'a [usize], hidden_sizes: Vec<usize>) -> BinaryClassiferNetwork<'a> {
+    pub fn new(
+        input_size: &'a [usize],
+        hidden_sizes: Vec<usize>,
+        learning_rate: f32,
+    ) -> BinaryClassiferNetwork<'a> {
         if input_size.len() != 1 {
             panic!("[BINARY_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 but got {}.", input_size.len());
         }
@@ -44,7 +48,7 @@ impl<'a> BinaryClassiferNetwork<'a> {
             }
 
             let hidden_unit: UnitContainer<LinearUnit> =
-                UnitContainer::new(LinearUnit::new("relu", prev_width, *width));
+                UnitContainer::new(LinearUnit::new("relu", prev_width, *width, learning_rate));
 
             hidden_unit.add_input_ref(&prev_unit);
 
@@ -55,7 +59,7 @@ impl<'a> BinaryClassiferNetwork<'a> {
         }
 
         let inference: UnitContainer<LinearUnit> =
-            UnitContainer::new(LinearUnit::new("sigmoid", prev_width, 1));
+            UnitContainer::new(LinearUnit::new("sigmoid", prev_width, 1, learning_rate));
         inference.add_input_ref(&prev_unit);
 
         loss.add_input(&inference);

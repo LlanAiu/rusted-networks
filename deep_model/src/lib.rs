@@ -35,7 +35,8 @@ mod tests {
     #[test]
     fn loss_test() {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(&[3]));
-        let hidden: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::new("relu", 3, 2));
+        let hidden: UnitContainer<SoftmaxUnit> =
+            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(&[2], "base_cross_entropy"));
 
@@ -86,7 +87,8 @@ mod tests {
     #[test]
     fn batch_test() {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(&[3]));
-        let hidden: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::new("relu", 3, 2));
+        let hidden: UnitContainer<SoftmaxUnit> =
+            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(&[2], "base_cross_entropy"));
 
@@ -130,7 +132,8 @@ mod tests {
 
     #[test]
     fn network_test() {
-        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
+        let classifier: SimpleClassifierNetwork =
+            SimpleClassifierNetwork::new(&[3], &[2], vec![5], 0.001);
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
         let input = DataContainer::Inference(Data::VectorF32(input_arr1));
@@ -144,7 +147,8 @@ mod tests {
 
     #[test]
     fn backprop_test() {
-        let classifier: SimpleClassifierNetwork = SimpleClassifierNetwork::new(&[3], &[2], vec![5]);
+        let classifier: SimpleClassifierNetwork =
+            SimpleClassifierNetwork::new(&[3], &[2], vec![5], 0.001);
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
         let input_arr2: Array1<f32> = arr1(&[0.3, 0.8, 0.2]);
@@ -165,7 +169,7 @@ mod tests {
 
     #[test]
     fn training_test() {
-        let classifier: BinaryClassiferNetwork = BinaryClassiferNetwork::new(&[1], vec![3]);
+        let classifier: BinaryClassiferNetwork = BinaryClassiferNetwork::new(&[1], vec![2], 0.05);
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
@@ -209,7 +213,8 @@ mod tests {
 
     #[test]
     fn quadratic_test() {
-        let classifier: SimpleRegressorNetwork = SimpleRegressorNetwork::new(&[1], &[1], vec![4]);
+        let classifier: SimpleRegressorNetwork =
+            SimpleRegressorNetwork::new(&[1], &[1], vec![4], 0.001);
 
         let test_arr: Array1<f32> = arr1(&[2.0]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
