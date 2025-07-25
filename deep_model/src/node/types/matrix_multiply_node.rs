@@ -1,10 +1,9 @@
 // builtin
 
 // external
-use ndarray::{ArrayView2, Axis};
+use crate::data::data_container::DataContainer;
 
 // internal
-use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 
@@ -16,43 +15,6 @@ impl<'a> MatrixMultiplyNode<'a> {
     pub fn new() -> MatrixMultiplyNode<'a> {
         MatrixMultiplyNode {
             base: NodeBase::new(),
-        }
-    }
-
-    fn propogate_gradient_of(&self, node_index: usize, other_index: usize) {
-        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
-
-        let grad_data = self.base.get_gradient();
-        let prev_gradient: ArrayView2<f32> = match grad_data {
-            Data::VectorF32(vec) => vec.view().insert_axis(Axis(1)),
-            Data::MatrixF32(matrix) => matrix.view(),
-            _ => {
-                let variant_name = grad_data.variant_name();
-                panic!("[MATMUL] Invalid previous gradient, was {variant_name}");
-            }
-        };
-
-        let mut node_ref = inputs.get(node_index).unwrap().borrow_mut();
-        let mut other_ref = inputs.get(other_index).unwrap().borrow_mut();
-
-        match other_ref.get_data() {
-            Data::VectorF32(vec) => {
-                let matrix = vec.insert_axis(Axis(1));
-                let grad = prev_gradient.dot(&matrix.t());
-                node_ref.add_gradient(&Data::MatrixF32(grad));
-            }
-            Data::MatrixF32(matrix) => {
-                let grad = matrix.t().dot(&prev_gradient);
-                node_ref.add_gradient(&Data::VectorF32(grad.remove_axis(Axis(1))));
-            }
-            _ => {
-                let variant_name = grad_data.variant_name();
-                panic!("[MATMUL] Invalid input data type for backprop, was {variant_name}");
-            }
-        }
-
-        if node_ref.should_process_backprop() {
-            node_ref.apply_jacobian();
         }
     }
 }
@@ -82,7 +44,7 @@ impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
         self.base.get_outputs()
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
@@ -103,16 +65,16 @@ impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
         let mut second_ref = inputs.get(1).unwrap().borrow_mut();
         let second_data = second_ref.get_data();
 
-        let res: Data = first_data.dot(&second_data);
+        let res: DataContainer = first_data.matmul(&second_data);
 
         self.base.set_data(res);
     }
 
-    fn set_data(&mut self, _data: Data) {
+    fn set_data(&mut self, _data: DataContainer) {
         println!("[MATMUL] Unsupported Operation: Cannot set data of an operation node");
     }
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }
@@ -120,8 +82,30 @@ impl<'a> Node<'a> for MatrixMultiplyNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        self.propogate_gradient_of(0, 1);
-        self.propogate_gradient_of(1, 0);
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
+        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
+
+        let first_data = first_ref.get_data();
+        let second_data = second_ref.get_data();
+        let grad = self.base.get_gradient();
+
+        let first_grad = grad.matmul(&second_data.transpose());
+        let second_grad = first_data.transpose().matmul(grad);
+
+        first_ref.add_gradient(&first_grad);
+        second_ref.add_gradient(&second_grad);
+
+        if first_ref.should_process_backprop() {
+            first_ref.apply_jacobian();
+        }
+
+        if second_ref.should_process_backprop() {
+            second_ref.apply_jacobian();
+        }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

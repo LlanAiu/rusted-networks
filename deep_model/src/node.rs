@@ -8,7 +8,7 @@ use std::{
 // external
 
 // internal
-use crate::data::Data;
+use crate::data::data_container::DataContainer;
 pub mod activation;
 pub mod loss;
 pub mod node_base;
@@ -86,13 +86,13 @@ pub trait Node<'a> {
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>>;
 
-    fn set_data(&mut self, data: Data);
+    fn set_data(&mut self, data: DataContainer);
 
-    fn get_data(&mut self) -> Data;
+    fn get_data(&mut self) -> DataContainer;
 
     fn apply_operation(&mut self);
 
-    fn add_gradient(&mut self, grad: &Data);
+    fn add_gradient(&mut self, grad: &DataContainer);
 
     fn apply_jacobian(&mut self);
 

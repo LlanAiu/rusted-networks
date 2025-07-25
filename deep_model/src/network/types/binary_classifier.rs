@@ -7,36 +7,31 @@ use crate::{
     data::data_container::DataContainer,
     network::Network,
     unit::{
-        types::{
-            input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
-            softmax_unit::SoftmaxUnit,
-        },
+        types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer, UnitRef,
     },
 };
 
-pub struct SimpleClassifierNetwork<'a> {
+pub struct BinaryClassiferNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
     _hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
-    inference: UnitContainer<'a, SoftmaxUnit<'a>>,
+    inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
 }
 
-// TODO: Find a more elegant way to handle input/output dimensions (either restrict to 1D or find a way to handle higher dims)
-impl<'a> SimpleClassifierNetwork<'a> {
+impl<'a> BinaryClassiferNetwork<'a> {
     pub fn new(
         input_size: &'a [usize],
-        output_size: &'a [usize],
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
-    ) -> SimpleClassifierNetwork<'a> {
-        if input_size.len() != 1 || output_size.len() != 1 {
-            panic!("[SIMPLE_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
+    ) -> BinaryClassiferNetwork<'a> {
+        if input_size.len() != 1 {
+            panic!("[BINARY_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 but got {}.", input_size.len());
         }
 
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(input_size));
         let loss: UnitContainer<LossUnit> =
-            UnitContainer::new(LossUnit::new(output_size, "base_cross_entropy"));
+            UnitContainer::new(LossUnit::new(&[1], "binary_cross_entropy"));
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
         let mut prev_width = input_size[0];
@@ -45,10 +40,10 @@ impl<'a> SimpleClassifierNetwork<'a> {
         for i in 0..hidden_sizes.len() {
             let width = hidden_sizes
                 .get(i)
-                .expect("[SIMPLE_CLASSIFIER] Failed to get layer width");
+                .expect("[BINARY_CLASSIFIER] Failed to get layer width");
 
             if *width == 0 {
-                println!("[SIMPLE_CLASSIFIER] got layer with 0 width, skipping creation...");
+                println!("[BINARY_CLASSIFIER] got layer with 0 width, skipping creation...");
                 continue;
             }
 
@@ -63,17 +58,13 @@ impl<'a> SimpleClassifierNetwork<'a> {
             hidden.push(hidden_unit);
         }
 
-        let inference: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::new(
-            "none",
-            prev_width,
-            output_size[0],
-            learning_rate,
-        ));
+        let inference: UnitContainer<LinearUnit> =
+            UnitContainer::new(LinearUnit::new("sigmoid", prev_width, 1, learning_rate));
         inference.add_input_ref(&prev_unit);
 
         loss.add_input(&inference);
 
-        SimpleClassifierNetwork {
+        BinaryClassiferNetwork {
             input,
             _hidden: hidden,
             inference,
@@ -82,13 +73,13 @@ impl<'a> SimpleClassifierNetwork<'a> {
     }
 }
 
-impl<'a> SimpleClassifierNetwork<'a> {
+impl<'a> BinaryClassiferNetwork<'a> {
     pub fn get_hidden_layers(&self) -> usize {
         self._hidden.len()
     }
 }
 
-impl Network for SimpleClassifierNetwork<'_> {
+impl Network for BinaryClassiferNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
         self.input.borrow_mut().set_input_data(input);
 

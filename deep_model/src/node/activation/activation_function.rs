@@ -31,27 +31,31 @@ impl ActivationFunction {
         }
     }
 
-    pub fn apply_all(&self, data: &mut Data) {
+    pub fn apply_all(&self, data: Data) -> Data {
         match data {
-            Data::VectorF32(vec) => {
+            Data::VectorF32(mut vec) => {
                 vec.mapv_inplace(|f| self.activation_type.apply(f));
+                Data::VectorF32(vec)
             }
-            Data::MatrixF32(matrix) => {
+            Data::MatrixF32(mut matrix) => {
                 matrix.mapv_inplace(|f| self.activation_type.apply(f));
+                Data::MatrixF32(matrix)
             }
-            _ => {}
+            _ => Data::None,
         }
     }
 
-    pub fn diff_all(&self, data: &mut Data) {
+    pub fn diff_all(&self, data: Data) -> Data {
         match data {
-            Data::VectorF32(vec) => {
+            Data::VectorF32(mut vec) => {
                 vec.mapv_inplace(|f| self.activation_type.diff(f));
+                Data::VectorF32(vec)
             }
-            Data::MatrixF32(matrix) => {
+            Data::MatrixF32(mut matrix) => {
                 matrix.mapv_inplace(|f| self.activation_type.diff(f));
+                Data::MatrixF32(matrix)
             }
-            _ => {}
+            _ => Data::None,
         }
     }
 }

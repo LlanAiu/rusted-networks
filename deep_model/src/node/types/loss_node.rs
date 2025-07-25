@@ -2,8 +2,8 @@
 
 // external
 
+use crate::data::data_container::DataContainer;
 // internal
-use crate::data::Data;
 use crate::node::loss::loss_function::LossFunction;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
@@ -69,7 +69,7 @@ impl<'a> Node<'a> for LossNode<'a> {
         self.base.get_outputs()
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
@@ -96,18 +96,20 @@ impl<'a> Node<'a> for LossNode<'a> {
 
         if first_ref.get_type() == NodeType::ExpectedResponse {
             let data = self.function.apply(&first_data, &second_data);
+            println!("Average Loss: {:?}", data.average_batch());
             self.base.set_data(data);
         } else {
             let data = self.function.apply(&second_data, &first_data);
+            println!("Average Loss: {:?}", data.average_batch());
             self.base.set_data(data);
         }
     }
 
-    fn set_data(&mut self, _data: Data) {
+    fn set_data(&mut self, _data: DataContainer) {
         panic!("[LOSS] Unsupported Operation: Cannot set data of an operation node");
     }
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }
@@ -128,18 +130,22 @@ impl<'a> Node<'a> for LossNode<'a> {
             let expected_grad = self.function.get_jacobian(&second_data, &first_data, true);
             second_ref
                 .borrow_mut()
-                .add_gradient(&expected_grad.dot(grad));
+                .add_gradient(&expected_grad.times(grad));
 
             let actual_grad = self.function.get_jacobian(&second_data, &first_data, false);
-            first_ref.borrow_mut().add_gradient(&actual_grad.dot(grad));
+            first_ref
+                .borrow_mut()
+                .add_gradient(&actual_grad.times(grad));
         } else {
             let expected_grad = self.function.get_jacobian(&first_data, &second_data, true);
             first_ref
                 .borrow_mut()
-                .add_gradient(&expected_grad.dot(grad));
+                .add_gradient(&expected_grad.times(grad));
 
             let actual_grad = self.function.get_jacobian(&first_data, &second_data, false);
-            second_ref.borrow_mut().add_gradient(&actual_grad.dot(grad));
+            second_ref
+                .borrow_mut()
+                .add_gradient(&actual_grad.times(grad));
         }
 
         for input in inputs {
@@ -147,6 +153,8 @@ impl<'a> Node<'a> for LossNode<'a> {
                 input.borrow_mut().apply_jacobian();
             }
         }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    data::Data,
+    data::data_container::DataContainer,
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
@@ -23,9 +23,15 @@ pub struct SoftmaxUnit<'a> {
 }
 
 impl<'a> SoftmaxUnit<'a> {
-    pub fn new(function: &str, input_size: usize, output_size: usize) -> SoftmaxUnit<'a> {
-        let weights_ref: NodeRef = NodeRef::new(WeightNode::new(input_size, output_size, 0.001));
-        let biases_ref = NodeRef::new(BiasNode::new(output_size, 0.001));
+    pub fn new(
+        function: &str,
+        input_size: usize,
+        output_size: usize,
+        learning_rate: f32,
+    ) -> SoftmaxUnit<'a> {
+        let weights_ref: NodeRef =
+            NodeRef::new(WeightNode::new(input_size, output_size, learning_rate));
+        let biases_ref = NodeRef::new(BiasNode::new(output_size, learning_rate));
         let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
         let add_ref: NodeRef = NodeRef::new(AddNode::new());
         let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
@@ -51,11 +57,11 @@ impl<'a> SoftmaxUnit<'a> {
         }
     }
 
-    pub fn set_biases(&self, data: Data) {
+    pub fn set_biases(&self, data: DataContainer) {
         self.biases.borrow_mut().set_data(data);
     }
 
-    pub fn set_weights(&self, data: Data) {
+    pub fn set_weights(&self, data: DataContainer) {
         self.weights.borrow_mut().set_data(data);
     }
 }

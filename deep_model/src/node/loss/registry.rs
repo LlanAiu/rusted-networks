@@ -7,7 +7,13 @@ use std::{
 // external
 
 // internal
-use crate::node::loss::{loss_function::LossType, types::base_cross_entropy::BaseCrossEntropy};
+use crate::node::loss::{
+    loss_function::LossType,
+    types::{
+        base_cross_entropy::BaseCrossEntropy, binary_cross_entropy::BinaryCrossEntropy,
+        mean_squared_error::MeanSquaredError,
+    },
+};
 
 pub fn init_loss_registry() {
     if REGISTRY_INSTANCE.get().is_none() {
@@ -18,6 +24,8 @@ pub fn init_loss_registry() {
             .unwrap();
 
         LossRegistry::register(BaseCrossEntropy.name(), Box::new(BaseCrossEntropy));
+        LossRegistry::register(MeanSquaredError.name(), Box::new(MeanSquaredError));
+        LossRegistry::register(BinaryCrossEntropy.name(), Box::new(BinaryCrossEntropy));
     }
 }
 

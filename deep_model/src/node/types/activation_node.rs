@@ -2,8 +2,8 @@
 
 // external
 
+use crate::data::data_container::DataContainer;
 // internal
-use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{
     activation::activation_function::ActivationFunction, node_base::NodeBase, Node, NodeRef,
@@ -48,7 +48,7 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         self.base.get_outputs()
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
@@ -66,17 +66,17 @@ impl<'a> Node<'a> for ActivationNode<'a> {
 
         let mut input_ref = inputs.get(0).unwrap().borrow_mut();
 
-        let mut data = input_ref.get_data();
-        self.function.apply_all(&mut data);
+        let data = input_ref.get_data();
+        let result = data.apply_function(|data| self.function.apply_all(data));
 
-        self.base.set_data(data);
+        self.base.set_data(result);
     }
 
-    fn set_data(&mut self, _data: Data) {
+    fn set_data(&mut self, _data: DataContainer) {
         panic!("[ACTIVATION] Unsupported Operation: Cannot set data of an operation node");
     }
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }
@@ -85,14 +85,16 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         self.base.reset_grad_count();
 
         for node in self.get_inputs() {
-            let mut grad = node.borrow_mut().get_data();
-            self.function.diff_all(&mut grad);
+            let data = node.borrow_mut().get_data();
+            let grad = data.apply_function(|data| self.function.diff_all(data));
             node.borrow_mut()
                 .add_gradient(&grad.times(self.base.get_gradient()));
             if node.borrow().should_process_backprop() {
                 node.borrow_mut().apply_jacobian();
             }
         }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

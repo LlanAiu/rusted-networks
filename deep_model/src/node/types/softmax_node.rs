@@ -1,8 +1,11 @@
 // builtin
 
-// external
-use ndarray::{Array1, Array2};
+use core::f32;
 
+// external
+use ndarray::Array2;
+
+use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
 use crate::node::NodeType;
@@ -19,31 +22,55 @@ impl<'a> SoftmaxNode<'a> {
         }
     }
 
-    fn softmax(mut arr: Array1<f32>) -> Data {
-        arr.mapv_inplace(|f| f32::exp(f));
-
-        let sum = arr.sum();
-
-        arr.mapv_inplace(|f| f / sum);
-
-        Data::VectorF32(arr)
+    fn epsilon() -> f32 {
+        1e-7
     }
 
-    fn softmax_jacobian(softmax: Array1<f32>) -> Data {
-        let n = softmax.len();
+    fn softmax(data: Data) -> Data {
+        if let Data::VectorF32(mut vec) = data {
+            let max = vec.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+            vec.mapv_inplace(|f| f32::exp(f - max));
 
-        let mut jacobian: Array2<f32> = Array2::zeros((n, n));
-        for i in 0..n {
-            for j in 0..n {
-                if i == j {
-                    jacobian[[i, j]] = softmax[i] * (1.0 - softmax[j]);
-                } else {
-                    jacobian[[i, j]] = -softmax[i] * softmax[j];
+            let mut sum = vec.sum();
+            if sum <= 0.0 {
+                sum = SoftmaxNode::epsilon();
+            }
+
+            vec.mapv_inplace(|f| f / sum);
+
+            Data::VectorF32(vec)
+        } else {
+            println!(
+                "[SOFTMAX] Invalid data type. Expected Data::VectorF32 but got {}",
+                data.variant_name()
+            );
+            Data::None
+        }
+    }
+
+    fn softmax_jacobian(softmax: Data) -> Data {
+        if let Data::VectorF32(vec) = softmax {
+            let n = vec.len();
+
+            let mut jacobian: Array2<f32> = Array2::zeros((n, n));
+            for i in 0..n {
+                for j in 0..n {
+                    if i == j {
+                        jacobian[[i, j]] = vec[i] * (1.0 - vec[j]);
+                    } else {
+                        jacobian[[i, j]] = -vec[i] * vec[j];
+                    }
                 }
             }
-        }
 
-        Data::MatrixF32(jacobian)
+            Data::MatrixF32(jacobian)
+        } else {
+            println!(
+                "[SOFTMAX] Invalid data type. Expected Data::VectorF32 but got {}",
+                softmax.variant_name()
+            );
+            Data::None
+        }
     }
 }
 
@@ -72,7 +99,7 @@ impl<'a> Node<'a> for SoftmaxNode<'a> {
         self.base.get_outputs()
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
@@ -90,25 +117,18 @@ impl<'a> Node<'a> for SoftmaxNode<'a> {
 
         let mut input_ref = inputs.get(0).unwrap().borrow_mut();
 
-        let mut data = input_ref.get_data();
+        let data = input_ref.get_data();
 
-        if let Data::VectorF32(vec) = data {
-            data = SoftmaxNode::softmax(vec);
-            self.base.set_data(data);
-        } else {
-            println!(
-                "[SOFTMAX] Invalid data type. Expected Data::VectorF32 but got {}",
-                data.variant_name()
-            );
-            self.base.set_data(data);
-        }
+        let res = data.apply_function(SoftmaxNode::softmax);
+
+        self.base.set_data(res);
     }
 
-    fn set_data(&mut self, _data: Data) {
+    fn set_data(&mut self, _data: DataContainer) {
         panic!("[SOFTMAX] Unsupported Operation: Cannot set data of an operation node");
     }
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }
@@ -123,22 +143,16 @@ impl<'a> Node<'a> for SoftmaxNode<'a> {
 
         let node = self.base.get_inputs().get(0).unwrap();
 
-        if let Data::VectorF32(vec) = data {
-            let grad = SoftmaxNode::softmax_jacobian(vec);
+        let jacobian = data.apply_function(SoftmaxNode::softmax_jacobian);
+        let grad = jacobian.matmul(self.base.get_gradient());
 
-            node.borrow_mut()
-                .add_gradient(&grad.dot(self.base.get_gradient()));
-        } else {
-            println!(
-                "[SOFTMAX] Invalid data type. Expected Data::VectorF32 but got {}",
-                data.variant_name()
-            );
-            node.borrow_mut().add_gradient(self.base.get_gradient());
-        }
+        node.borrow_mut().add_gradient(&grad);
 
         if node.borrow().should_process_backprop() {
             node.borrow_mut().apply_jacobian();
         }
+
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

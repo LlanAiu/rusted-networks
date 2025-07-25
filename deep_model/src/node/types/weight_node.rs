@@ -2,6 +2,11 @@
 
 // external
 
+use ndarray::Array2;
+use ndarray_rand::rand_distr::Uniform;
+use ndarray_rand::RandomExt;
+
+use crate::data::data_container::DataContainer;
 // internal
 use crate::data::Data;
 use crate::node::NodeType;
@@ -10,15 +15,22 @@ use crate::node::{node_base::NodeBase, Node, NodeRef};
 pub struct WeightNode<'a> {
     base: NodeBase<'a>,
     dim: (usize, usize),
-    learning_rate: f32,
+    learning_rate: DataContainer,
 }
 
 impl<'a> WeightNode<'a> {
     pub fn new(input_size: usize, output_size: usize, learning_rate: f32) -> WeightNode<'a> {
+        let mut base = NodeBase::new();
+
+        let scale = f32::sqrt(6.0 / (input_size + output_size) as f32);
+        let initial_weights: Array2<f32> =
+            Array2::random((output_size, input_size), Uniform::new(-scale, scale));
+        base.set_data(DataContainer::Parameter(Data::MatrixF32(initial_weights)));
+
         WeightNode {
-            base: NodeBase::new(),
+            base,
             dim: (output_size, input_size),
-            learning_rate,
+            learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
         }
     }
 }
@@ -42,30 +54,32 @@ impl<'a> Node<'a> for WeightNode<'a> {
         self.base.get_outputs()
     }
 
-    fn set_data(&mut self, input: Data) {
-        if let Data::MatrixF32(matrix) = input {
+    fn set_data(&mut self, input: DataContainer) {
+        if let DataContainer::Parameter(Data::MatrixF32(matrix)) = input {
             if matrix.dim() == self.dim {
-                self.base.set_data(Data::MatrixF32(matrix));
+                let container = DataContainer::Parameter(Data::MatrixF32(matrix));
+                self.base.set_data(container);
                 return;
             }
         }
         println!("[WEIGHT] type or dimension mismatch, skipping reassignment");
     }
 
-    fn get_data(&mut self) -> Data {
+    fn get_data(&mut self) -> DataContainer {
         self.base.get_data()
     }
 
     fn apply_operation(&mut self) {}
 
-    fn add_gradient(&mut self, grad: &Data) {
+    fn add_gradient(&mut self, grad: &DataContainer) {
         self.base.increment_grad_count();
         self.base.add_to_gradient(grad);
     }
 
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
-        self.base.process_gradient(self.learning_rate);
+        self.base.process_gradient(&self.learning_rate);
+        self.base.reset_gradient();
     }
 
     fn should_process_backprop(&self) -> bool {

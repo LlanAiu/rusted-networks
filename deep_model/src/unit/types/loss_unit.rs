@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    data::Data,
+    data::data_container::DataContainer,
     node::{
         types::{expected_response_node::ExpectedResponseNode, loss_node::LossNode},
         NodeRef,
@@ -18,7 +18,7 @@ pub struct LossUnit<'a> {
 }
 
 impl<'a> LossUnit<'a> {
-    pub fn new(output_dim: usize, loss_type: &str) -> LossUnit<'a> {
+    pub fn new(output_dim: &'a [usize], loss_type: &str) -> LossUnit<'a> {
         let loss_ref: NodeRef = NodeRef::new(LossNode::new(loss_type));
         let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim));
 
@@ -30,7 +30,7 @@ impl<'a> LossUnit<'a> {
         }
     }
 
-    pub fn set_expected_response(&self, response: Data) {
+    pub fn set_expected_response(&self, response: DataContainer) {
         self.response_node.borrow_mut().set_data(response);
     }
 }
