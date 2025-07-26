@@ -21,8 +21,8 @@ pub struct SimpleRegressorNetwork<'a> {
 
 impl<'a> SimpleRegressorNetwork<'a> {
     pub fn new(
-        input_size: &'a [usize],
-        output_size: &'a [usize],
+        input_size: Vec<usize>,
+        output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
     ) -> SimpleRegressorNetwork<'a> {
@@ -30,12 +30,14 @@ impl<'a> SimpleRegressorNetwork<'a> {
             panic!("[SIMPLE_REGRESSOR] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
         }
 
+        let mut prev_width = input_size[0];
+        let output_dim = output_size[0];
+
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(input_size));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(output_size, "mean_squared_error"));
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
-        let mut prev_width = input_size[0];
         let mut prev_unit: UnitRef = input.get_ref();
 
         for i in 0..hidden_sizes.len() {
@@ -62,7 +64,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
         let inference: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::new(
             "none",
             prev_width,
-            output_size[0],
+            output_dim,
             learning_rate,
         ));
         inference.add_input_ref(&prev_unit);

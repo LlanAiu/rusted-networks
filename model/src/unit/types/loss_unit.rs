@@ -5,6 +5,7 @@
 // internal
 use crate::{
     data::data_container::DataContainer,
+    network::config_types::LossParams,
     node::{
         types::{expected_response_node::ExpectedResponseNode, loss_node::LossNode},
         NodeRef,
@@ -18,7 +19,7 @@ pub struct LossUnit<'a> {
 }
 
 impl<'a> LossUnit<'a> {
-    pub fn new(output_dim: &'a [usize], loss_type: &str) -> LossUnit<'a> {
+    pub fn new(output_dim: Vec<usize>, loss_type: &str) -> LossUnit<'a> {
         let loss_ref: NodeRef = NodeRef::new(LossNode::new(loss_type));
         let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim));
 
@@ -28,6 +29,10 @@ impl<'a> LossUnit<'a> {
             base: UnitBase::new(&loss_ref, &loss_ref),
             response_node: response_ref,
         }
+    }
+
+    pub fn from_config(config: &LossParams) -> LossUnit<'a> {
+        Self::new(config.output_size.clone(), &config.loss_type)
     }
 
     pub fn set_expected_response(&self, response: DataContainer) {

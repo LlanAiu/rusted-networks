@@ -22,20 +22,20 @@ pub struct BinaryClassiferNetwork<'a> {
 
 impl<'a> BinaryClassiferNetwork<'a> {
     pub fn new(
-        input_size: &'a [usize],
+        input_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
     ) -> BinaryClassiferNetwork<'a> {
         if input_size.len() != 1 {
             panic!("[BINARY_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 but got {}.", input_size.len());
         }
+        let mut prev_width = input_size[0];
 
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(input_size));
         let loss: UnitContainer<LossUnit> =
-            UnitContainer::new(LossUnit::new(&[1], "binary_cross_entropy"));
+            UnitContainer::new(LossUnit::new(vec![1], "binary_cross_entropy"));
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
-        let mut prev_width = input_size[0];
         let mut prev_unit: UnitRef = input.get_ref();
 
         for i in 0..hidden_sizes.len() {
@@ -76,7 +76,44 @@ impl<'a> BinaryClassiferNetwork<'a> {
     pub fn load_from_file(path: &str) -> BinaryClassiferNetwork {
         let config: BinaryClassifierConfig = BinaryClassifierConfig::load_from_file(path).unwrap();
 
-        todo!()
+        let learning = config.learning();
+
+        let input: UnitContainer<InputUnit> =
+            UnitContainer::new(InputUnit::from_config(config.input()));
+
+        let loss: UnitContainer<LossUnit> =
+            UnitContainer::new(LossUnit::from_config(config.loss()));
+
+        let units = config.units();
+
+        let mut prev_unit: UnitRef = input.get_ref();
+        let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
+        for i in 0..(units.len() - 1) {
+            let unit = units.get(i).unwrap();
+
+            let hidden_unit =
+                UnitContainer::new(LinearUnit::from_config(unit, learning.learning_rate));
+
+            hidden_unit.add_input_ref(&prev_unit);
+
+            prev_unit = hidden_unit.get_ref();
+
+            hidden.push(hidden_unit);
+        }
+
+        let last_params = config.units().get(units.len()).unwrap();
+
+        let inference: UnitContainer<LinearUnit> =
+            UnitContainer::new(LinearUnit::from_config(last_params, learning.learning_rate));
+
+        inference.add_input_ref(&prev_unit);
+
+        BinaryClassiferNetwork {
+            input,
+            _hidden: hidden,
+            inference,
+            loss,
+        }
     }
 }
 

@@ -22,24 +22,24 @@ pub struct SimpleClassifierNetwork<'a> {
     loss: UnitContainer<'a, LossUnit<'a>>,
 }
 
-// TODO: Find a more elegant way to handle input/output dimensions (either restrict to 1D or find a way to handle higher dims)
 impl<'a> SimpleClassifierNetwork<'a> {
     pub fn new(
-        input_size: &'a [usize],
-        output_size: &'a [usize],
+        input_size: Vec<usize>,
+        output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
     ) -> SimpleClassifierNetwork<'a> {
         if input_size.len() != 1 || output_size.len() != 1 {
             panic!("[SIMPLE_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
         }
+        let mut prev_width = input_size[0];
+        let output_dim = output_size[0];
 
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(input_size));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(output_size, "base_cross_entropy"));
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
-        let mut prev_width = input_size[0];
         let mut prev_unit: UnitRef = input.get_ref();
 
         for i in 0..hidden_sizes.len() {
@@ -66,7 +66,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
         let inference: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::new(
             "none",
             prev_width,
-            output_size[0],
+            output_dim,
             learning_rate,
         ));
         inference.add_input_ref(&prev_unit);

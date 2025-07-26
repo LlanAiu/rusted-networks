@@ -5,6 +5,7 @@
 // internal
 use crate::{
     data::data_container::DataContainer,
+    network::config_types::InputParams,
     node::{types::input_node::InputNode, NodeRef},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
@@ -15,13 +16,17 @@ pub struct InputUnit<'a> {
 }
 
 impl<'a> InputUnit<'a> {
-    pub fn new(input_size: &'a [usize]) -> InputUnit<'a> {
+    pub fn new(input_size: Vec<usize>) -> InputUnit<'a> {
         let input_ref = NodeRef::new(InputNode::new(input_size));
 
         InputUnit {
             base: UnitBase::new(&input_ref, &input_ref),
             input: input_ref,
         }
+    }
+
+    pub fn from_config(config: &InputParams) -> InputUnit<'a> {
+        Self::new(config.input_size.clone())
     }
 
     pub fn set_input_data(&self, data: DataContainer) {

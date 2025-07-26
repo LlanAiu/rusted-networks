@@ -2,11 +2,13 @@
 
 // external
 
+use core::panic;
 use std::usize;
 
 // internal
 use crate::{
     data::data_container::DataContainer,
+    network::config_types::UnitParams,
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
@@ -51,6 +53,28 @@ impl<'a> LinearUnit<'a> {
             weights: weights_ref,
             biases: biases_ref,
         }
+    }
+
+    pub fn from_config(config: &UnitParams, learning_rate: f32) -> LinearUnit<'a> {
+        if let UnitParams::Linear {
+            input_size,
+            output_size,
+            activation,
+            ..
+        } = config
+        {
+            let unit: LinearUnit = Self::new(activation, *input_size, *output_size, learning_rate);
+
+            let weights = config.get_weights();
+            let biases = config.get_biases();
+
+            unit.set_weights(weights);
+            unit.set_biases(biases);
+
+            return unit;
+        }
+
+        panic!("Mismatched unit parameter types for initialization: expected UnitParams::Linear but got {},", config.type_name());
     }
 
     pub fn set_biases(&self, data: DataContainer) {

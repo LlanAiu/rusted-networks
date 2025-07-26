@@ -9,11 +9,11 @@ use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct ExpectedResponseNode<'a> {
     base: NodeBase<'a>,
-    dim: &'a [usize],
+    dim: Vec<usize>,
 }
 
 impl<'a> ExpectedResponseNode<'a> {
-    pub fn new(dim: &'a [usize]) -> ExpectedResponseNode<'a> {
+    pub fn new(dim: Vec<usize>) -> ExpectedResponseNode<'a> {
         return ExpectedResponseNode {
             base: NodeBase::new(),
             dim,
@@ -46,7 +46,7 @@ impl<'a> Node<'a> for ExpectedResponseNode<'a> {
                 println!("[RESPONSE] type or dimension mismatch, skipping reassignment");
             }
             _ => {
-                if input.dim().1 == self.dim {
+                if input.dim().1 == &self.dim {
                     self.base.set_data(input);
                 }
             }

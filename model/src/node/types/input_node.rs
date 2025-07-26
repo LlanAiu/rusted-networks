@@ -9,11 +9,11 @@ use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct InputNode<'a> {
     base: NodeBase<'a>,
-    dim: &'a [usize],
+    dim: Vec<usize>,
 }
 
 impl<'a> InputNode<'a> {
-    pub fn new(dim: &'a [usize]) -> InputNode<'a> {
+    pub fn new(dim: Vec<usize>) -> InputNode<'a> {
         return InputNode {
             base: NodeBase::new(),
             dim,
@@ -41,7 +41,7 @@ impl<'a> Node<'a> for InputNode<'a> {
     }
 
     fn set_data(&mut self, input: DataContainer) {
-        if input.dim().1 == self.dim {
+        if input.dim().1 == &self.dim {
             self.base.set_data(input);
             return;
         }
