@@ -5,12 +5,13 @@
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::Network,
+    network::{types::binary_classifier::config::BinaryClassifierConfig, Network},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer, UnitRef,
     },
 };
+pub mod config;
 
 pub struct BinaryClassiferNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
@@ -70,6 +71,12 @@ impl<'a> BinaryClassiferNetwork<'a> {
             inference,
             loss,
         }
+    }
+
+    pub fn load_from_file(path: &str) -> BinaryClassiferNetwork {
+        let config: BinaryClassifierConfig = BinaryClassifierConfig::load_from_file(path).unwrap();
+
+        todo!()
     }
 }
 
