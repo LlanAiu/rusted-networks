@@ -2,10 +2,16 @@
 
 // external
 
+use std::io::Result;
+
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::{types::binary_classifier::config::BinaryClassifierConfig, Network},
+    network::{
+        config_types::{InputParams, LearningParams, LossParams, UnitParams},
+        types::binary_classifier::config::BinaryClassifierConfig,
+        Network,
+    },
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer, UnitRef,
@@ -15,9 +21,10 @@ pub mod config;
 
 pub struct BinaryClassiferNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
-    _hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
+    hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
+    learning_rate: f32,
 }
 
 impl<'a> BinaryClassiferNetwork<'a> {
@@ -67,9 +74,10 @@ impl<'a> BinaryClassiferNetwork<'a> {
 
         BinaryClassiferNetwork {
             input,
-            _hidden: hidden,
+            hidden,
             inference,
             loss,
+            learning_rate,
         }
     }
 
@@ -110,16 +118,38 @@ impl<'a> BinaryClassiferNetwork<'a> {
 
         BinaryClassiferNetwork {
             input,
-            _hidden: hidden,
+            hidden,
             inference,
             loss,
+            learning_rate: learning.learning_rate,
         }
+    }
+
+    pub fn save_to_file(&self, path: &str) -> Result<()> {
+        let input: InputParams = InputParams::from_unit(&self.input);
+        let loss: LossParams = LossParams::from_unit(&self.loss);
+
+        let learning: LearningParams = LearningParams {
+            learning_rate: self.learning_rate,
+        };
+
+        let mut units: Vec<UnitParams> = Vec::new();
+
+        for hidden_unit in &self.hidden {
+            units.push(UnitParams::from_linear_unit(hidden_unit));
+        }
+        units.push(UnitParams::from_linear_unit(&self.inference));
+
+        let config: BinaryClassifierConfig =
+            BinaryClassifierConfig::new(input, units, loss, learning);
+
+        config.save_to_file(path)
     }
 }
 
 impl<'a> BinaryClassiferNetwork<'a> {
     pub fn get_hidden_layers(&self) -> usize {
-        self._hidden.len()
+        self.hidden.len()
     }
 }
 

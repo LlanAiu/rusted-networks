@@ -4,13 +4,27 @@ use ndarray::{Array1, Array2};
 // external
 use serde::{Deserialize, Serialize};
 
-use crate::data::{data_container::DataContainer, Data};
+use crate::{
+    data::{data_container::DataContainer, Data},
+    unit::{
+        types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
+        UnitContainer,
+    },
+};
 
 // internal
 
 #[derive(Serialize, Deserialize)]
 pub struct InputParams {
     pub input_size: Vec<usize>,
+}
+
+impl InputParams {
+    pub fn from_unit<'a>(unit: &UnitContainer<'a, InputUnit<'a>>) -> InputParams {
+        InputParams {
+            input_size: unit.borrow().get_input_size().to_vec(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -75,12 +89,47 @@ impl UnitParams {
             UnitParams::Softmax { .. } => "UnitParam::Softmax",
         }
     }
+
+    pub fn from_linear_unit<'a>(unit: &UnitContainer<'a, LinearUnit<'a>>) -> UnitParams {
+        let unit_ref = unit.borrow();
+
+        let input_size = unit_ref.get_input_size();
+        let output_size = unit_ref.get_output_size();
+
+        let weights_dim = (output_size, input_size);
+
+        let weights = unit_ref.get_weights();
+        let biases = unit_ref.get_biases();
+
+        let activation = unit_ref.get_activation().to_string();
+
+        UnitParams::Linear {
+            input_size,
+            output_size,
+            weights_dim,
+            weights,
+            biases,
+            activation,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct LossParams {
     pub loss_type: String,
     pub output_size: Vec<usize>,
+}
+
+impl LossParams {
+    pub fn from_unit<'a>(unit: &UnitContainer<'a, LossUnit<'a>>) -> LossParams {
+        let loss_type = unit.borrow().get_loss_type().to_string();
+        let output_size = unit.borrow().get_output_size().to_vec();
+
+        LossParams {
+            loss_type,
+            output_size,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]

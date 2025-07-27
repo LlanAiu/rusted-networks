@@ -13,15 +13,17 @@ use crate::{
 pub struct InputUnit<'a> {
     base: UnitBase<'a>,
     input: NodeRef<'a>,
+    input_size: Vec<usize>,
 }
 
 impl<'a> InputUnit<'a> {
     pub fn new(input_size: Vec<usize>) -> InputUnit<'a> {
-        let input_ref = NodeRef::new(InputNode::new(input_size));
+        let input_ref = NodeRef::new(InputNode::new(input_size.clone()));
 
         InputUnit {
             base: UnitBase::new(&input_ref, &input_ref),
             input: input_ref,
+            input_size,
         }
     }
 
@@ -31,6 +33,10 @@ impl<'a> InputUnit<'a> {
 
     pub fn set_input_data(&self, data: DataContainer) {
         self.input.borrow_mut().set_data(data);
+    }
+
+    pub fn get_input_size(&self) -> &[usize] {
+        &self.input_size
     }
 }
 

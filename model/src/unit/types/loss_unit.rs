@@ -16,18 +16,22 @@ use crate::{
 pub struct LossUnit<'a> {
     base: UnitBase<'a>,
     response_node: NodeRef<'a>,
+    loss_type: String,
+    output_size: Vec<usize>,
 }
 
 impl<'a> LossUnit<'a> {
     pub fn new(output_dim: Vec<usize>, loss_type: &str) -> LossUnit<'a> {
         let loss_ref: NodeRef = NodeRef::new(LossNode::new(loss_type));
-        let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim));
+        let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim.clone()));
 
         loss_ref.borrow_mut().add_input(&loss_ref, &response_ref);
 
         LossUnit {
             base: UnitBase::new(&loss_ref, &loss_ref),
             response_node: response_ref,
+            loss_type: loss_type.to_string(),
+            output_size: output_dim,
         }
     }
 
@@ -37,6 +41,14 @@ impl<'a> LossUnit<'a> {
 
     pub fn set_expected_response(&self, response: DataContainer) {
         self.response_node.borrow_mut().set_data(response);
+    }
+
+    pub fn get_loss_type(&self) -> &str {
+        &self.loss_type
+    }
+
+    pub fn get_output_size(&self) -> &[usize] {
+        &self.output_size
     }
 }
 
