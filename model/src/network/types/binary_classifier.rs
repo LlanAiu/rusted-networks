@@ -19,7 +19,7 @@ use crate::{
 };
 pub mod config;
 
-pub struct BinaryClassiferNetwork<'a> {
+pub struct BinaryClassifierNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, LinearUnit<'a>>,
@@ -27,12 +27,12 @@ pub struct BinaryClassiferNetwork<'a> {
     learning_rate: f32,
 }
 
-impl<'a> BinaryClassiferNetwork<'a> {
+impl<'a> BinaryClassifierNetwork<'a> {
     pub fn new(
         input_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
-    ) -> BinaryClassiferNetwork<'a> {
+    ) -> BinaryClassifierNetwork<'a> {
         if input_size.len() != 1 {
             panic!("[BINARY_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 but got {}.", input_size.len());
         }
@@ -72,7 +72,7 @@ impl<'a> BinaryClassiferNetwork<'a> {
 
         loss.add_input(&inference);
 
-        BinaryClassiferNetwork {
+        BinaryClassifierNetwork {
             input,
             hidden,
             inference,
@@ -81,7 +81,7 @@ impl<'a> BinaryClassiferNetwork<'a> {
         }
     }
 
-    pub fn load_from_file(path: &str) -> BinaryClassiferNetwork {
+    pub fn load_from_file(path: &str) -> BinaryClassifierNetwork {
         let config: BinaryClassifierConfig = BinaryClassifierConfig::load_from_file(path).unwrap();
 
         let learning = config.learning();
@@ -109,14 +109,14 @@ impl<'a> BinaryClassiferNetwork<'a> {
             hidden.push(hidden_unit);
         }
 
-        let last_params = config.units().get(units.len()).unwrap();
+        let last_params = config.units().get(units.len() - 1).unwrap();
 
         let inference: UnitContainer<LinearUnit> =
             UnitContainer::new(LinearUnit::from_config(last_params, learning.learning_rate));
 
         inference.add_input_ref(&prev_unit);
 
-        BinaryClassiferNetwork {
+        BinaryClassifierNetwork {
             input,
             hidden,
             inference,
@@ -147,13 +147,13 @@ impl<'a> BinaryClassiferNetwork<'a> {
     }
 }
 
-impl<'a> BinaryClassiferNetwork<'a> {
+impl<'a> BinaryClassifierNetwork<'a> {
     pub fn get_hidden_layers(&self) -> usize {
         self.hidden.len()
     }
 }
 
-impl Network for BinaryClassiferNetwork<'_> {
+impl Network for BinaryClassifierNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
         self.input.borrow_mut().set_input_data(input);
 

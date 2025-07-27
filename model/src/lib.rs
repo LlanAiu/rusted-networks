@@ -20,7 +20,7 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{
             types::{
-                binary_classifier::BinaryClassiferNetwork,
+                binary_classifier::BinaryClassifierNetwork,
                 simple_classifier::SimpleClassifierNetwork,
                 simple_regressor::SimpleRegressorNetwork,
             },
@@ -169,8 +169,8 @@ mod tests {
 
     #[test]
     fn training_test() {
-        let classifier: BinaryClassiferNetwork =
-            BinaryClassiferNetwork::new(vec![1], vec![2], 0.05);
+        let classifier: BinaryClassifierNetwork =
+            BinaryClassifierNetwork::new(vec![1], vec![2], 0.05);
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
@@ -210,6 +210,10 @@ mod tests {
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = classifier.predict(after_data2);
         println!("After 2: {:?}", after_output2);
+
+        classifier
+            .save_to_file("test/binary_classifer_test.json")
+            .expect("Save failed");
     }
 
     #[test]
@@ -247,5 +251,21 @@ mod tests {
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = classifier.predict(after_data2);
         println!("After 2: {:?}", after_output2);
+    }
+
+    #[test]
+    fn network_load_test() {
+        let classifier: BinaryClassifierNetwork =
+            BinaryClassifierNetwork::load_from_file("test/binary_classifer_test.json");
+
+        let test_arr: Array1<f32> = arr1(&[-0.7]);
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = classifier.predict(after_data);
+        println!("Loaded output 1: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[3.0]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = classifier.predict(after_data2);
+        println!("output 2: {:?}", after_output2);
     }
 }

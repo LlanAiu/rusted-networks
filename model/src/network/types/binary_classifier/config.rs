@@ -40,7 +40,8 @@ impl BinaryClassifierConfig {
 
     pub fn load_from_file(path: &str) -> Result<BinaryClassifierConfig> {
         let data = read_to_string(path)?;
-        let config: BinaryClassifierConfig = serde_json::from_str(&data).unwrap();
+        let config: BinaryClassifierConfig =
+            serde_json::from_str(&data).expect("Invalid JSON data for the selected network");
         Ok(config)
     }
 
