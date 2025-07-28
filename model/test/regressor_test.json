@@ -1,5 +1,5 @@
 {
-  "BinaryClassifier": {
+  "Regressor": {
     "input": {
       "input_size": [
         1
@@ -9,47 +9,53 @@
       {
         "unit_type": "Linear",
         "input_size": 1,
-        "output_size": 2,
+        "output_size": 4,
         "weights_dim": [
-          2,
+          4,
           1
         ],
         "weights": [
-          -1.6849277,
-          0.43740964
+          0.48039618,
+          1.7534853,
+          -0.04261899,
+          0.06975941
         ],
         "biases": [
-          0.8801296,
-          -0.1730768
+          -0.17112824,
+          -0.5130236,
+          0.0,
+          -0.29384464
         ],
         "activation": "relu"
       },
       {
         "unit_type": "Linear",
-        "input_size": 2,
+        "input_size": 4,
         "output_size": 1,
         "weights_dim": [
           1,
-          2
+          4
         ],
         "weights": [
-          -1.6094718,
-          0.07365175
+          0.33352438,
+          1.7449647,
+          0.0026909113,
+          -0.37530914
         ],
         "biases": [
-          0.88106817
+          -0.06273936
         ],
-        "activation": "sigmoid"
+        "activation": "none"
       }
     ],
     "loss": {
-      "loss_type": "binary_cross_entropy",
+      "loss_type": "mean_squared_error",
       "output_size": [
         1
       ]
     },
     "learning": {
-      "learning_rate": 0.05
+      "learning_rate": 0.005
     }
   }
 }

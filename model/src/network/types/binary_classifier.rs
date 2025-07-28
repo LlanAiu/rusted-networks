@@ -84,7 +84,7 @@ impl<'a> BinaryClassifierNetwork<'a> {
     pub fn load_from_file(path: &str) -> BinaryClassifierNetwork {
         let config: BinaryClassifierConfig = BinaryClassifierConfig::load_from_file(path).unwrap();
 
-        let learning = config.learning();
+        let learning_rate = config.learning().learning_rate;
 
         let input: UnitContainer<InputUnit> =
             UnitContainer::new(InputUnit::from_config(config.input()));
@@ -99,8 +99,7 @@ impl<'a> BinaryClassifierNetwork<'a> {
         for i in 0..(units.len() - 1) {
             let unit = units.get(i).unwrap();
 
-            let hidden_unit =
-                UnitContainer::new(LinearUnit::from_config(unit, learning.learning_rate));
+            let hidden_unit = UnitContainer::new(LinearUnit::from_config(unit, learning_rate));
 
             hidden_unit.add_input_ref(&prev_unit);
 
@@ -112,7 +111,7 @@ impl<'a> BinaryClassifierNetwork<'a> {
         let last_params = config.units().get(units.len() - 1).unwrap();
 
         let inference: UnitContainer<LinearUnit> =
-            UnitContainer::new(LinearUnit::from_config(last_params, learning.learning_rate));
+            UnitContainer::new(LinearUnit::from_config(last_params, learning_rate));
 
         inference.add_input_ref(&prev_unit);
 
@@ -123,7 +122,7 @@ impl<'a> BinaryClassifierNetwork<'a> {
             hidden,
             inference,
             loss,
-            learning_rate: learning.learning_rate,
+            learning_rate: learning_rate,
         }
     }
 
