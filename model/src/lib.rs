@@ -138,9 +138,6 @@ mod tests {
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
         let input = DataContainer::Inference(Data::VectorF32(input_arr1));
 
-        let layers = classifier.get_hidden_layers();
-        println!("Hidden layers: {}", layers);
-
         let output = classifier.predict(input);
         println!("{:?}", output);
     }
@@ -212,7 +209,7 @@ mod tests {
         println!("After 2: {:?}", after_output2);
 
         classifier
-            .save_to_file("test/binary_classifer_test.json")
+            .save_to_file("test/binary_classifier_test.json")
             .expect("Save failed");
     }
 
@@ -256,7 +253,7 @@ mod tests {
     #[test]
     fn network_load_test() {
         let classifier: BinaryClassifierNetwork =
-            BinaryClassifierNetwork::load_from_file("test/binary_classifer_test.json");
+            BinaryClassifierNetwork::load_from_file("test/binary_classifier_test.json");
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
         let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
@@ -266,6 +263,10 @@ mod tests {
         let test_arr2: Array1<f32> = arr1(&[3.0]);
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = classifier.predict(after_data2);
-        println!("output 2: {:?}", after_output2);
+        println!("Loaded output 2: {:?}", after_output2);
+
+        classifier
+            .save_to_file("test/binary_classifier_test.json")
+            .expect("Save Failed");
     }
 }

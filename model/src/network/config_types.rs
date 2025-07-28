@@ -1,18 +1,31 @@
 // builtin
 
-use ndarray::{Array1, Array2};
 // external
+use ndarray::{Array1, Array2};
 use serde::{Deserialize, Serialize};
 
+// internal
 use crate::{
     data::{data_container::DataContainer, Data},
+    network::types::{
+        binary_classifier::config::BinaryClassifierConfig,
+        simple_classifier::config::ClassifierConfig, simple_regressor::config::RegressorConfig,
+    },
     unit::{
-        types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
+        types::{
+            input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
+            softmax_unit::SoftmaxUnit,
+        },
         UnitContainer,
     },
 };
 
-// internal
+#[derive(Serialize, Deserialize)]
+pub enum Config {
+    BinaryClassifier(BinaryClassifierConfig),
+    Classifier(ClassifierConfig),
+    Regressor(RegressorConfig),
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct InputParams {
@@ -104,6 +117,29 @@ impl UnitParams {
         let activation = unit_ref.get_activation().to_string();
 
         UnitParams::Linear {
+            input_size,
+            output_size,
+            weights_dim,
+            weights,
+            biases,
+            activation,
+        }
+    }
+
+    pub fn from_softmax_unit<'a>(unit: &UnitContainer<'a, SoftmaxUnit<'a>>) -> UnitParams {
+        let unit_ref = unit.borrow();
+
+        let input_size = unit_ref.get_input_size();
+        let output_size = unit_ref.get_output_size();
+
+        let weights_dim = (output_size, input_size);
+
+        let weights = unit_ref.get_weights();
+        let biases = unit_ref.get_biases();
+
+        let activation = unit_ref.get_activation().to_string();
+
+        UnitParams::Softmax {
             input_size,
             output_size,
             weights_dim,

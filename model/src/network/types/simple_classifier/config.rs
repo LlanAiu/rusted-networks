@@ -11,21 +11,21 @@ use serde::{Deserialize, Serialize};
 use crate::network::config_types::{Config, InputParams, LearningParams, LossParams, UnitParams};
 
 #[derive(Serialize, Deserialize)]
-pub struct BinaryClassifierConfig {
+pub struct ClassifierConfig {
     input: InputParams,
     units: Vec<UnitParams>,
     loss: LossParams,
     learning: LearningParams,
 }
 
-impl BinaryClassifierConfig {
+impl ClassifierConfig {
     pub fn new(
         input: InputParams,
         units: Vec<UnitParams>,
         loss: LossParams,
         learning: LearningParams,
-    ) -> BinaryClassifierConfig {
-        BinaryClassifierConfig {
+    ) -> ClassifierConfig {
+        ClassifierConfig {
             input,
             units,
             loss,
@@ -34,18 +34,18 @@ impl BinaryClassifierConfig {
     }
 
     pub fn save_to_file(self, path: &str) -> Result<()> {
-        let config: Config = Config::BinaryClassifier(self);
+        let config: Config = Config::Classifier(self);
         let json_string = serde_json::to_string_pretty(&config).unwrap();
         write(path, json_string)
     }
 
-    pub fn load_from_file(path: &str) -> Result<BinaryClassifierConfig> {
+    pub fn load_from_file(path: &str) -> Result<ClassifierConfig> {
         let data = read_to_string(path)?;
         let config: Config =
             serde_json::from_str(&data).expect("Invalid JSON data for network configuration");
 
-        if let Config::BinaryClassifier(binary_config) = config {
-            return Ok(binary_config);
+        if let Config::Classifier(class_config) = config {
+            return Ok(class_config);
         }
 
         Err(Error::new(

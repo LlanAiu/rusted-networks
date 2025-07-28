@@ -1,0 +1,55 @@
+{
+  "BinaryClassifier": {
+    "input": {
+      "input_size": [
+        1
+      ]
+    },
+    "units": [
+      {
+        "unit_type": "Linear",
+        "input_size": 1,
+        "output_size": 2,
+        "weights_dim": [
+          2,
+          1
+        ],
+        "weights": [
+          -0.01968092,
+          1.4271829
+        ],
+        "biases": [
+          -0.022778606,
+          0.8026447
+        ],
+        "activation": "relu"
+      },
+      {
+        "unit_type": "Linear",
+        "input_size": 2,
+        "output_size": 1,
+        "weights_dim": [
+          1,
+          2
+        ],
+        "weights": [
+          0.70124465,
+          1.9668438
+        ],
+        "biases": [
+          -0.9034575
+        ],
+        "activation": "sigmoid"
+      }
+    ],
+    "loss": {
+      "loss_type": "binary_cross_entropy",
+      "output_size": [
+        1
+      ]
+    },
+    "learning": {
+      "learning_rate": 0.05
+    }
+  }
+}

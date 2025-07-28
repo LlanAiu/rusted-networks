@@ -116,6 +116,8 @@ impl<'a> BinaryClassifierNetwork<'a> {
 
         inference.add_input_ref(&prev_unit);
 
+        loss.add_input(&inference);
+
         BinaryClassifierNetwork {
             input,
             hidden,

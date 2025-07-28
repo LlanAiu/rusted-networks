@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    data::data_container::DataContainer,
+    data::{data_container::DataContainer, Data},
     network::config_types::UnitParams,
     node::{
         types::{
@@ -21,6 +21,9 @@ pub struct SoftmaxUnit<'a> {
     base: UnitBase<'a>,
     weights: NodeRef<'a>,
     biases: NodeRef<'a>,
+    input_size: usize,
+    output_size: usize,
+    activation: String,
 }
 
 impl<'a> SoftmaxUnit<'a> {
@@ -55,6 +58,9 @@ impl<'a> SoftmaxUnit<'a> {
             base: UnitBase::new(&matmul_ref, &softmax_ref),
             weights: weights_ref,
             biases: biases_ref,
+            input_size,
+            output_size,
+            activation: function.to_string(),
         }
     }
 
@@ -85,6 +91,40 @@ impl<'a> SoftmaxUnit<'a> {
 
     pub fn set_weights(&self, data: DataContainer) {
         self.weights.borrow_mut().set_data(data);
+    }
+
+    pub fn get_input_size(&self) -> usize {
+        self.input_size
+    }
+
+    pub fn get_output_size(&self) -> usize {
+        self.output_size
+    }
+
+    pub fn get_weights(&self) -> Vec<f32> {
+        let data = self.weights.borrow_mut().get_data();
+
+        if let DataContainer::Parameter(Data::MatrixF32(matrix)) = data {
+            return matrix.flatten().to_vec();
+        }
+
+        println!("Couldn't package weights for serialization due to invalid data container/type");
+        Vec::new()
+    }
+
+    pub fn get_biases(&self) -> Vec<f32> {
+        let data = self.biases.borrow_mut().get_data();
+
+        if let DataContainer::Parameter(Data::VectorF32(vec)) = data {
+            return vec.to_vec();
+        }
+
+        println!("Couldn't package biases for serialization due to invalid data container/type");
+        Vec::new()
+    }
+
+    pub fn get_activation(&self) -> &str {
+        &self.activation
     }
 }
 

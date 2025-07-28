@@ -2,10 +2,16 @@
 
 // external
 
+use std::io::Result;
+
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::Network,
+    network::{
+        config_types::{InputParams, LearningParams, LossParams, UnitParams},
+        types::simple_classifier::config::ClassifierConfig,
+        Network,
+    },
     unit::{
         types::{
             input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
@@ -14,12 +20,14 @@ use crate::{
         Unit, UnitContainer, UnitRef,
     },
 };
+pub mod config;
 
 pub struct SimpleClassifierNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
-    _hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
+    hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
+    learning_rate: f32,
 }
 
 impl<'a> SimpleClassifierNetwork<'a> {
@@ -75,16 +83,75 @@ impl<'a> SimpleClassifierNetwork<'a> {
 
         SimpleClassifierNetwork {
             input,
-            _hidden: hidden,
+            hidden,
             inference,
             loss,
+            learning_rate,
         }
     }
-}
 
-impl<'a> SimpleClassifierNetwork<'a> {
-    pub fn get_hidden_layers(&self) -> usize {
-        self._hidden.len()
+    pub fn load_from_file(path: &str) -> SimpleClassifierNetwork {
+        let config: ClassifierConfig = ClassifierConfig::load_from_file(path).unwrap();
+        let learning_rate: f32 = config.learning().learning_rate;
+
+        let input: UnitContainer<InputUnit> =
+            UnitContainer::new(InputUnit::from_config(config.input()));
+
+        let hidden_len = config.units().len();
+        let units = config.units();
+
+        let mut prev_ref = input.get_ref();
+        let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
+
+        for i in 0..(hidden_len - 1) {
+            let hidden_config = units.get(i).unwrap();
+            let hidden_unit: UnitContainer<LinearUnit> =
+                UnitContainer::new(LinearUnit::from_config(hidden_config, learning_rate));
+
+            hidden_unit.add_input_ref(&prev_ref);
+            prev_ref = hidden_unit.get_ref();
+            hidden.push(hidden_unit);
+        }
+
+        let inference_config = units.get(hidden_len - 1).unwrap();
+        let inference: UnitContainer<SoftmaxUnit> =
+            UnitContainer::new(SoftmaxUnit::from_config(inference_config, learning_rate));
+
+        inference.add_input_ref(&prev_ref);
+
+        let loss: UnitContainer<LossUnit> =
+            UnitContainer::new(LossUnit::from_config(config.loss()));
+
+        loss.add_input(&inference);
+
+        SimpleClassifierNetwork {
+            input,
+            hidden,
+            inference,
+            loss,
+            learning_rate,
+        }
+    }
+
+    pub fn save_to_file(&self, path: &str) -> Result<()> {
+        let input = InputParams::from_unit(&self.input);
+
+        let loss = LossParams::from_unit(&self.loss);
+
+        let mut units: Vec<UnitParams> = Vec::new();
+
+        for unit in &self.hidden {
+            units.push(UnitParams::from_linear_unit(unit));
+        }
+        units.push(UnitParams::from_softmax_unit(&self.inference));
+
+        let learning = LearningParams {
+            learning_rate: self.learning_rate,
+        };
+
+        let config: ClassifierConfig = ClassifierConfig::new(input, units, loss, learning);
+
+        config.save_to_file(path)
     }
 }
 
