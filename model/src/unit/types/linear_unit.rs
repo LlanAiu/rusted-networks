@@ -8,7 +8,7 @@ use std::usize;
 // internal
 use crate::{
     data::{data_container::DataContainer, Data},
-    network::config_types::UnitParams,
+    network::config_types::unit_params::UnitParams,
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,

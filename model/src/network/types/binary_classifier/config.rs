@@ -8,7 +8,10 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 // internal
-use crate::network::config_types::{Config, InputParams, LearningParams, LossParams, UnitParams};
+use crate::network::config_types::{
+    input_params::InputParams, learning_params::LearningParams, loss_params::LossParams,
+    unit_params::UnitParams, Config,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct BinaryClassifierConfig {

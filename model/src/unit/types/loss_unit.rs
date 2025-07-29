@@ -5,7 +5,7 @@
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::config_types::LossParams,
+    network::config_types::loss_params::LossParams,
     node::{
         types::{expected_response_node::ExpectedResponseNode, loss_node::LossNode},
         NodeRef,

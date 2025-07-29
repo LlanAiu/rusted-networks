@@ -5,7 +5,7 @@
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::config_types::InputParams,
+    network::config_types::input_params::InputParams,
     node::{types::input_node::InputNode, NodeRef},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };

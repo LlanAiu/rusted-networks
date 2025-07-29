@@ -8,7 +8,10 @@ use std::io::Result;
 use crate::{
     data::data_container::DataContainer,
     network::{
-        config_types::{InputParams, LearningParams, LossParams, UnitParams},
+        config_types::{
+            input_params::InputParams, learning_params::LearningParams, loss_params::LossParams,
+            unit_params::UnitParams,
+        },
         types::simple_regressor::config::RegressorConfig,
         Network,
     },
