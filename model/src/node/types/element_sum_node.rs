@@ -4,23 +4,23 @@
 
 // internal
 use crate::{
-    data::{data_container::DataContainer, Data},
+    data::data_container::DataContainer,
     node::{node_base::NodeBase, Node, NodeRef, NodeType},
 };
 
-pub struct SquareNode<'a> {
+pub struct ElementSumNode<'a> {
     base: NodeBase<'a>,
 }
 
-impl<'a> SquareNode<'a> {
-    pub fn new() -> SquareNode<'a> {
-        SquareNode {
+impl<'a> ElementSumNode<'a> {
+    pub fn new() -> ElementSumNode<'a> {
+        ElementSumNode {
             base: NodeBase::new(),
         }
     }
 }
 
-impl<'a> Node<'a> for SquareNode<'a> {
+impl<'a> Node<'a> for ElementSumNode<'a> {
     fn get_type(&self) -> NodeType {
         NodeType::Operation
     }
@@ -63,7 +63,7 @@ impl<'a> Node<'a> for SquareNode<'a> {
         let input_ref = inputs.get(0).unwrap();
         let input_data = input_ref.borrow_mut().get_data();
 
-        let res = input_data.apply_function_ref(|data| data.times(data));
+        let res = input_data.element_sum();
 
         self.base.set_data(res);
     }
@@ -80,19 +80,18 @@ impl<'a> Node<'a> for SquareNode<'a> {
             return;
         }
 
-        let scale = DataContainer::Parameter(Data::ScalarF32(2.0));
         let input = self.base.get_inputs().get(0).unwrap();
+        let input_data = input.borrow_mut().get_data();
 
-        let grad = input.borrow_mut().get_data().times(&scale);
+        let scale = input_data.apply_elementwise(|_f| 1.0);
         let prev_grad = self.base.get_gradient();
 
-        let update = grad.times(&prev_grad);
-        for node in self.base.get_inputs() {
-            node.borrow_mut().add_gradient(&update);
+        let update = prev_grad.times(&scale);
 
-            if node.borrow().should_process_backprop() {
-                node.borrow_mut().apply_jacobian();
-            }
+        input.borrow_mut().add_gradient(&update);
+
+        if input.borrow().should_process_backprop() {
+            input.borrow_mut().apply_jacobian();
         }
 
         self.base.reset_gradient();

@@ -5,8 +5,8 @@ use ndarray::{Array1, Array2};
 
 // internal
 use crate::data::operations::{
-    matmul::DataMatMul, minus::DataMinus, plus::DataPlus, sqrt::DataSquareRoot, times::DataTimes,
-    transpose::DataTranspose,
+    element_sum::DataElementSum, matmul::DataMatMul, minus::DataMinus, plus::DataPlus,
+    sqrt::DataSquareRoot, times::DataTimes, transpose::DataTranspose,
 };
 pub mod data_container;
 pub mod operations;
@@ -167,11 +167,29 @@ impl Data {
         }
     }
 
+    pub fn element_sum(&self) -> Data {
+        match self {
+            Data::ScalarF32(scalar) => DataElementSum::element_sum_scalar(scalar),
+            Data::VectorF32(vector) => DataElementSum::element_sum_vector(vector),
+            Data::MatrixF32(matrix) => DataElementSum::element_sum_matrix(matrix),
+            Data::None => Data::None,
+        }
+    }
+
     pub fn sqrt(&self) -> Data {
         match self {
             Data::ScalarF32(scalar) => DataSquareRoot::square_root_scalar(scalar),
             Data::VectorF32(vector) => DataSquareRoot::square_root_vector(vector),
             Data::MatrixF32(matrix) => DataSquareRoot::square_root_matrix(matrix),
+            Data::None => Data::None,
+        }
+    }
+
+    pub fn apply_elementwise(&self, func: impl Fn(f32) -> f32) -> Data {
+        match self {
+            Data::ScalarF32(scalar) => Data::ScalarF32(func(*scalar)),
+            Data::VectorF32(vector) => Data::VectorF32(vector.mapv(func)),
+            Data::MatrixF32(matrix) => Data::MatrixF32(matrix.mapv(func)),
             Data::None => Data::None,
         }
     }

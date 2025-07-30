@@ -6,8 +6,8 @@ use ndarray::Array2;
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 
-use crate::data::data_container::DataContainer;
 // internal
+use crate::data::data_container::DataContainer;
 use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};

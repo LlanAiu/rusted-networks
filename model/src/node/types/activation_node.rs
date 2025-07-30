@@ -2,8 +2,8 @@
 
 // external
 
-use crate::data::data_container::DataContainer;
 // internal
+use crate::data::data_container::DataContainer;
 use crate::node::NodeType;
 use crate::node::{
     activation::activation_function::ActivationFunction, node_base::NodeBase, Node, NodeRef,

@@ -5,8 +5,9 @@
 // internal
 use crate::data::{
     data_container::operations::{
-        matmul::ContainerMatMul, minus::ContainerMinus, plus::ContainerPlus,
-        sqrt::ContainerSquareRoot, times::ContainerTimes, transpose::ContainerTranspose,
+        element_sum::ContainerElementSum, matmul::ContainerMatMul, minus::ContainerMinus,
+        plus::ContainerPlus, sqrt::ContainerSquareRoot, times::ContainerTimes,
+        transpose::ContainerTranspose,
     },
     Data,
 };
@@ -208,6 +209,19 @@ impl DataContainer {
         }
     }
 
+    pub fn element_sum(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => ContainerElementSum::element_sum_batch(batch),
+            DataContainer::Inference(data) => {
+                ContainerElementSum::element_sum_data(data, ContainerType::Inference)
+            }
+            DataContainer::Parameter(data) => {
+                ContainerElementSum::element_sum_data(data, ContainerType::Parameter)
+            }
+            DataContainer::Empty => DataContainer::Empty,
+        }
+    }
+
     pub fn sqrt(&self) -> DataContainer {
         match self {
             DataContainer::Batch(batch) => ContainerSquareRoot::square_root_batch(batch),
@@ -242,6 +256,30 @@ impl DataContainer {
             DataContainer::Inference(data) => DataContainer::Inference(func(data)),
             DataContainer::Parameter(data) => DataContainer::Parameter(func(data)),
             _ => DataContainer::Empty,
+        }
+    }
+
+    pub fn apply_elementwise<F>(&self, func: F) -> DataContainer
+    where
+        F: Fn(f32) -> f32 + Copy,
+    {
+        match self {
+            DataContainer::Batch(datas) => {
+                let mapped: Vec<Data> = datas
+                    .iter()
+                    .map(|data| data.apply_elementwise(func))
+                    .collect();
+                DataContainer::Batch(mapped)
+            }
+            DataContainer::Inference(data) => {
+                let new_data = data.apply_elementwise(func);
+                DataContainer::Inference(new_data)
+            }
+            DataContainer::Parameter(data) => {
+                let new_data = data.apply_elementwise(func);
+                DataContainer::Parameter(new_data)
+            }
+            DataContainer::Empty => todo!(),
         }
     }
 

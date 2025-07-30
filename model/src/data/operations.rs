@@ -3,6 +3,7 @@
 // external
 
 // internal
+pub mod element_sum;
 pub mod matmul;
 pub mod minus;
 pub mod plus;

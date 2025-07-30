@@ -5,8 +5,8 @@ use core::f32;
 // external
 use ndarray::Array2;
 
-use crate::data::data_container::DataContainer;
 // internal
+use crate::data::data_container::DataContainer;
 use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
