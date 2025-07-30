@@ -3,6 +3,7 @@
 // external
 
 // internal
+pub mod abs_value_node;
 pub mod activation_node;
 pub mod add_node;
 pub mod bias_node;

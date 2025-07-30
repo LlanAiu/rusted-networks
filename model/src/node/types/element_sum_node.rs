@@ -29,7 +29,7 @@ impl<'a> Node<'a> for ElementSumNode<'a> {
         if self.base.get_inputs().len() == 0 {
             self.base.add_input(this, input);
         } else {
-            println!("[SQUARE] Node's maximum input capacity reached (1). Skipping assignment, consider using an extra node instead.");
+            println!("[ELEMENT_SUM] Node's maximum input capacity reached (1). Skipping assignment, consider using an extra node instead.");
         }
     }
 
@@ -46,7 +46,7 @@ impl<'a> Node<'a> for ElementSumNode<'a> {
     }
 
     fn set_data(&mut self, _data: DataContainer) {
-        println!("[SQUARE] Unsupported Operation: Cannot set data of an operation node");
+        println!("[ELEMENT_SUM] Unsupported Operation: Cannot set data of an operation node");
     }
 
     fn get_data(&mut self) -> DataContainer {
