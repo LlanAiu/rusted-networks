@@ -6,5 +6,6 @@
 pub mod matmul;
 pub mod minus;
 pub mod plus;
+pub mod sqrt;
 pub mod times;
 pub mod transpose;

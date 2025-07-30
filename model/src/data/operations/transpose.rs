@@ -14,11 +14,11 @@ impl DataTranspose {
     }
 
     pub fn transpose_vector(vector: &Array1<f32>) -> Data {
-        return Data::VectorF32(vector.clone());
+        Data::VectorF32(vector.clone())
     }
 
     pub fn transpose_matrix(matrix: &Array2<f32>) -> Data {
         let transposed = matrix.t().to_owned();
-        return Data::MatrixF32(transposed);
+        Data::MatrixF32(transposed)
     }
 }

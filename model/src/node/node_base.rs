@@ -78,7 +78,6 @@ impl<'a> NodeBase<'a> {
 
     pub fn process_gradient(&mut self, learning_rate: &DataContainer) {
         let update = self.grad.average_batch().times(learning_rate);
-        // println!("Gradient update: {:?}", update);
 
         self.data = self.data.minus(&update);
     }

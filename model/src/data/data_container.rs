@@ -5,8 +5,8 @@
 // internal
 use crate::data::{
     data_container::operations::{
-        matmul::ContainerMatMul, minus::ContainerMinus, plus::ContainerPlus, times::ContainerTimes,
-        transpose::ContainerTranspose,
+        matmul::ContainerMatMul, minus::ContainerMinus, plus::ContainerPlus,
+        sqrt::ContainerSquareRoot, times::ContainerTimes, transpose::ContainerTranspose,
     },
     Data,
 };
@@ -203,6 +203,19 @@ impl DataContainer {
             }
             DataContainer::Parameter(data) => {
                 ContainerTranspose::transpose_data(data, ContainerType::Parameter)
+            }
+            DataContainer::Empty => DataContainer::Empty,
+        }
+    }
+
+    pub fn sqrt(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => ContainerSquareRoot::square_root_batch(batch),
+            DataContainer::Inference(data) => {
+                ContainerSquareRoot::square_root_data(data, ContainerType::Inference)
+            }
+            DataContainer::Parameter(data) => {
+                ContainerSquareRoot::square_root_data(data, ContainerType::Parameter)
             }
             DataContainer::Empty => DataContainer::Empty,
         }

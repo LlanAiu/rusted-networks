@@ -5,7 +5,7 @@ use ndarray::{Array1, Array2};
 
 // internal
 use crate::data::operations::{
-    matmul::DataMatMul, minus::DataMinus, plus::DataPlus, times::DataTimes,
+    matmul::DataMatMul, minus::DataMinus, plus::DataPlus, sqrt::DataSquareRoot, times::DataTimes,
     transpose::DataTranspose,
 };
 pub mod data_container;
@@ -163,6 +163,15 @@ impl Data {
             Data::ScalarF32(scalar) => DataTranspose::transpose_scalar(scalar),
             Data::VectorF32(vector) => DataTranspose::transpose_vector(vector),
             Data::MatrixF32(matrix) => DataTranspose::transpose_matrix(matrix),
+            Data::None => Data::None,
+        }
+    }
+
+    pub fn sqrt(&self) -> Data {
+        match self {
+            Data::ScalarF32(scalar) => DataSquareRoot::square_root_scalar(scalar),
+            Data::VectorF32(vector) => DataSquareRoot::square_root_vector(vector),
+            Data::MatrixF32(matrix) => DataSquareRoot::square_root_matrix(matrix),
             Data::None => Data::None,
         }
     }
