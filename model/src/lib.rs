@@ -6,6 +6,7 @@
 pub mod data;
 pub mod network;
 pub mod node;
+pub mod regularization;
 pub mod unit;
 
 #[cfg(test)]
