@@ -3,5 +3,4 @@
 // external
 
 // internal
-
-pub trait NormPenalty {}
+pub mod l2_penalty;
