@@ -2,7 +2,7 @@
 
 // external
 
-use std::io::Result;
+use std::{cell::RefCell, io::Result, rc::Rc};
 
 // internal
 use crate::{
@@ -15,6 +15,7 @@ use crate::{
         types::simple_regressor::config::RegressorConfig,
         Network,
     },
+    regularization::norm_penalty::l2_penalty::{L2PenaltyUnit, L2Ref},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer, UnitRef,
@@ -36,6 +37,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
+        alpha: f32,
     ) -> SimpleRegressorNetwork<'a> {
         if input_size.len() != 1 || output_size.len() != 1 {
             panic!("[SIMPLE_REGRESSOR] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
@@ -50,6 +52,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
         let mut prev_unit: UnitRef = input.get_ref();
+        let mut prev_reg_unit: Option<L2Ref> = None;
 
         for i in 0..hidden_sizes.len() {
             let width = hidden_sizes
@@ -63,10 +66,19 @@ impl<'a> SimpleRegressorNetwork<'a> {
 
             let hidden_unit: UnitContainer<LinearUnit> =
                 UnitContainer::new(LinearUnit::new("relu", prev_width, *width, learning_rate));
+            let reg_unit: L2Ref = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
+            reg_unit
+                .borrow_mut()
+                .add_weight_input(hidden_unit.borrow().get_weights_ref());
+
+            if let Option::Some(prev_reg) = prev_reg_unit {
+                reg_unit.borrow_mut().add_penalty_input(&prev_reg);
+            }
 
             hidden_unit.add_input_ref(&prev_unit);
 
             prev_unit = hidden_unit.get_ref();
+            prev_reg_unit = Option::Some(reg_unit);
             prev_width = *width;
 
             hidden.push(hidden_unit);
@@ -78,9 +90,18 @@ impl<'a> SimpleRegressorNetwork<'a> {
             output_dim,
             learning_rate,
         ));
+        let inference_reg = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
+
+        inference_reg
+            .borrow_mut()
+            .add_weight_input(inference.borrow().get_weights_ref());
+        if let Option::Some(prev_reg) = prev_reg_unit {
+            inference_reg.borrow_mut().add_penalty_input(&prev_reg);
+        }
         inference.add_input_ref(&prev_unit);
 
         loss.add_input(&inference);
+        loss.borrow().add_reg_node(&inference_reg);
 
         SimpleRegressorNetwork {
             input,

@@ -4,9 +4,15 @@ use std::{cell::RefCell, rc::Rc};
 // external
 
 // internal
-use crate::node::{
-    types::{add_node::AddNode, element_sum_node::ElementSumNode, square_node::SquareNode},
-    NodeRef,
+use crate::{
+    data::Data,
+    node::{
+        types::{
+            add_node::AddNode, constant_node::ConstantNode, element_sum_node::ElementSumNode,
+            multiply_node::MultiplyNode, square_node::SquareNode,
+        },
+        NodeRef,
+    },
 };
 
 pub type L2Ref<'a> = Rc<RefCell<L2PenaltyUnit<'a>>>;
@@ -18,12 +24,16 @@ pub struct L2PenaltyUnit<'a> {
 }
 
 impl<'a> L2PenaltyUnit<'a> {
-    pub fn new() -> L2PenaltyUnit<'a> {
+    pub fn new(scale: f32) -> L2PenaltyUnit<'a> {
         let square = NodeRef::new(SquareNode::new());
         let element_sum = NodeRef::new(ElementSumNode::new());
         let add = NodeRef::new(AddNode::new());
+        let multiply = NodeRef::new(MultiplyNode::new());
+        let scale = NodeRef::new(ConstantNode::new(Data::ScalarF32(scale)));
 
-        add.borrow_mut().add_input(&add, &element_sum);
+        add.borrow_mut().add_input(&add, &multiply);
+        multiply.borrow_mut().add_input(&multiply, &element_sum);
+        multiply.borrow_mut().add_input(&multiply, &scale);
         element_sum.borrow_mut().add_input(&element_sum, &square);
 
         L2PenaltyUnit {
@@ -49,5 +59,45 @@ impl<'a> L2PenaltyUnit<'a> {
 
     pub fn get_output_ref(&self) -> &NodeRef<'a> {
         &self.penalty_output
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        data::data_container::DataContainer,
+        node::{types::weight_node::WeightNode, NodeRef},
+        regularization::norm_penalty::l2_penalty::L2PenaltyUnit,
+    };
+
+    #[test]
+    fn penalty_test() {
+        let mut unit: L2PenaltyUnit = L2PenaltyUnit::new(1.0);
+        let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 0.001));
+
+        println!("Weights: {:?}", weight.borrow_mut().get_data());
+
+        unit.add_weight_input(&weight);
+
+        unit.get_output_ref().borrow_mut().apply_operation();
+
+        let output = unit.get_output_ref().borrow_mut().get_data();
+
+        println!("Output: {:?}", output);
+    }
+
+    #[test]
+    fn penalty_backprop() {
+        let mut unit: L2PenaltyUnit = L2PenaltyUnit::new(1.0);
+        let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 1.0));
+
+        println!("Weights: {:?}", weight.borrow_mut().get_data());
+
+        unit.add_weight_input(&weight);
+
+        let output_ref = unit.get_output_ref();
+        output_ref.borrow_mut().apply_operation();
+        output_ref.borrow_mut().add_gradient(&DataContainer::one());
+        output_ref.borrow_mut().apply_jacobian();
     }
 }

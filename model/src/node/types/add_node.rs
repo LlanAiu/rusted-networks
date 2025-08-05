@@ -9,12 +9,21 @@ use crate::node::{node_base::NodeBase, Node, NodeRef};
 
 pub struct AddNode<'a> {
     base: NodeBase<'a>,
+    should_print: bool,
 }
 
 impl<'a> AddNode<'a> {
     pub fn new() -> AddNode<'a> {
         AddNode {
             base: NodeBase::new(),
+            should_print: false,
+        }
+    }
+
+    pub fn with_print() -> AddNode<'a> {
+        AddNode {
+            base: NodeBase::new(),
+            should_print: true,
         }
     }
 }
@@ -58,10 +67,18 @@ impl<'a> Node<'a> for AddNode<'a> {
         let mut first_ref = inputs.get(0).unwrap().borrow_mut();
         let mut sum = first_ref.get_data();
 
+        if self.should_print {
+            println!("Sum data 0: {:?}", sum);
+        }
+
         for i in 1..inputs.len() {
             let mut node_ref = inputs[i].borrow_mut();
-            let data_one = node_ref.get_data();
-            sum = sum.plus(&data_one);
+            let data = node_ref.get_data();
+            sum = sum.plus(&data);
+
+            if self.should_print {
+                println!("Sum data {i}: {:?}", data);
+            }
         }
 
         self.base.set_data(sum);

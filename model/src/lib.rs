@@ -153,11 +153,11 @@ mod tests {
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
-        for _i in 1..200 {
+        for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
-            for _j in 1..8 {
+            for _j in 0..8 {
                 let rand = random_range(0.0..1.0);
                 if rand < 0.5 {
                     let x: f32 = random_range(-1.0..-0.5);
@@ -202,11 +202,11 @@ mod tests {
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
-        for _i in 1..200 {
+        for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
-            for _j in 1..8 {
+            for _j in 0..8 {
                 let rand = random_range(0.0..1.0);
                 if rand < 0.5 {
                     let x: f32 = random_range(-1.0..-0.5);
@@ -244,18 +244,18 @@ mod tests {
     #[test]
     fn quadratic_test() {
         let regressor: SimpleRegressorNetwork =
-            SimpleRegressorNetwork::new(vec![1], vec![1], vec![4], 0.005);
+            SimpleRegressorNetwork::new(vec![1], vec![1], vec![4], 0.005, 0.2);
 
         let test_arr: Array1<f32> = arr1(&[2.0]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
         let before_output = regressor.predict(before_data);
         println!("Before: {:?}", before_output);
 
-        for _i in 1..200 {
+        for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
-            for _j in 1..8 {
+            for _j in 0..8 {
                 let x: f32 = random_range(1.0..4.0);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
@@ -318,6 +318,39 @@ mod tests {
     fn regressor_load_test() {
         let regressor: SimpleRegressorNetwork =
             SimpleRegressorNetwork::load_from_file("test/regressor_test.json");
+
+        let test_arr: Array1<f32> = arr1(&[2.0]);
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = regressor.predict(after_data);
+        println!("Loaded output 1: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[3.0]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = regressor.predict(after_data2);
+        println!("Loaded output 2: {:?}", after_output2);
+    }
+
+    #[test]
+    fn regressor_regularization_test() {
+        let regressor: SimpleRegressorNetwork =
+            SimpleRegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, 1.5);
+
+        for _i in 0..10 {
+            let mut inputs = Vec::new();
+            let mut responses = Vec::new();
+
+            for _j in 0..8 {
+                let x: f32 = random_range(1.0..4.0);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[x * x])));
+            }
+
+            let input = DataContainer::Batch(inputs);
+            let response = DataContainer::Batch(responses);
+
+            regressor.train(input, response);
+        }
 
         let test_arr: Array1<f32> = arr1(&[2.0]);
         let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));

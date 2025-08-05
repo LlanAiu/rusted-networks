@@ -65,6 +65,8 @@ impl<'a> Node<'a> for SquareNode<'a> {
 
         let res = input_data.apply_function_ref(|data| data.times(data));
 
+        println!("Square output: {:?}", res);
+
         self.base.set_data(res);
     }
 
