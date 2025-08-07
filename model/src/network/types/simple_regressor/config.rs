@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 // internal
 use crate::network::config_types::{
-    input_params::InputParams, learning_params::LearningParams, loss_params::LossParams,
+    hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
     unit_params::UnitParams, Config,
 };
 
@@ -18,21 +18,63 @@ pub struct RegressorConfig {
     input: InputParams,
     units: Vec<UnitParams>,
     loss: LossParams,
-    learning: LearningParams,
+    hyperparams: HyperParams,
 }
 
 impl RegressorConfig {
     pub fn new(
+        input_size: Vec<usize>,
+        output_size: Vec<usize>,
+        hidden_sizes: Vec<usize>,
+        learning_rate: f32,
+        reg_alpha: f32,
+    ) -> RegressorConfig {
+        if input_size.len() != 1 || output_size.len() != 1 {
+            panic!("[SIMPLE_REGRESSOR] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
+        }
+        let input_usize = input_size[0];
+        let output_usize = output_size[0];
+
+        let input: InputParams = InputParams {
+            input_size: input_size,
+        };
+        let loss: LossParams = LossParams {
+            loss_type: String::from("mean_squared_error"),
+            output_size: output_size,
+        };
+        let learning: HyperParams = HyperParams::new(learning_rate, reg_alpha);
+
+        let mut units: Vec<UnitParams> = Vec::new();
+        let mut prev_width: usize = input_usize;
+
+        for unit_size in hidden_sizes {
+            let unit: UnitParams = UnitParams::new_linear(prev_width, unit_size, "relu");
+            units.push(unit);
+            prev_width = unit_size;
+        }
+
+        let inference_unit: UnitParams = UnitParams::new_linear(prev_width, output_usize, "none");
+        units.push(inference_unit);
+
+        RegressorConfig {
+            input,
+            units,
+            loss,
+            hyperparams: learning,
+        }
+    }
+
+    pub fn from_params(
         input: InputParams,
         units: Vec<UnitParams>,
         loss: LossParams,
-        learning: LearningParams,
+        learning: HyperParams,
     ) -> RegressorConfig {
         RegressorConfig {
             input,
             units,
             loss,
-            learning,
+            hyperparams: learning,
         }
     }
 
@@ -69,7 +111,7 @@ impl RegressorConfig {
         &self.loss
     }
 
-    pub fn learning(&self) -> &LearningParams {
-        &self.learning
+    pub fn params(&self) -> &HyperParams {
+        &self.hyperparams
     }
 }

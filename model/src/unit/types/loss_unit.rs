@@ -28,7 +28,7 @@ impl<'a> LossUnit<'a> {
     pub fn new(output_dim: Vec<usize>, loss_type: &str) -> LossUnit<'a> {
         let loss_ref: NodeRef = NodeRef::new(LossNode::new(loss_type));
         let response_ref: NodeRef = NodeRef::new(ExpectedResponseNode::new(output_dim.clone()));
-        let sum_ref: NodeRef = NodeRef::new(AddNode::with_print());
+        let sum_ref: NodeRef = NodeRef::new(AddNode::new());
 
         loss_ref.borrow_mut().add_input(&loss_ref, &response_ref);
         sum_ref.borrow_mut().add_input(&sum_ref, &loss_ref);

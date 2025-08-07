@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 // internal
 use crate::network::config_types::{
-    input_params::InputParams, learning_params::LearningParams, loss_params::LossParams,
+    hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
     unit_params::UnitParams, Config,
 };
 
@@ -18,7 +18,7 @@ pub struct ClassifierConfig {
     input: InputParams,
     units: Vec<UnitParams>,
     loss: LossParams,
-    learning: LearningParams,
+    learning: HyperParams,
 }
 
 impl ClassifierConfig {
@@ -26,7 +26,7 @@ impl ClassifierConfig {
         input: InputParams,
         units: Vec<UnitParams>,
         loss: LossParams,
-        learning: LearningParams,
+        learning: HyperParams,
     ) -> ClassifierConfig {
         ClassifierConfig {
             input,
@@ -69,7 +69,7 @@ impl ClassifierConfig {
         &self.loss
     }
 
-    pub fn learning(&self) -> &LearningParams {
+    pub fn learning(&self) -> &HyperParams {
         &self.learning
     }
 }

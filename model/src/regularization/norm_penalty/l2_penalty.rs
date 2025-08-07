@@ -91,7 +91,8 @@ mod tests {
         let mut unit: L2PenaltyUnit = L2PenaltyUnit::new(1.0);
         let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 1.0));
 
-        println!("Weights: {:?}", weight.borrow_mut().get_data());
+        let old_weights = weight.borrow_mut().get_data();
+        println!("Weights: {:?}", old_weights);
 
         unit.add_weight_input(&weight);
 
@@ -99,5 +100,8 @@ mod tests {
         output_ref.borrow_mut().apply_operation();
         output_ref.borrow_mut().add_gradient(&DataContainer::one());
         output_ref.borrow_mut().apply_jacobian();
+
+        let new_weights = weight.borrow_mut().get_data();
+        println!("New weights: {:?}", new_weights);
     }
 }

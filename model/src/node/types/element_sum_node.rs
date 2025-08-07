@@ -65,8 +65,6 @@ impl<'a> Node<'a> for ElementSumNode<'a> {
 
         let res = input_data.element_sum();
 
-        println!("Element sum output: {:?}", res);
-
         self.base.set_data(res);
     }
 

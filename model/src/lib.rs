@@ -242,47 +242,6 @@ mod tests {
     }
 
     #[test]
-    fn quadratic_test() {
-        let regressor: SimpleRegressorNetwork =
-            SimpleRegressorNetwork::new(vec![1], vec![1], vec![4], 0.005, 0.2);
-
-        let test_arr: Array1<f32> = arr1(&[2.0]);
-        let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
-        let before_output = regressor.predict(before_data);
-        println!("Before: {:?}", before_output);
-
-        for _i in 0..200 {
-            let mut inputs = Vec::new();
-            let mut responses = Vec::new();
-
-            for _j in 0..8 {
-                let x: f32 = random_range(1.0..4.0);
-
-                inputs.push(Data::VectorF32(arr1(&[x])));
-                responses.push(Data::VectorF32(arr1(&[x * x])));
-            }
-
-            let input = DataContainer::Batch(inputs);
-            let response = DataContainer::Batch(responses);
-
-            regressor.train(input, response);
-        }
-
-        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
-        let after_output = regressor.predict(after_data);
-        println!("After: {:?}", after_output);
-
-        let test_arr2: Array1<f32> = arr1(&[3.0]);
-        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
-        let after_output2 = regressor.predict(after_data2);
-        println!("After 2: {:?}", after_output2);
-
-        regressor
-            .save_to_file("test/regressor_test.json")
-            .expect("Save Failed");
-    }
-
-    #[test]
     fn binary_classifier_load_test() {
         let classifier: BinaryClassifierNetwork =
             BinaryClassifierNetwork::load_from_file("test/binary_classifier_test.json");
@@ -333,9 +292,9 @@ mod tests {
     #[test]
     fn regressor_regularization_test() {
         let regressor: SimpleRegressorNetwork =
-            SimpleRegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, 1.5);
+            SimpleRegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, 0.2);
 
-        for _i in 0..10 {
+        for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
@@ -361,5 +320,9 @@ mod tests {
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = regressor.predict(after_data2);
         println!("Loaded output 2: {:?}", after_output2);
+
+        regressor
+            .save_to_file("test/regressor_test.json")
+            .expect("Save Failed");
     }
 }

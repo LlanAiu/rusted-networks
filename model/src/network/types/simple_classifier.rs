@@ -9,7 +9,7 @@ use crate::{
     data::data_container::DataContainer,
     network::{
         config_types::{
-            input_params::InputParams, learning_params::LearningParams, loss_params::LossParams,
+            hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
             unit_params::UnitParams,
         },
         types::simple_classifier::config::ClassifierConfig,
@@ -148,8 +148,9 @@ impl<'a> SimpleClassifierNetwork<'a> {
         }
         units.push(UnitParams::from_softmax_unit(&self.inference));
 
-        let learning = LearningParams {
+        let learning = HyperParams {
             learning_rate: self.learning_rate,
+            reg_alpha: 0.0,
         };
 
         let config: ClassifierConfig = ClassifierConfig::new(input, units, loss, learning);

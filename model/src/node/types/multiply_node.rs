@@ -67,8 +67,6 @@ impl<'a> Node<'a> for MultiplyNode<'a> {
 
         let product = first_data.times(&second_data);
 
-        println!("Multiply output: {:?}", product);
-
         self.base.set_data(product);
     }
 

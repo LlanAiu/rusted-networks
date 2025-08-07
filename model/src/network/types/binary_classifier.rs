@@ -9,7 +9,7 @@ use crate::{
     data::data_container::DataContainer,
     network::{
         config_types::{
-            input_params::InputParams, learning_params::LearningParams, loss_params::LossParams,
+            hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
             unit_params::UnitParams,
         },
         types::binary_classifier::config::BinaryClassifierConfig,
@@ -133,8 +133,9 @@ impl<'a> BinaryClassifierNetwork<'a> {
         let input: InputParams = InputParams::from_unit(&self.input);
         let loss: LossParams = LossParams::from_unit(&self.loss);
 
-        let learning: LearningParams = LearningParams {
+        let learning: HyperParams = HyperParams {
             learning_rate: self.learning_rate,
+            reg_alpha: 0.0,
         };
 
         let mut units: Vec<UnitParams> = Vec::new();
