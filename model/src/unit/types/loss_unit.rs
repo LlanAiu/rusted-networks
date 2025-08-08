@@ -12,7 +12,7 @@ use crate::{
         },
         NodeRef,
     },
-    regularization::norm_penalty::l2_penalty::L2Ref,
+    regularization::norm_penalty::NormPenaltyRef,
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -58,7 +58,7 @@ impl<'a> LossUnit<'a> {
         &self.output_size
     }
 
-    pub fn add_reg_node(&self, reg_unit: &L2Ref<'a>) {
+    pub fn add_regularization_node(&self, reg_unit: &NormPenaltyRef<'a>) {
         let sum_ref = &self.sum_node;
 
         sum_ref

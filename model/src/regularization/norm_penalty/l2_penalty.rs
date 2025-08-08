@@ -1,5 +1,4 @@
 // builtin
-use std::{cell::RefCell, rc::Rc};
 
 // external
 
@@ -13,9 +12,9 @@ use crate::{
         },
         NodeRef,
     },
+    regularization::norm_penalty::{NormPenaltyRef, NormPenaltyUnit},
 };
-
-pub type L2Ref<'a> = Rc<RefCell<L2PenaltyUnit<'a>>>;
+pub mod builder;
 
 pub struct L2PenaltyUnit<'a> {
     weight_input: NodeRef<'a>,
@@ -42,22 +41,24 @@ impl<'a> L2PenaltyUnit<'a> {
             penalty_output: add,
         }
     }
+}
 
-    pub fn add_penalty_input(&mut self, input: &L2Ref<'a>) {
+impl<'a> NormPenaltyUnit<'a> for L2PenaltyUnit<'a> {
+    fn add_penalty_input(&mut self, input: &NormPenaltyRef<'a>) {
         let penalty_input = &self.penalty_input;
         penalty_input
             .borrow_mut()
             .add_input(&penalty_input, input.borrow().get_output_ref());
     }
 
-    pub fn add_weight_input(&mut self, weight_node: &NodeRef<'a>) {
+    fn add_weight_input(&mut self, weight_node: &NodeRef<'a>) {
         let weight_input = &self.weight_input;
         weight_input
             .borrow_mut()
             .add_input(&weight_input, weight_node);
     }
 
-    pub fn get_output_ref(&self) -> &NodeRef<'a> {
+    fn get_output_ref(&self) -> &NodeRef<'a> {
         &self.penalty_output
     }
 }
@@ -68,6 +69,7 @@ mod tests {
         data::data_container::DataContainer,
         node::{types::weight_node::WeightNode, NodeRef},
         regularization::norm_penalty::l2_penalty::L2PenaltyUnit,
+        regularization::norm_penalty::NormPenaltyUnit,
     };
 
     #[test]
