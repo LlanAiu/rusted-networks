@@ -61,9 +61,11 @@ impl<'a> LossUnit<'a> {
     pub fn add_regularization_node(&self, reg_unit: &NormPenaltyRef<'a>) {
         let sum_ref = &self.sum_node;
 
-        sum_ref
-            .borrow_mut()
-            .add_input(sum_ref, reg_unit.borrow().get_output_ref());
+        if !reg_unit.borrow().is_null() {
+            sum_ref
+                .borrow_mut()
+                .add_input(sum_ref, reg_unit.borrow().get_output_ref());
+        }
     }
 }
 

@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    regularization::norm_penalty::{NormPenaltyBuilder, NormPenaltyConfig, NormPenaltyUnit},
+    regularization::norm_penalty::NormPenaltyConfig,
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         UnitContainer,
@@ -18,16 +18,12 @@ pub struct TestNetwork<'a> {
 }
 
 impl<'a> TestNetwork<'a> {
-    pub fn new<T, C>(
+    pub fn new(
         input_size: usize,
         output_size: usize,
         learning_rate: f32,
-        penalty: NormPenaltyConfig<'a, T, C>,
-    ) -> TestNetwork<'a>
-    where
-        C: NormPenaltyUnit<'a>,
-        T: NormPenaltyBuilder<'a, C>,
-    {
+        penalty: NormPenaltyConfig<'a>,
+    ) -> TestNetwork<'a> {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![input_size]));
         let inference: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::new(
             "none",
@@ -65,7 +61,7 @@ mod test {
     #[test]
     fn create_test() {
         let L2Builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.2);
-        let penaltyConfig = NormPenaltyConfig::new(Box::new(L2Builder));
+        let penaltyConfig = NormPenaltyConfig::new(L2Builder);
         let net: TestNetwork = TestNetwork::new(3, 4, 0.001, penaltyConfig);
     }
 }

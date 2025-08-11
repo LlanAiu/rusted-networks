@@ -1,117 +1,101 @@
 // builtin
 use std::{
     cell::{Ref, RefCell, RefMut},
-    marker::PhantomData,
     rc::Rc,
 };
 
 // external
+use serde::{Deserialize, Serialize};
 
 // internal
-use crate::node::NodeRef;
+use crate::{node::NodeRef, regularization::norm_penalty::no_penalty::builder::NullBuilder};
 pub mod l2_penalty;
+pub mod no_penalty;
+
+#[derive(Serialize, Deserialize)]
+pub enum NormPenaltyType {
+    L2 { alpha: f32 },
+    None,
+}
 
 pub type NormPenaltyRef<'a> = Rc<RefCell<dyn NormPenaltyUnit<'a> + 'a>>;
 
-pub struct NormPenaltyConfig<'a, T, C>
-where
-    C: NormPenaltyUnit<'a>,
-    T: NormPenaltyBuilder<'a, C>,
-{
-    builder: Box<T>,
-    _marker: PhantomData<&'a C>,
+pub struct NormPenaltyConfig<'a> {
+    builder: Box<dyn NormPenaltyBuilder<'a> + 'a>,
 }
 
-impl<'a, T, C> NormPenaltyConfig<'a, T, C>
-where
-    C: NormPenaltyUnit<'a>,
-    T: NormPenaltyBuilder<'a, C>,
-{
-    pub fn new(builder: Box<T>) -> NormPenaltyConfig<'a, T, C> {
+impl<'a> NormPenaltyConfig<'a> {
+    pub fn new(builder: impl NormPenaltyBuilder<'a> + 'a) -> NormPenaltyConfig<'a> {
         NormPenaltyConfig {
-            builder,
-            _marker: PhantomData,
+            builder: Box::new(builder),
         }
     }
 
-    pub fn create_first(&self, weights: &NodeRef<'a>) -> NormPenaltyContainer<'a, C> {
-        self.builder.create_first(weights)
+    pub fn none() -> NormPenaltyConfig<'a> {
+        NormPenaltyConfig {
+            builder: Box::new(NullBuilder),
+        }
+    }
+
+    pub fn create_first(&self, parameter_node: &NodeRef<'a>) -> NormPenaltyContainer<'a> {
+        self.builder.create_first(parameter_node)
     }
 
     pub fn create_new(
         &self,
         prev: &NormPenaltyRef<'a>,
-        weights: &NodeRef<'a>,
-    ) -> NormPenaltyContainer<'a, C> {
-        self.builder.create_new(prev, weights)
+        parameter_node: &NodeRef<'a>,
+    ) -> NormPenaltyContainer<'a> {
+        self.builder.create_new(prev, parameter_node)
     }
 
-    pub fn create_last(
-        &self,
-        weights: &NodeRef<'a>,
-        prev: &NormPenaltyRef<'a>,
-        loss_sum_node: &NodeRef<'a>,
-    ) -> NormPenaltyContainer<'a, C> {
-        self.builder.create_last(weights, prev, loss_sum_node)
+    pub fn get_builder(&self) -> &Box<dyn NormPenaltyBuilder<'a> + 'a> {
+        &self.builder
     }
 }
 
-pub struct NormPenaltyContainer<'a, T>
-where
-    T: NormPenaltyUnit<'a>,
-{
-    unit: Rc<RefCell<T>>,
-    _marker: PhantomData<&'a T>,
+pub struct NormPenaltyContainer<'a> {
+    unit: Rc<RefCell<dyn NormPenaltyUnit<'a> + 'a>>,
 }
 
-impl<'a, T> NormPenaltyContainer<'a, T>
-where
-    T: NormPenaltyUnit<'a>,
-{
-    pub fn new(penalty_unit: T) -> NormPenaltyContainer<'a, T> {
+impl<'a> NormPenaltyContainer<'a> {
+    pub fn new(penalty_unit: impl NormPenaltyUnit<'a> + 'a) -> NormPenaltyContainer<'a> {
         NormPenaltyContainer {
             unit: Rc::new(RefCell::new(penalty_unit)),
-            _marker: PhantomData,
         }
     }
 
-    pub fn borrow(&self) -> Ref<T> {
+    pub fn borrow(&self) -> Ref<dyn NormPenaltyUnit<'a> + 'a> {
         self.unit.borrow()
     }
 
-    pub fn borrow_mut(&self) -> RefMut<T> {
+    pub fn borrow_mut(&self) -> RefMut<dyn NormPenaltyUnit<'a> + 'a> {
         self.unit.borrow_mut()
     }
 
     pub fn get_ref(&self) -> NormPenaltyRef<'a> {
-        Rc::clone(&self.unit) as Rc<RefCell<dyn NormPenaltyUnit<'a>>>
+        Rc::clone(&self.unit)
     }
 }
 
 pub trait NormPenaltyUnit<'a> {
     fn add_penalty_input(&mut self, input: &NormPenaltyRef<'a>);
 
-    fn add_weight_input(&mut self, weight_node: &NodeRef<'a>);
+    fn add_parameter_input(&mut self, parameter_node: &NodeRef<'a>);
 
     fn get_output_ref(&self) -> &NodeRef<'a>;
+
+    fn is_null(&self) -> bool;
 }
 
-pub trait NormPenaltyBuilder<'a, T>
-where
-    T: NormPenaltyUnit<'a>,
-{
-    fn create_first(&self, weights: &NodeRef<'a>) -> NormPenaltyContainer<'a, T>;
+pub trait NormPenaltyBuilder<'a> {
+    fn create_first(&self, parameter_node: &NodeRef<'a>) -> NormPenaltyContainer<'a>;
 
     fn create_new(
         &self,
         prev: &NormPenaltyRef<'a>,
-        weights: &NodeRef<'a>,
-    ) -> NormPenaltyContainer<'a, T>;
+        parameter_node: &NodeRef<'a>,
+    ) -> NormPenaltyContainer<'a>;
 
-    fn create_last(
-        &self,
-        weights: &NodeRef<'a>,
-        prev: &NormPenaltyRef<'a>,
-        loss_sum_node: &NodeRef<'a>,
-    ) -> NormPenaltyContainer<'a, T>;
+    fn get_associated_type(&self) -> NormPenaltyType;
 }

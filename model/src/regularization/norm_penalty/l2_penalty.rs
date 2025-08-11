@@ -51,7 +51,7 @@ impl<'a> NormPenaltyUnit<'a> for L2PenaltyUnit<'a> {
             .add_input(&penalty_input, input.borrow().get_output_ref());
     }
 
-    fn add_weight_input(&mut self, weight_node: &NodeRef<'a>) {
+    fn add_parameter_input(&mut self, weight_node: &NodeRef<'a>) {
         let weight_input = &self.weight_input;
         weight_input
             .borrow_mut()
@@ -60,6 +60,10 @@ impl<'a> NormPenaltyUnit<'a> for L2PenaltyUnit<'a> {
 
     fn get_output_ref(&self) -> &NodeRef<'a> {
         &self.penalty_output
+    }
+
+    fn is_null(&self) -> bool {
+        false
     }
 }
 
@@ -79,7 +83,7 @@ mod tests {
 
         println!("Weights: {:?}", weight.borrow_mut().get_data());
 
-        unit.add_weight_input(&weight);
+        unit.add_parameter_input(&weight);
 
         unit.get_output_ref().borrow_mut().apply_operation();
 
@@ -96,7 +100,7 @@ mod tests {
         let old_weights = weight.borrow_mut().get_data();
         println!("Weights: {:?}", old_weights);
 
-        unit.add_weight_input(&weight);
+        unit.add_parameter_input(&weight);
 
         let output_ref = unit.get_output_ref();
         output_ref.borrow_mut().apply_operation();

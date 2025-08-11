@@ -94,7 +94,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
             let reg_unit: NormPenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
             reg_unit
                 .borrow_mut()
-                .add_weight_input(hidden_unit.borrow().get_weights_ref());
+                .add_parameter_input(hidden_unit.borrow().get_weights_ref());
 
             if let Option::Some(prev_reg) = prev_reg_unit {
                 reg_unit.borrow_mut().add_penalty_input(&prev_reg);
@@ -114,7 +114,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
 
         inference_reg
             .borrow_mut()
-            .add_weight_input(inference.borrow().get_weights_ref());
+            .add_parameter_input(inference.borrow().get_weights_ref());
         if let Option::Some(prev_reg) = prev_reg_unit {
             inference_reg.borrow_mut().add_penalty_input(&prev_reg);
         }
