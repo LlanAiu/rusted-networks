@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    regularization::norm_penalty::NormPenaltyConfig,
+    regularization::penalty::PenaltyConfig,
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         UnitContainer,
@@ -22,7 +22,7 @@ impl<'a> TestNetwork<'a> {
         input_size: usize,
         output_size: usize,
         learning_rate: f32,
-        penalty: NormPenaltyConfig<'a>,
+        penalty: PenaltyConfig<'a>,
     ) -> TestNetwork<'a> {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![input_size]));
         let inference: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::new(
@@ -55,13 +55,13 @@ impl<'a> TestNetwork<'a> {
 mod test {
     use crate::{
         network::types::test_network::TestNetwork,
-        regularization::norm_penalty::{l2_penalty::builder::L2PenaltyBuilder, NormPenaltyConfig},
+        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
     };
 
     #[test]
     fn create_test() {
-        let L2Builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.2);
-        let penaltyConfig = NormPenaltyConfig::new(L2Builder);
-        let net: TestNetwork = TestNetwork::new(3, 4, 0.001, penaltyConfig);
+        let builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.2);
+        let penalty_config = PenaltyConfig::new(builder);
+        let _net: TestNetwork = TestNetwork::new(3, 4, 0.001, penalty_config);
     }
 }

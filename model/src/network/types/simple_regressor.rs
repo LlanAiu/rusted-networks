@@ -14,7 +14,7 @@ use crate::{
         types::simple_regressor::config::RegressorConfig,
         Network,
     },
-    regularization::norm_penalty::{l2_penalty::L2PenaltyUnit, NormPenaltyRef},
+    regularization::penalty::{l2_penalty::L2PenaltyUnit, PenaltyRef},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer,
@@ -84,14 +84,14 @@ impl<'a> SimpleRegressorNetwork<'a> {
         let mut prev_ref = input.get_ref();
         let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
 
-        let mut prev_reg_unit: Option<NormPenaltyRef> = None;
+        let mut prev_reg_unit: Option<PenaltyRef> = None;
 
         for i in 0..(hidden_len - 1) {
             let hidden_config = units.get(i).unwrap();
             let hidden_unit: UnitContainer<LinearUnit> =
                 UnitContainer::new(LinearUnit::from_config(hidden_config, learning_rate));
 
-            let reg_unit: NormPenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
+            let reg_unit: PenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
             reg_unit
                 .borrow_mut()
                 .add_parameter_input(hidden_unit.borrow().get_weights_ref());
@@ -110,7 +110,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
         let inference: UnitContainer<LinearUnit> =
             UnitContainer::new(LinearUnit::from_config(inference_config, learning_rate));
 
-        let inference_reg: NormPenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
+        let inference_reg: PenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
 
         inference_reg
             .borrow_mut()

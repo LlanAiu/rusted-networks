@@ -5,7 +5,7 @@
 // internal
 use crate::{
     node::NodeRef,
-    regularization::norm_penalty::{NormPenaltyRef, NormPenaltyUnit},
+    regularization::penalty::{PenaltyRef, PenaltyUnit},
 };
 pub mod builder;
 
@@ -17,8 +17,8 @@ impl NullPenaltyUnit {
     }
 }
 
-impl<'a> NormPenaltyUnit<'a> for NullPenaltyUnit {
-    fn add_penalty_input(&mut self, _input: &NormPenaltyRef<'a>) {
+impl<'a> PenaltyUnit<'a> for NullPenaltyUnit {
+    fn add_penalty_input(&mut self, _input: &PenaltyRef<'a>) {
         println!("[NULL] Attempted to add penalty input to null penalty node");
     }
 

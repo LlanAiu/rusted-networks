@@ -12,7 +12,7 @@ use crate::{
         },
         NodeRef,
     },
-    regularization::norm_penalty::{NormPenaltyRef, NormPenaltyUnit},
+    regularization::penalty::{PenaltyRef, PenaltyUnit},
 };
 pub mod builder;
 
@@ -43,8 +43,8 @@ impl<'a> L2PenaltyUnit<'a> {
     }
 }
 
-impl<'a> NormPenaltyUnit<'a> for L2PenaltyUnit<'a> {
-    fn add_penalty_input(&mut self, input: &NormPenaltyRef<'a>) {
+impl<'a> PenaltyUnit<'a> for L2PenaltyUnit<'a> {
+    fn add_penalty_input(&mut self, input: &PenaltyRef<'a>) {
         let penalty_input = &self.penalty_input;
         penalty_input
             .borrow_mut()
@@ -72,8 +72,8 @@ mod tests {
     use crate::{
         data::data_container::DataContainer,
         node::{types::weight_node::WeightNode, NodeRef},
-        regularization::norm_penalty::l2_penalty::L2PenaltyUnit,
-        regularization::norm_penalty::NormPenaltyUnit,
+        regularization::penalty::l2_penalty::L2PenaltyUnit,
+        regularization::penalty::PenaltyUnit,
     };
 
     #[test]
