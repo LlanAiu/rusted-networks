@@ -27,6 +27,7 @@ mod tests {
             },
             Network,
         },
+        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
         unit::{
             types::{input_unit::InputUnit, loss_unit::LossUnit, softmax_unit::SoftmaxUnit},
             Unit, UnitContainer,
@@ -291,8 +292,10 @@ mod tests {
 
     #[test]
     fn regressor_regularization_test() {
+        let config: PenaltyConfig = PenaltyConfig::new(L2PenaltyBuilder::new(0.2));
+
         let regressor: SimpleRegressorNetwork =
-            SimpleRegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, 0.2);
+            SimpleRegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, config, false);
 
         for _i in 0..200 {
             let mut inputs = Vec::new();

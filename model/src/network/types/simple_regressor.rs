@@ -1,5 +1,5 @@
 // builtin
-use std::{cell::RefCell, io::Result, rc::Rc};
+use std::io::Result;
 
 // external
 
@@ -7,19 +7,16 @@ use std::{cell::RefCell, io::Result, rc::Rc};
 use crate::{
     data::data_container::DataContainer,
     network::{
-        config_types::{
-            hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
-            unit_params::UnitParams,
-        },
-        types::simple_regressor::config::RegressorConfig,
+        types::simple_regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
-    regularization::penalty::{l2_penalty::L2PenaltyUnit, PenaltyRef},
+    regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer,
     },
 };
+pub mod builder;
 pub mod config;
 
 pub struct SimpleRegressorNetwork<'a> {
@@ -28,7 +25,8 @@ pub struct SimpleRegressorNetwork<'a> {
     inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
     learning_rate: f32,
-    alpha: f32,
+    penalty_type: PenaltyType,
+    with_dropout: bool,
 }
 
 impl<'a> SimpleRegressorNetwork<'a> {
@@ -37,10 +35,17 @@ impl<'a> SimpleRegressorNetwork<'a> {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
-        alpha: f32,
+        penalty_config: PenaltyConfig,
+        with_dropout: bool,
     ) -> SimpleRegressorNetwork<'a> {
-        let config: RegressorConfig =
-            RegressorConfig::new(input_size, output_size, hidden_sizes, learning_rate, alpha);
+        let config: RegressorConfig = RegressorConfig::new(
+            input_size,
+            output_size,
+            hidden_sizes,
+            learning_rate,
+            penalty_config,
+            with_dropout,
+        );
         SimpleRegressorNetwork::from_config(config)
     }
 
@@ -50,90 +55,12 @@ impl<'a> SimpleRegressorNetwork<'a> {
     }
 
     pub fn save_to_file(&self, path: &str) -> Result<()> {
-        let input = InputParams::from_unit(&self.input);
-
-        let loss = LossParams::from_unit(&self.loss);
-
-        let mut units: Vec<UnitParams> = Vec::new();
-
-        for unit in &self.hidden {
-            units.push(UnitParams::from_linear_unit(unit));
-        }
-        units.push(UnitParams::from_linear_unit(&self.inference));
-
-        let learning = HyperParams {
-            learning_rate: self.learning_rate,
-            reg_alpha: self.alpha,
-        };
-
-        let config: RegressorConfig = RegressorConfig::from_params(input, units, loss, learning);
-
+        let config: RegressorConfig = RegressorConfig::to_config(self);
         config.save_to_file(path)
     }
 
     fn from_config(config: RegressorConfig) -> SimpleRegressorNetwork<'a> {
-        let learning_rate: f32 = config.params().learning_rate;
-        let alpha: f32 = config.params().reg_alpha;
-
-        let input: UnitContainer<InputUnit> =
-            UnitContainer::new(InputUnit::from_config(config.input()));
-
-        let hidden_len = config.units().len();
-        let units = config.units();
-
-        let mut prev_ref = input.get_ref();
-        let mut hidden: Vec<UnitContainer<LinearUnit>> = Vec::new();
-
-        let mut prev_reg_unit: Option<PenaltyRef> = None;
-
-        for i in 0..(hidden_len - 1) {
-            let hidden_config = units.get(i).unwrap();
-            let hidden_unit: UnitContainer<LinearUnit> =
-                UnitContainer::new(LinearUnit::from_config(hidden_config, learning_rate));
-
-            let reg_unit: PenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
-            reg_unit
-                .borrow_mut()
-                .add_parameter_input(hidden_unit.borrow().get_weights_ref());
-
-            if let Option::Some(prev_reg) = prev_reg_unit {
-                reg_unit.borrow_mut().add_penalty_input(&prev_reg);
-            }
-
-            hidden_unit.add_input_ref(&prev_ref);
-            prev_reg_unit = Option::Some(reg_unit);
-            prev_ref = hidden_unit.get_ref();
-            hidden.push(hidden_unit);
-        }
-
-        let inference_config = units.get(hidden_len - 1).unwrap();
-        let inference: UnitContainer<LinearUnit> =
-            UnitContainer::new(LinearUnit::from_config(inference_config, learning_rate));
-
-        let inference_reg: PenaltyRef = Rc::new(RefCell::new(L2PenaltyUnit::new(alpha)));
-
-        inference_reg
-            .borrow_mut()
-            .add_parameter_input(inference.borrow().get_weights_ref());
-        if let Option::Some(prev_reg) = prev_reg_unit {
-            inference_reg.borrow_mut().add_penalty_input(&prev_reg);
-        }
-        inference.add_input_ref(&prev_ref);
-
-        let loss: UnitContainer<LossUnit> =
-            UnitContainer::new(LossUnit::from_config(config.loss()));
-
-        loss.add_input(&inference);
-        loss.borrow().add_regularization_node(&inference_reg);
-
-        SimpleRegressorNetwork {
-            input,
-            hidden,
-            inference,
-            loss,
-            learning_rate,
-            alpha,
-        }
+        build_from_config(config)
     }
 }
 

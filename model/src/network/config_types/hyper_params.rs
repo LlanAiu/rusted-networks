@@ -7,15 +7,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct HyperParams {
-    pub learning_rate: f32,
-    pub reg_alpha: f32,
+    learning_rate: f32,
 }
 
 impl HyperParams {
-    pub fn new(learning_rate: f32, reg_alpha: f32) -> HyperParams {
-        HyperParams {
-            learning_rate,
-            reg_alpha,
-        }
+    pub fn new(learning_rate: f32) -> HyperParams {
+        HyperParams { learning_rate }
+    }
+
+    pub fn learning_rate(&self) -> f32 {
+        self.learning_rate
     }
 }

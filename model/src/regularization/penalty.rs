@@ -13,7 +13,7 @@ pub mod l1_penalty;
 pub mod l2_penalty;
 pub mod no_penalty;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum PenaltyType {
     L2 { alpha: f32 },
     L1 { alpha: f32 },
@@ -53,6 +53,10 @@ impl<'a> PenaltyConfig<'a> {
 
     pub fn get_builder(&self) -> &Box<dyn PenaltyBuilder<'a> + 'a> {
         &self.builder
+    }
+
+    pub fn get_type(&self) -> PenaltyType {
+        self.builder.get_associated_type()
     }
 }
 

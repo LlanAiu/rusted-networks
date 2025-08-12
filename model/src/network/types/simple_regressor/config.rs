@@ -8,9 +8,15 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 // internal
-use crate::network::config_types::{
-    hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
-    unit_params::UnitParams, Config,
+use crate::{
+    network::{
+        config_types::{
+            hyper_params::HyperParams, input_params::InputParams, loss_params::LossParams,
+            regularization_params::RegularizationParams, unit_params::UnitParams, Config,
+        },
+        types::simple_regressor::SimpleRegressorNetwork,
+    },
+    regularization::penalty::PenaltyConfig,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -19,6 +25,7 @@ pub struct RegressorConfig {
     units: Vec<UnitParams>,
     loss: LossParams,
     hyperparams: HyperParams,
+    regularization: RegularizationParams,
 }
 
 impl RegressorConfig {
@@ -27,7 +34,8 @@ impl RegressorConfig {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         learning_rate: f32,
-        reg_alpha: f32,
+        penalty_config: PenaltyConfig,
+        with_dropout: bool,
     ) -> RegressorConfig {
         if input_size.len() != 1 || output_size.len() != 1 {
             panic!("[SIMPLE_REGRESSOR] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
@@ -42,7 +50,7 @@ impl RegressorConfig {
             loss_type: String::from("mean_squared_error"),
             output_size: output_size,
         };
-        let learning: HyperParams = HyperParams::new(learning_rate, reg_alpha);
+        let hyperparams: HyperParams = HyperParams::new(learning_rate);
 
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
@@ -56,25 +64,41 @@ impl RegressorConfig {
         let inference_unit: UnitParams = UnitParams::new_linear(prev_width, output_usize, "none");
         units.push(inference_unit);
 
+        let regularization: RegularizationParams =
+            RegularizationParams::from_builder(penalty_config.get_builder(), with_dropout);
+
         RegressorConfig {
             input,
             units,
             loss,
-            hyperparams: learning,
+            hyperparams,
+            regularization,
         }
     }
 
-    pub fn from_params(
-        input: InputParams,
-        units: Vec<UnitParams>,
-        loss: LossParams,
-        learning: HyperParams,
-    ) -> RegressorConfig {
+    pub fn to_config(network: &SimpleRegressorNetwork) -> RegressorConfig {
+        let input = InputParams::from_unit(&network.input);
+
+        let loss = LossParams::from_unit(&network.loss);
+
+        let mut units: Vec<UnitParams> = Vec::new();
+
+        for unit in &network.hidden {
+            units.push(UnitParams::from_linear_unit(unit));
+        }
+        units.push(UnitParams::from_linear_unit(&network.inference));
+
+        let hyperparams: HyperParams = HyperParams::new(network.learning_rate);
+
+        let regularization: RegularizationParams =
+            RegularizationParams::new(network.penalty_type.clone(), network.with_dropout);
+
         RegressorConfig {
             input,
             units,
             loss,
-            hyperparams: learning,
+            hyperparams,
+            regularization,
         }
     }
 
@@ -113,5 +137,9 @@ impl RegressorConfig {
 
     pub fn params(&self) -> &HyperParams {
         &self.hyperparams
+    }
+
+    pub fn regularization(&self) -> &RegularizationParams {
+        &self.regularization
     }
 }

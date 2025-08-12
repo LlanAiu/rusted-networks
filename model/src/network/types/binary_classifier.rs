@@ -87,7 +87,7 @@ impl<'a> BinaryClassifierNetwork<'a> {
     pub fn load_from_file(path: &str) -> BinaryClassifierNetwork {
         let config: BinaryClassifierConfig = BinaryClassifierConfig::load_from_file(path).unwrap();
 
-        let learning_rate = config.learning().learning_rate;
+        let learning_rate = config.learning().learning_rate();
 
         let input: UnitContainer<InputUnit> =
             UnitContainer::new(InputUnit::from_config(config.input()));
@@ -133,10 +133,7 @@ impl<'a> BinaryClassifierNetwork<'a> {
         let input: InputParams = InputParams::from_unit(&self.input);
         let loss: LossParams = LossParams::from_unit(&self.loss);
 
-        let learning: HyperParams = HyperParams {
-            learning_rate: self.learning_rate,
-            reg_alpha: 0.0,
-        };
+        let learning: HyperParams = HyperParams::new(self.learning_rate);
 
         let mut units: Vec<UnitParams> = Vec::new();
 

@@ -95,7 +95,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
 
     pub fn load_from_file(path: &str) -> SimpleClassifierNetwork {
         let config: ClassifierConfig = ClassifierConfig::load_from_file(path).unwrap();
-        let learning_rate: f32 = config.learning().learning_rate;
+        let learning_rate: f32 = config.learning().learning_rate();
 
         let input: UnitContainer<InputUnit> =
             UnitContainer::new(InputUnit::from_config(config.input()));
@@ -148,10 +148,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
         }
         units.push(UnitParams::from_softmax_unit(&self.inference));
 
-        let learning = HyperParams {
-            learning_rate: self.learning_rate,
-            reg_alpha: 0.0,
-        };
+        let learning = HyperParams::new(self.learning_rate);
 
         let config: ClassifierConfig = ClassifierConfig::new(input, units, loss, learning);
 

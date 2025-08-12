@@ -45,4 +45,8 @@ impl RegularizationParams {
             PenaltyType::None => PenaltyConfig::none(),
         }
     }
+
+    pub fn is_dropout_enabled(&self) -> bool {
+        self.with_dropout
+    }
 }
