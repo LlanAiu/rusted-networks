@@ -65,6 +65,10 @@ impl DataContainer {
     pub fn one() -> DataContainer {
         DataContainer::Parameter(Data::one())
     }
+
+    pub fn neg_one() -> DataContainer {
+        DataContainer::Parameter(Data::neg_one())
+    }
 }
 
 impl DataContainer {

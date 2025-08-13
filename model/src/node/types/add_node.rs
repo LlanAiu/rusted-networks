@@ -60,8 +60,8 @@ impl<'a> Node<'a> for AddNode<'a> {
 
         for i in 1..inputs.len() {
             let mut node_ref = inputs[i].borrow_mut();
-            let data_one = node_ref.get_data();
-            sum = sum.plus(&data_one);
+            let data = node_ref.get_data();
+            sum = sum.plus(&data);
         }
 
         self.base.set_data(sum);

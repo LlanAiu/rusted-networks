@@ -2,6 +2,7 @@
 
 // external
 use ndarray::{Array1, Array2};
+use ndarray_rand::{rand_distr::Uniform, RandomExt};
 use serde::{Deserialize, Serialize};
 
 // internal
@@ -120,5 +121,57 @@ impl UnitParams {
             biases,
             activation,
         }
+    }
+
+    pub fn new_linear(
+        input_size: usize,
+        output_size: usize,
+        activation_function: &str,
+    ) -> UnitParams {
+        let weights_dim = (output_size, input_size);
+
+        let weights = UnitParams::generate_new_weights(input_size, output_size);
+        let biases = vec![0.0; output_size];
+
+        let activation = activation_function.to_string();
+
+        UnitParams::Linear {
+            input_size,
+            output_size,
+            weights_dim,
+            weights,
+            biases,
+            activation,
+        }
+    }
+
+    pub fn new_softmax(
+        input_size: usize,
+        output_size: usize,
+        activation_function: &str,
+    ) -> UnitParams {
+        let weights_dim = (output_size, input_size);
+
+        let weights = UnitParams::generate_new_weights(input_size, output_size);
+        let biases = vec![0.0; output_size];
+
+        let activation = activation_function.to_string();
+
+        UnitParams::Softmax {
+            input_size,
+            output_size,
+            weights_dim,
+            weights,
+            biases,
+            activation,
+        }
+    }
+
+    fn generate_new_weights(input_size: usize, output_size: usize) -> Vec<f32> {
+        let scale = f32::sqrt(6.0 / (input_size + output_size) as f32);
+        let initial_weights: Array1<f32> =
+            Array1::random(output_size * input_size, Uniform::new(-scale, scale));
+
+        initial_weights.to_vec()
     }
 }

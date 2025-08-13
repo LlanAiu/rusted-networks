@@ -3,6 +3,4 @@
 // external
 
 // internal
-pub mod norm_penalty;
-
-pub struct RegularizationConfig {}
+pub mod penalty;

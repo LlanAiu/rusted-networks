@@ -1,0 +1,114 @@
+// builtin
+
+// external
+
+// internal
+use crate::data::data_container::DataContainer;
+use crate::node::NodeType;
+use crate::node::{node_base::NodeBase, Node, NodeRef};
+
+pub struct MultiplyNode<'a> {
+    base: NodeBase<'a>,
+}
+
+impl<'a> MultiplyNode<'a> {
+    pub fn new() -> MultiplyNode<'a> {
+        MultiplyNode {
+            base: NodeBase::new(),
+        }
+    }
+}
+
+impl<'a> Node<'a> for MultiplyNode<'a> {
+    fn get_type(&self) -> NodeType {
+        NodeType::Operation
+    }
+
+    fn add_input(&mut self, this: &NodeRef<'a>, input: &NodeRef<'a>) {
+        if self.base.get_inputs().len() < 2 {
+            self.base.add_input(this, input);
+        } else {
+            println!("[TIMES] Node's maximum input capacity (2) reached. Skipping assignment, consider using an extra node instead.");
+        }
+    }
+
+    fn add_output(&mut self, output: &NodeRef<'a>) {
+        self.base.add_output(output);
+    }
+
+    fn get_inputs(&self) -> &Vec<NodeRef<'a>> {
+        self.base.get_inputs()
+    }
+
+    fn get_outputs(&self) -> &Vec<NodeRef<'a>> {
+        self.base.get_outputs()
+    }
+
+    fn get_data(&mut self) -> DataContainer {
+        self.base.get_data()
+    }
+
+    fn apply_operation(&mut self) {
+        if self.get_inputs().len() != 2 {
+            return;
+        }
+
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        for input in &inputs {
+            input.borrow_mut().apply_operation();
+        }
+
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
+        let first_data = first_ref.get_data();
+
+        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
+        let second_data = second_ref.get_data();
+
+        let product = first_data.times(&second_data);
+
+        self.base.set_data(product);
+    }
+
+    fn set_data(&mut self, _data: DataContainer) {
+        panic!("[TIMES] Unsupported Operation: Cannot set data of an operation node");
+    }
+
+    fn add_gradient(&mut self, grad: &DataContainer) {
+        self.base.increment_grad_count();
+        self.base.add_to_gradient(grad);
+    }
+
+    fn apply_jacobian(&mut self) {
+        self.base.reset_grad_count();
+
+        let inputs: Vec<NodeRef<'a>> = self.get_inputs().iter().cloned().collect();
+
+        let mut first_ref = inputs.get(0).unwrap().borrow_mut();
+        let mut second_ref = inputs.get(1).unwrap().borrow_mut();
+
+        let first_data = first_ref.get_data();
+        let second_data = second_ref.get_data();
+        let grad = self.base.get_gradient();
+
+        let first_grad = grad.times(&second_data);
+        let second_grad = grad.times(&first_data);
+
+        first_ref.add_gradient(&first_grad);
+        second_ref.add_gradient(&second_grad);
+
+        if first_ref.should_process_backprop() {
+            first_ref.apply_jacobian();
+        }
+
+        if second_ref.should_process_backprop() {
+            second_ref.apply_jacobian();
+        }
+
+        self.base.reset_gradient();
+    }
+
+    fn should_process_backprop(&self) -> bool {
+        self.base.should_process_backprop()
+    }
+}

@@ -85,6 +85,10 @@ impl<'a> SoftmaxUnit<'a> {
         panic!("Mismatched unit parameter types for initialization: expected UnitParams::Softmax but got {},", config.type_name());
     }
 
+    pub fn get_weights_ref(&self) -> &NodeRef<'a> {
+        &self.weights
+    }
+
     pub fn set_biases(&self, data: DataContainer) {
         self.biases.borrow_mut().set_data(data);
     }
