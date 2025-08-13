@@ -1,0 +1,62 @@
+{
+  "Classifier": {
+    "input": {
+      "input_size": [
+        1
+      ]
+    },
+    "units": [
+      {
+        "unit_type": "Linear",
+        "input_size": 1,
+        "output_size": 2,
+        "weights_dim": [
+          2,
+          1
+        ],
+        "weights": [
+          -1.2964071,
+          1.6623123
+        ],
+        "biases": [
+          0.24592993,
+          0.8649533
+        ],
+        "activation": "relu"
+      },
+      {
+        "unit_type": "Softmax",
+        "input_size": 2,
+        "output_size": 2,
+        "weights_dim": [
+          2,
+          2
+        ],
+        "weights": [
+          0.3295302,
+          -1.9181314,
+          -0.8967011,
+          0.3171859
+        ],
+        "biases": [
+          0.5805523,
+          -0.58055234
+        ],
+        "activation": "none"
+      }
+    ],
+    "loss": {
+      "loss_type": "base_cross_entropy",
+      "output_size": [
+        2
+      ]
+    },
+    "params": {
+      "learning_rate": 0.05
+    },
+    "regularization": {
+      "norm_penalty": "None",
+      "with_dropout": false
+    }
+  }
+}
