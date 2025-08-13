@@ -27,7 +27,10 @@ mod tests {
             },
             Network,
         },
-        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        regularization::penalty::{
+            l1_penalty::builder::L1PenaltyBuilder, l2_penalty::builder::L2PenaltyBuilder,
+            PenaltyConfig,
+        },
         unit::{
             types::{input_unit::InputUnit, loss_unit::LossUnit, softmax_unit::SoftmaxUnit},
             Unit, UnitContainer,
@@ -134,8 +137,10 @@ mod tests {
 
     #[test]
     fn network_test() {
+        let penalty_config: PenaltyConfig = PenaltyConfig::none();
+
         let classifier: SimpleClassifierNetwork =
-            SimpleClassifierNetwork::new(vec![3], vec![2], vec![5], 0.001);
+            SimpleClassifierNetwork::new(vec![3], vec![2], vec![5], 0.001, penalty_config, false);
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
         let input = DataContainer::Inference(Data::VectorF32(input_arr1));
@@ -195,8 +200,10 @@ mod tests {
 
     #[test]
     fn classification_test() {
+        let penalty_config: PenaltyConfig = PenaltyConfig::none();
+
         let classifier: SimpleClassifierNetwork =
-            SimpleClassifierNetwork::new(vec![1], vec![2], vec![2], 0.05);
+            SimpleClassifierNetwork::new(vec![1], vec![2], vec![2], 0.05, penalty_config, false);
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
