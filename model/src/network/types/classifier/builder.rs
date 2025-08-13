@@ -6,7 +6,7 @@
 use crate::{
     network::{
         config_types::unit_params::UnitParams,
-        types::simple_classifier::{config::ClassifierConfig, SimpleClassifierNetwork},
+        types::classifier::{config::ClassifierConfig, ClassifierNetwork},
     },
     node::NodeRef,
     regularization::penalty::{PenaltyConfig, PenaltyContainer},
@@ -19,7 +19,7 @@ use crate::{
     },
 };
 
-pub fn build_from_config<'a>(config: ClassifierConfig) -> SimpleClassifierNetwork<'a> {
+pub fn build_from_config<'a>(config: ClassifierConfig) -> ClassifierNetwork<'a> {
     let learning_rate: f32 = config.params().learning_rate();
     let penalty_config: PenaltyConfig = config.regularization().get_config();
 
@@ -34,7 +34,7 @@ pub fn build_from_config<'a>(config: ClassifierConfig) -> SimpleClassifierNetwor
 
     let loss: UnitContainer<LossUnit> = build_loss(&config, &inference, &inference_penalty);
 
-    SimpleClassifierNetwork {
+    ClassifierNetwork {
         input,
         hidden,
         inference,

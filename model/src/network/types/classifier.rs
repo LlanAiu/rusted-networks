@@ -8,7 +8,7 @@ use std::io::Result;
 use crate::{
     data::data_container::DataContainer,
     network::{
-        types::simple_classifier::{builder::build_from_config, config::ClassifierConfig},
+        types::classifier::{builder::build_from_config, config::ClassifierConfig},
         Network,
     },
     regularization::penalty::{PenaltyConfig, PenaltyType},
@@ -23,7 +23,7 @@ use crate::{
 pub mod builder;
 pub mod config;
 
-pub struct SimpleClassifierNetwork<'a> {
+pub struct ClassifierNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
@@ -33,7 +33,7 @@ pub struct SimpleClassifierNetwork<'a> {
     with_dropout: bool,
 }
 
-impl<'a> SimpleClassifierNetwork<'a> {
+impl<'a> ClassifierNetwork<'a> {
     pub fn new(
         input_size: Vec<usize>,
         output_size: Vec<usize>,
@@ -41,7 +41,7 @@ impl<'a> SimpleClassifierNetwork<'a> {
         learning_rate: f32,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
-    ) -> SimpleClassifierNetwork<'a> {
+    ) -> ClassifierNetwork<'a> {
         let config: ClassifierConfig = ClassifierConfig::new(
             input_size,
             output_size,
@@ -51,12 +51,12 @@ impl<'a> SimpleClassifierNetwork<'a> {
             with_dropout,
         );
 
-        SimpleClassifierNetwork::from_config(config)
+        ClassifierNetwork::from_config(config)
     }
 
-    pub fn load_from_file(path: &str) -> SimpleClassifierNetwork {
+    pub fn load_from_file(path: &str) -> ClassifierNetwork {
         let config: ClassifierConfig = ClassifierConfig::load_from_file(path).unwrap();
-        SimpleClassifierNetwork::from_config(config)
+        ClassifierNetwork::from_config(config)
     }
 
     pub fn save_to_file(&self, path: &str) -> Result<()> {
@@ -64,12 +64,12 @@ impl<'a> SimpleClassifierNetwork<'a> {
         config.save_to_file(path)
     }
 
-    fn from_config(config: ClassifierConfig) -> SimpleClassifierNetwork<'a> {
+    fn from_config(config: ClassifierConfig) -> ClassifierNetwork<'a> {
         build_from_config(config)
     }
 }
 
-impl Network for SimpleClassifierNetwork<'_> {
+impl Network for ClassifierNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
         self.input.borrow_mut().set_input_data(input);
 

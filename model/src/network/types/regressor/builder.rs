@@ -6,7 +6,7 @@
 use crate::{
     network::{
         config_types::unit_params::UnitParams,
-        types::simple_regressor::{config::RegressorConfig, SimpleRegressorNetwork},
+        types::regressor::{config::RegressorConfig, RegressorNetwork},
     },
     node::NodeRef,
     regularization::penalty::{PenaltyConfig, PenaltyContainer},
@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-pub fn build_from_config<'a>(config: RegressorConfig) -> SimpleRegressorNetwork<'a> {
+pub fn build_from_config<'a>(config: RegressorConfig) -> RegressorNetwork<'a> {
     let learning_rate: f32 = config.params().learning_rate();
     let penalty_config: PenaltyConfig = config.regularization().get_config();
 
@@ -31,7 +31,7 @@ pub fn build_from_config<'a>(config: RegressorConfig) -> SimpleRegressorNetwork<
 
     let loss: UnitContainer<LossUnit> = build_loss(&config, &inference, &inference_penalty);
 
-    SimpleRegressorNetwork {
+    RegressorNetwork {
         input,
         hidden,
         inference,

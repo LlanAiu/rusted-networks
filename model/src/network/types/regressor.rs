@@ -7,7 +7,7 @@ use std::io::Result;
 use crate::{
     data::data_container::DataContainer,
     network::{
-        types::simple_regressor::{builder::build_from_config, config::RegressorConfig},
+        types::regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
     regularization::penalty::{PenaltyConfig, PenaltyType},
@@ -19,7 +19,7 @@ use crate::{
 pub mod builder;
 pub mod config;
 
-pub struct SimpleRegressorNetwork<'a> {
+pub struct RegressorNetwork<'a> {
     input: UnitContainer<'a, InputUnit<'a>>,
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, LinearUnit<'a>>,
@@ -29,7 +29,7 @@ pub struct SimpleRegressorNetwork<'a> {
     with_dropout: bool,
 }
 
-impl<'a> SimpleRegressorNetwork<'a> {
+impl<'a> RegressorNetwork<'a> {
     pub fn new(
         input_size: Vec<usize>,
         output_size: Vec<usize>,
@@ -37,7 +37,7 @@ impl<'a> SimpleRegressorNetwork<'a> {
         learning_rate: f32,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
-    ) -> SimpleRegressorNetwork<'a> {
+    ) -> RegressorNetwork<'a> {
         let config: RegressorConfig = RegressorConfig::new(
             input_size,
             output_size,
@@ -46,12 +46,12 @@ impl<'a> SimpleRegressorNetwork<'a> {
             penalty_config,
             with_dropout,
         );
-        SimpleRegressorNetwork::from_config(config)
+        RegressorNetwork::from_config(config)
     }
 
-    pub fn load_from_file(path: &str) -> SimpleRegressorNetwork<'a> {
+    pub fn load_from_file(path: &str) -> RegressorNetwork<'a> {
         let config: RegressorConfig = RegressorConfig::load_from_file(path).unwrap();
-        SimpleRegressorNetwork::from_config(config)
+        RegressorNetwork::from_config(config)
     }
 
     pub fn save_to_file(&self, path: &str) -> Result<()> {
@@ -59,12 +59,12 @@ impl<'a> SimpleRegressorNetwork<'a> {
         config.save_to_file(path)
     }
 
-    fn from_config(config: RegressorConfig) -> SimpleRegressorNetwork<'a> {
+    fn from_config(config: RegressorConfig) -> RegressorNetwork<'a> {
         build_from_config(config)
     }
 }
 
-impl Network for SimpleRegressorNetwork<'_> {
+impl Network for RegressorNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
         self.input.borrow_mut().set_input_data(input);
 
