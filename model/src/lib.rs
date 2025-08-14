@@ -7,6 +7,7 @@ pub mod data;
 pub mod network;
 pub mod node;
 pub mod regularization;
+pub mod trainer;
 pub mod unit;
 
 #[cfg(test)]

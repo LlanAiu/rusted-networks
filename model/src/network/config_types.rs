@@ -1,4 +1,5 @@
 // builtin
+use std::io::Result;
 
 // external
 use serde::{Deserialize, Serialize};
@@ -17,4 +18,11 @@ pub mod unit_params;
 pub enum Config {
     Classifier(ClassifierConfig),
     Regressor(RegressorConfig),
+    None,
+}
+
+impl Config {
+    pub fn save_to_file(&self, path: &str) -> Result<()> {
+        todo!()
+    }
 }
