@@ -112,7 +112,7 @@ mod tests {
     #[test]
     fn regressor_load_test() {
         let regressor: RegressorNetwork =
-            RegressorNetwork::load_from_file("test/regressor_test.json");
+            RegressorNetwork::load_from_file("test/quadratic_training.json");
 
         let test_arr: Array1<f32> = arr1(&[2.0]);
         let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
@@ -123,6 +123,11 @@ mod tests {
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = regressor.predict(after_data2);
         println!("Loaded output 2: {:?}", after_output2);
+
+        let test_arr3: Array1<f32> = arr1(&[4.0]);
+        let after_data3 = DataContainer::Inference(Data::VectorF32(test_arr3.clone()));
+        let after_output3 = regressor.predict(after_data3);
+        println!("Loaded output 3: {:?}", after_output3);
     }
 
     #[test]
