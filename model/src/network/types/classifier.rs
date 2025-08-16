@@ -8,6 +8,7 @@ use std::io::Result;
 use crate::{
     data::data_container::DataContainer,
     network::{
+        config_types::Config,
         types::classifier::{builder::build_from_config, config::ClassifierConfig},
         Network,
     },
@@ -94,5 +95,89 @@ impl Network for ClassifierNetwork<'_> {
 
         loss_node.borrow_mut().add_gradient(&DataContainer::one());
         loss_node.borrow_mut().apply_jacobian();
+    }
+
+    fn create_config(&self) -> Config {
+        let classifier_config = ClassifierConfig::from_network(self);
+        Config::Classifier(classifier_config)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ndarray::{arr1, Array1};
+    use rand::random_range;
+
+    use crate::{
+        data::{data_container::DataContainer, Data},
+        network::{types::classifier::ClassifierNetwork, Network},
+        regularization::penalty::PenaltyConfig,
+    };
+
+    #[test]
+    fn classification_test() {
+        let penalty_config: PenaltyConfig = PenaltyConfig::none();
+
+        let classifier: ClassifierNetwork =
+            ClassifierNetwork::new(vec![1], vec![2], vec![2], 0.05, penalty_config, false);
+
+        let test_arr: Array1<f32> = arr1(&[-0.7]);
+        let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let before_output = classifier.predict(before_data);
+        println!("Before: {:?}", before_output);
+
+        for _i in 0..200 {
+            let mut inputs = Vec::new();
+            let mut responses = Vec::new();
+
+            for _j in 0..8 {
+                let rand = random_range(0.0..1.0);
+                if rand < 0.5 {
+                    let x: f32 = random_range(-1.0..-0.5);
+
+                    inputs.push(Data::VectorF32(arr1(&[x])));
+                    responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
+                } else {
+                    let x: f32 = random_range(0.5..1.0);
+
+                    inputs.push(Data::VectorF32(arr1(&[x])));
+                    responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
+                }
+            }
+
+            let input = DataContainer::Batch(inputs);
+            let response = DataContainer::Batch(responses);
+
+            classifier.train(input, response);
+        }
+
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = classifier.predict(after_data);
+        println!("After: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[0.6]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = classifier.predict(after_data2);
+        println!("After 2: {:?}", after_output2);
+
+        classifier
+            .save_to_file("test/classifier_test.json")
+            .expect("Save failed");
+    }
+
+    #[test]
+    fn classifier_load_test() {
+        let classifier: ClassifierNetwork =
+            ClassifierNetwork::load_from_file("test/classifier_test.json");
+
+        let test_arr: Array1<f32> = arr1(&[-0.7]);
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = classifier.predict(after_data);
+        println!("Loaded output 1: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[0.6]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = classifier.predict(after_data2);
+        println!("Loaded output 2: {:?}", after_output2);
     }
 }

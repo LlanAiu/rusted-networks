@@ -7,6 +7,7 @@ use std::io::Result;
 use crate::{
     data::data_container::DataContainer,
     network::{
+        config_types::Config,
         types::regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
@@ -89,5 +90,77 @@ impl Network for RegressorNetwork<'_> {
 
         loss_node.borrow_mut().add_gradient(&DataContainer::one());
         loss_node.borrow_mut().apply_jacobian();
+    }
+
+    fn create_config(&self) -> Config {
+        let regressor_config = RegressorConfig::to_config(self);
+        Config::Regressor(regressor_config)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ndarray::{arr1, Array1};
+    use rand::random_range;
+
+    use crate::{
+        data::{data_container::DataContainer, Data},
+        network::{types::regressor::RegressorNetwork, Network},
+        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+    };
+
+    #[test]
+    fn regressor_load_test() {
+        let regressor: RegressorNetwork =
+            RegressorNetwork::load_from_file("test/regressor_test.json");
+
+        let test_arr: Array1<f32> = arr1(&[2.0]);
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = regressor.predict(after_data);
+        println!("Loaded output 1: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[3.0]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = regressor.predict(after_data2);
+        println!("Loaded output 2: {:?}", after_output2);
+    }
+
+    #[test]
+    fn regressor_regularization_test() {
+        let config: PenaltyConfig = PenaltyConfig::new(L2PenaltyBuilder::new(0.2));
+
+        let regressor: RegressorNetwork =
+            RegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, config, false);
+
+        for _i in 0..200 {
+            let mut inputs = Vec::new();
+            let mut responses = Vec::new();
+
+            for _j in 0..8 {
+                let x: f32 = random_range(1.0..4.0);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[x * x])));
+            }
+
+            let input = DataContainer::Batch(inputs);
+            let response = DataContainer::Batch(responses);
+
+            regressor.train(input, response);
+        }
+
+        let test_arr: Array1<f32> = arr1(&[2.0]);
+        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
+        let after_output = regressor.predict(after_data);
+        println!("Loaded output 1: {:?}", after_output);
+
+        let test_arr2: Array1<f32> = arr1(&[3.0]);
+        let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
+        let after_output2 = regressor.predict(after_data2);
+        println!("Loaded output 2: {:?}", after_output2);
+
+        regressor
+            .save_to_file("test/regressor_test.json")
+            .expect("Save Failed");
     }
 }

@@ -80,12 +80,12 @@ where
         for example in self.test.iter() {
             let input = DataContainer::Inference(example.get_input());
             let predicted = self.model.predict(input);
-            let error = example.get_error(predicted);
+            let error = example.get_test_error(predicted);
 
             error_sum = error_sum.plus(&error);
         }
 
-        (Config::None, error_sum)
+        (Config::from_network(&self.model), error_sum)
     }
 
     pub fn train(&self, save_path: &str) {
@@ -94,16 +94,62 @@ where
         let mut prev_config: Config = config;
         let mut prev_error: PredictionError = error;
 
-        for _i in 0..5 {
+        for i in 1..21 {
             let (config, error) = self.train_epoch();
+
+            println!("Test error {i}: {:?}", error);
 
             if prev_error < error {
                 prev_config.save_to_file(save_path).expect("Save Failed");
-                break;
+                println!("Training stopped after {i} iterations");
+                return;
             }
 
             prev_config = config;
             prev_error = error;
         }
+
+        prev_config.save_to_file(save_path).expect("Save Failed");
+        println!("Training finished.");
+    }
+}
+
+#[cfg(test)]
+
+mod tests {
+    use rand::random_range;
+
+    use crate::{
+        network::types::regressor::RegressorNetwork,
+        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        trainer::{examples::QuadraticExample, SupervisedTrainer},
+    };
+
+    #[test]
+    fn trainer_test() {
+        let mut train: Vec<QuadraticExample> = Vec::new();
+        let mut test: Vec<QuadraticExample> = Vec::new();
+
+        for _i in 0..1600 {
+            let x: f32 = random_range(1.0..4.0);
+            let example: QuadraticExample = QuadraticExample::new(x);
+            train.push(example);
+        }
+
+        for i in 0..16 {
+            let x: f32 = (i as f32) / 5.0 + 1.0;
+            let example: QuadraticExample = QuadraticExample::new(x);
+            test.push(example);
+        }
+
+        let config: PenaltyConfig = PenaltyConfig::new(L2PenaltyBuilder::new(0.2));
+
+        let regressor: RegressorNetwork =
+            RegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, config, false);
+
+        let trainer: SupervisedTrainer<RegressorNetwork, QuadraticExample> =
+            SupervisedTrainer::new(regressor, train, test);
+
+        trainer.train("test/quadratic_training.json");
     }
 }

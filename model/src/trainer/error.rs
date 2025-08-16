@@ -4,7 +4,7 @@
 
 // internal
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum PredictionError {
     Loss { loss: f32 },
     Accuracy { correct: usize, total: usize },

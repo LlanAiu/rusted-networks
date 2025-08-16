@@ -5,8 +5,9 @@ use std::io::Result;
 use serde::{Deserialize, Serialize};
 
 // internal
-use crate::network::types::{
-    classifier::config::ClassifierConfig, regressor::config::RegressorConfig,
+use crate::network::{
+    types::{classifier::config::ClassifierConfig, regressor::config::RegressorConfig},
+    Network,
 };
 pub mod hyper_params;
 pub mod input_params;
@@ -22,7 +23,15 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn save_to_file(&self, path: &str) -> Result<()> {
-        todo!()
+    pub fn save_to_file(self, path: &str) -> Result<()> {
+        match self {
+            Config::Classifier(classifier_config) => classifier_config.save_to_file(path),
+            Config::Regressor(regressor_config) => regressor_config.save_to_file(path),
+            Config::None => Ok(()),
+        }
+    }
+
+    pub fn from_network(network: &impl Network) -> Config {
+        network.create_config()
     }
 }
