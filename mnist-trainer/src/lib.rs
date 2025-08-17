@@ -91,4 +91,40 @@ mod tests {
 
         trainer.train("test/mnist_small.json");
     }
+
+    #[test]
+    fn small_dataset_load_train() {
+        let classifier: ClassifierNetwork =
+            ClassifierNetwork::load_from_file("test/mnist_small.json");
+
+        let train: Vec<HandwrittenExample> =
+            load_data_from_csv("../data/mnist_train.csv", 100).expect("Failed to read data");
+        let test: Vec<HandwrittenExample> =
+            load_data_from_csv("../data/mnist_test.csv", 20).expect("Failed to read data");
+
+        let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
+
+        let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+            SupervisedTrainer::new(classifier, config);
+
+        trainer.train("test/mnist_small.json"); 
+    }
+
+    #[test]
+    fn small_dataset_load_test() {
+        let classifier: ClassifierNetwork =
+            ClassifierNetwork::load_from_file("test/mnist_small.json");
+
+        let data = load_data_from_csv("../data/mnist_test.csv", 2).expect("Failed to read data");
+
+        let test_label_one = &data[0];
+        let test_input_one = DataContainer::Inference(test_label_one.get_input());
+        let output_one = classifier.predict(test_input_one);
+        println!("Output (7): {:?}", output_one);
+
+        let test_label_two = &data[1];
+        let test_input_two = DataContainer::Inference(test_label_two.get_input());
+        let output_two = classifier.predict(test_input_two);
+        println!("Output (2): {:?}", output_two);
+    }
 }
