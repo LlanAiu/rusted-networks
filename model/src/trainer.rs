@@ -34,7 +34,7 @@ where
         }
     }
 
-    pub fn train_epoch(&self) -> (Config, PredictionError) {
+    fn train_epoch(&self) -> (Config, PredictionError) {
         let mut inputs: Vec<Data> = Vec::new();
         let mut responses: Vec<Data> = Vec::new();
 
@@ -51,6 +51,16 @@ where
                 inputs.clear();
                 responses.clear();
             }
+        }
+
+        if inputs.len() != 0 {
+            self.model.train(
+                DataContainer::Batch(inputs.clone()),
+                DataContainer::Batch(responses.clone()),
+            );
+
+            inputs.clear();
+            responses.clear();
         }
 
         let mut error_sum: PredictionError = PredictionError::empty();

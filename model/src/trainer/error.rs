@@ -7,7 +7,7 @@
 #[derive(Clone, Debug)]
 pub enum PredictionError {
     Loss { loss: f32 },
-    Accuracy { correct: usize, total: usize },
+    Misclassification { incorrect: usize, total: usize },
     Empty,
     None,
 }
@@ -29,14 +29,17 @@ impl PredictionError {
                 }
             }
             (
-                PredictionError::Accuracy { correct, total },
-                PredictionError::Accuracy {
-                    correct: second_correct,
-                    total: second_total,
+                PredictionError::Misclassification {
+                    incorrect: l_incorrect,
+                    total: l_total,
                 },
-            ) => PredictionError::Accuracy {
-                correct: correct + second_correct,
-                total: total + second_total,
+                PredictionError::Misclassification {
+                    incorrect: r_incorrect,
+                    total: r_total,
+                },
+            ) => PredictionError::Misclassification {
+                incorrect: l_incorrect + r_incorrect,
+                total: l_total + r_total,
             },
             (PredictionError::Empty, _) => other.clone(),
             (_, PredictionError::Empty) => self.clone(),
@@ -53,28 +56,28 @@ impl PartialEq for PredictionError {
         match (self, other) {
             (Self::Loss { loss: l_loss }, Self::Loss { loss: r_loss }) => l_loss == r_loss,
             (
-                Self::Accuracy {
-                    correct: l_correct,
+                Self::Misclassification {
+                    incorrect: l_incorrect,
                     total: l_total,
                 },
-                Self::Accuracy {
-                    correct: r_correct,
+                Self::Misclassification {
+                    incorrect: r_incorrect,
                     total: r_total,
                 },
             ) => {
-                let l_acc = if *l_total > 0 {
-                    (*l_correct as f32) / (*l_total as f32)
+                let l_error_rate = if *l_total > 0 {
+                    (*l_incorrect as f32) / (*l_total as f32)
                 } else {
                     0.0
                 };
 
-                let r_acc = if *r_total > 0 {
-                    (*r_correct as f32) / (*r_total as f32)
+                let r_error_rate = if *r_total > 0 {
+                    (*r_incorrect as f32) / (*r_total as f32)
                 } else {
                     0.0
                 };
 
-                return l_acc == r_acc;
+                return l_error_rate == r_error_rate;
             }
             _ => false,
         }
@@ -88,28 +91,28 @@ impl PartialOrd for PredictionError {
                 f32::partial_cmp(l_loss, r_loss)
             }
             (
-                PredictionError::Accuracy {
-                    correct: l_correct,
+                PredictionError::Misclassification {
+                    incorrect: l_incorrect,
                     total: l_total,
                 },
-                PredictionError::Accuracy {
-                    correct: r_correct,
+                PredictionError::Misclassification {
+                    incorrect: r_incorrect,
                     total: r_total,
                 },
             ) => {
-                let l_acc = if *l_total > 0 {
-                    (*l_correct as f32) / (*l_total as f32)
+                let l_error_rate = if *l_total > 0 {
+                    (*l_incorrect as f32) / (*l_total as f32)
                 } else {
                     0.0
                 };
 
-                let r_acc = if *r_total > 0 {
-                    (*r_correct as f32) / (*r_total as f32)
+                let r_error_rate = if *r_total > 0 {
+                    (*r_incorrect as f32) / (*r_total as f32)
                 } else {
                     0.0
                 };
 
-                f32::partial_cmp(&l_acc, &r_acc)
+                f32::partial_cmp(&l_error_rate, &r_error_rate)
             }
 
             _ => None,

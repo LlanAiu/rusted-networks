@@ -12,10 +12,10 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
         regularization::penalty::PenaltyConfig,
+        trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
-    use ndarray::{arr1, Array1};
 
-    use crate::import_csv::load_data_from_csv;
+    use crate::{import_csv::load_data_from_csv, types::HandwrittenExample};
 
     #[test]
     fn tiny_dataset_init() {
@@ -23,15 +23,15 @@ mod tests {
         let classifier: ClassifierNetwork =
             ClassifierNetwork::new(vec![784], vec![10], vec![50], 0.01, penalty_config, false);
 
-        let data = load_data_from_csv("../data/mnist_train.csv").expect("Failed to read data");
+        let data = load_data_from_csv("../data/mnist_train.csv", 2).expect("Failed to read data");
 
         for _i in 0..60 {
             let mut inputs: Vec<Data> = Vec::new();
             let mut responses: Vec<Data> = Vec::new();
 
             for label in &data {
-                inputs.push(Data::VectorF32(label.get_data()));
-                responses.push(Data::VectorF32(label.get_label()));
+                inputs.push(label.get_input());
+                responses.push(label.get_response());
             }
 
             classifier.train(
@@ -41,12 +41,12 @@ mod tests {
         }
 
         let test_label_one = &data[0];
-        let test_input_one = DataContainer::Inference(Data::VectorF32(test_label_one.get_data()));
+        let test_input_one = DataContainer::Inference(test_label_one.get_input());
         let output_one = classifier.predict(test_input_one);
         println!("Output (5): {:?}", output_one);
 
         let test_label_two = &data[1];
-        let test_input_two = DataContainer::Inference(Data::VectorF32(test_label_two.get_data()));
+        let test_input_two = DataContainer::Inference(test_label_two.get_input());
         let output_two = classifier.predict(test_input_two);
         println!("Output (0): {:?}", output_two);
 
@@ -60,27 +60,35 @@ mod tests {
         let classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/mnist_classifier_mini.json");
 
-        let data = load_data_from_csv("../data/mnist_train.csv").expect("Failed to read data");
+        let data = load_data_from_csv("../data/mnist_train.csv", 2).expect("Failed to read data");
 
         let test_label_one = &data[0];
-        let test_input_one = DataContainer::Inference(Data::VectorF32(test_label_one.get_data()));
+        let test_input_one = DataContainer::Inference(test_label_one.get_input());
         let output_one = classifier.predict(test_input_one);
         println!("Output (5): {:?}", output_one);
 
         let test_label_two = &data[1];
-        let test_input_two = DataContainer::Inference(Data::VectorF32(test_label_two.get_data()));
+        let test_input_two = DataContainer::Inference(test_label_two.get_input());
         let output_two = classifier.predict(test_input_two);
         println!("Output (0): {:?}", output_two);
     }
 
     #[test]
-    fn can_access_model() {
+    fn small_dataset_init() {
+        let penalty_config: PenaltyConfig = PenaltyConfig::none();
         let classifier: ClassifierNetwork =
-            ClassifierNetwork::load_from_file("test/classifier_test.json");
+            ClassifierNetwork::new(vec![784], vec![10], vec![50], 0.01, penalty_config, false);
 
-        let test_arr: Array1<f32> = arr1(&[-0.7]);
-        let after_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));
-        let after_output = classifier.predict(after_data);
-        println!("Loaded output: {:?}", after_output);
+        let train: Vec<HandwrittenExample> =
+            load_data_from_csv("../data/mnist_train.csv", 100).expect("Failed to read data");
+        let test: Vec<HandwrittenExample> =
+            load_data_from_csv("../data/mnist_test.csv", 20).expect("Failed to read data");
+
+        let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
+
+        let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+            SupervisedTrainer::new(classifier, config);
+
+        trainer.train("test/mnist_small.json");
     }
 }
