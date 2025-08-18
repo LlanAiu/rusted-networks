@@ -96,11 +96,9 @@ impl<'a> Node<'a> for LossNode<'a> {
 
         if first_ref.get_type() == NodeType::ExpectedResponse {
             let data = self.function.apply(&first_data, &second_data);
-            println!("Average Loss: {:?}", data.average_batch());
             self.base.set_data(data);
         } else {
             let data = self.function.apply(&second_data, &first_data);
-            println!("Average Loss: {:?}", data.average_batch());
             self.base.set_data(data);
         }
     }
