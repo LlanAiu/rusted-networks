@@ -6,6 +6,7 @@
 pub mod data;
 pub mod network;
 pub mod node;
+pub mod optimization;
 pub mod regularization;
 pub mod trainer;
 pub mod unit;
