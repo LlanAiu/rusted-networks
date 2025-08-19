@@ -107,7 +107,7 @@ mod tests {
         let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
             SupervisedTrainer::new(classifier, config);
 
-        trainer.train("test/mnist_small.json"); 
+        trainer.train("test/mnist_small.json");
     }
 
     #[test]
