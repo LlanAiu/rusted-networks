@@ -2,9 +2,8 @@
 
 // external
 
-use crate::data::data_container::{self, DataContainer};
-use crate::data::Data;
 // internal
+use crate::data::data_container::DataContainer;
 use crate::node::NodeRef;
 
 pub struct NodeBase<'a> {
