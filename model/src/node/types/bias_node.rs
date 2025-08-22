@@ -8,11 +8,13 @@ use crate::data::data_container::DataContainer;
 use crate::data::Data;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::optimization::momentum::DescentType;
 
 pub struct BiasNode<'a> {
     base: NodeBase<'a>,
     dim: usize,
     learning_rate: DataContainer,
+    descent_type: DescentType,
 }
 
 impl<'a> BiasNode<'a> {
@@ -26,6 +28,7 @@ impl<'a> BiasNode<'a> {
             base,
             dim,
             learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
+            descent_type: DescentType::Base,
         }
     }
 }
@@ -61,6 +64,9 @@ impl<'a> Node<'a> for BiasNode<'a> {
     }
 
     fn get_data(&mut self) -> DataContainer {
+        if let DescentType::Nesterov { .. } = &self.descent_type {
+            return self.base.get_nesterov_data();
+        }
         self.base.get_data()
     }
 
@@ -73,7 +79,17 @@ impl<'a> Node<'a> for BiasNode<'a> {
 
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
-        self.base.process_gradient(&self.learning_rate);
+
+        match &self.descent_type {
+            DescentType::Base => self.base.process_gradient(&self.learning_rate),
+            DescentType::Momentum { decay } => {
+                self.base.process_momentum(&self.learning_rate, decay)
+            }
+            DescentType::Nesterov { decay } => {
+                self.base.process_momentum(&self.learning_rate, decay)
+            }
+        }
+
         self.base.reset_gradient();
     }
 

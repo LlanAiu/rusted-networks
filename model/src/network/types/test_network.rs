@@ -4,6 +4,7 @@
 
 // internal
 use crate::{
+    optimization::momentum::DescentType,
     regularization::penalty::PenaltyConfig,
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -30,6 +31,7 @@ impl<'a> TestNetwork<'a> {
             input_size,
             output_size,
             learning_rate,
+            DescentType::Base,
         ));
 
         let reg_unit = penalty.create_first(inference.borrow().get_weights_ref());

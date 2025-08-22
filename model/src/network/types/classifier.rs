@@ -12,6 +12,7 @@ use crate::{
         types::classifier::{builder::build_from_config, config::ClassifierConfig},
         Network,
     },
+    optimization::momentum::DescentType,
     regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{
@@ -32,6 +33,7 @@ pub struct ClassifierNetwork<'a> {
     learning_rate: f32,
     penalty_type: PenaltyType,
     with_dropout: bool,
+    descent_type: DescentType,
 }
 
 impl<'a> ClassifierNetwork<'a> {
@@ -42,6 +44,7 @@ impl<'a> ClassifierNetwork<'a> {
         learning_rate: f32,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
+        descent_type: DescentType,
     ) -> ClassifierNetwork<'a> {
         let config: ClassifierConfig = ClassifierConfig::new(
             input_size,
@@ -50,6 +53,7 @@ impl<'a> ClassifierNetwork<'a> {
             learning_rate,
             penalty_config,
             with_dropout,
+            descent_type,
         );
 
         ClassifierNetwork::from_config(config)
@@ -111,6 +115,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
+        optimization::momentum::DescentType,
         regularization::penalty::PenaltyConfig,
     };
 
@@ -118,8 +123,15 @@ mod tests {
     fn classification_test() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
 
-        let classifier: ClassifierNetwork =
-            ClassifierNetwork::new(vec![1], vec![2], vec![2], 0.05, penalty_config, false);
+        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+            vec![1],
+            vec![2],
+            vec![2],
+            0.05,
+            penalty_config,
+            false,
+            DescentType::Base,
+        );
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
         let before_data = DataContainer::Inference(Data::VectorF32(test_arr.clone()));

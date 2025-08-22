@@ -16,6 +16,7 @@ use crate::{
         },
         types::regressor::RegressorNetwork,
     },
+    optimization::momentum::DescentType,
     regularization::penalty::PenaltyConfig,
 };
 
@@ -36,6 +37,7 @@ impl RegressorConfig {
         learning_rate: f32,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
+        descent_type: DescentType,
     ) -> RegressorConfig {
         if input_size.len() != 1 || output_size.len() != 1 {
             panic!("[SIMPLE_REGRESSOR] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
@@ -50,7 +52,7 @@ impl RegressorConfig {
             loss_type: String::from("mean_squared_error"),
             output_size: output_size,
         };
-        let hyperparams: HyperParams = HyperParams::new(learning_rate);
+        let hyperparams: HyperParams = HyperParams::new(learning_rate, descent_type);
 
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
@@ -88,7 +90,8 @@ impl RegressorConfig {
         }
         units.push(UnitParams::from_linear_unit(&network.inference));
 
-        let hyperparams: HyperParams = HyperParams::new(network.learning_rate);
+        let hyperparams: HyperParams =
+            HyperParams::new(network.learning_rate, network.descent_type.clone());
 
         let regularization: RegularizationParams =
             RegularizationParams::new(network.penalty_type.clone(), network.with_dropout);

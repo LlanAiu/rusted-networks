@@ -8,6 +8,7 @@ use crate::types::HandwrittenExample;
 
 pub fn load_data_from_csv(
     path: &str,
+    offset: usize,
     rows: usize,
 ) -> Result<Vec<HandwrittenExample>, Box<dyn Error>> {
     let mut reader = csv::ReaderBuilder::new()
@@ -15,7 +16,7 @@ pub fn load_data_from_csv(
         .from_path(path)?;
 
     let mut data: Vec<HandwrittenExample> = Vec::new();
-    for result in reader.deserialize().take(rows) {
+    for result in reader.deserialize().skip(offset).take(rows) {
         let record: Vec<u16> = result?;
         let labelled: HandwrittenExample = HandwrittenExample::new(record)?;
         data.push(labelled);
@@ -32,7 +33,7 @@ mod tests {
 
     #[test]
     fn load_data_test() {
-        let data = load_data_from_csv("../data/mnist_train.csv", 2).expect("Data load failed!");
+        let data = load_data_from_csv("../data/mnist_train.csv", 0, 2).expect("Data load failed!");
 
         println!("Data: {:?}", data);
 

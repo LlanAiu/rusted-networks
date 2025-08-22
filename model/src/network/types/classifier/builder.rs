@@ -9,6 +9,7 @@ use crate::{
         types::classifier::{config::ClassifierConfig, ClassifierNetwork},
     },
     node::NodeRef,
+    optimization::momentum::DescentType,
     regularization::penalty::{PenaltyConfig, PenaltyContainer},
     unit::{
         types::{
@@ -21,6 +22,7 @@ use crate::{
 
 pub fn build_from_config<'a>(config: ClassifierConfig) -> ClassifierNetwork<'a> {
     let learning_rate: f32 = config.params().learning_rate();
+    let descent_type: DescentType = config.params().descent().to_type();
     let penalty_config: PenaltyConfig = config.regularization().get_config();
 
     let input: UnitContainer<InputUnit> =
@@ -42,6 +44,7 @@ pub fn build_from_config<'a>(config: ClassifierConfig) -> ClassifierNetwork<'a> 
         learning_rate,
         penalty_type: penalty_config.get_type(),
         with_dropout: config.regularization().is_dropout_enabled(),
+        descent_type,
     }
 }
 
@@ -55,6 +58,7 @@ fn build_hidden_units<'a>(
     Option<PenaltyContainer<'a>>,
 ) {
     let learning_rate: f32 = config.params().learning_rate();
+    let descent_type: DescentType = config.params().descent().to_type();
     let hidden_len: usize = config.units().len();
     let units: &Vec<UnitParams> = config.units();
 
@@ -64,8 +68,11 @@ fn build_hidden_units<'a>(
 
     for i in 0..(hidden_len - 1) {
         let hidden_config: &UnitParams = units.get(i).unwrap();
-        let hidden_unit: UnitContainer<LinearUnit> =
-            UnitContainer::new(LinearUnit::from_config(hidden_config, learning_rate));
+        let hidden_unit: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::from_config(
+            hidden_config,
+            learning_rate,
+            descent_type.clone(),
+        ));
 
         let penalty: PenaltyContainer = build_penalty(
             penalty_config,
@@ -101,11 +108,15 @@ fn build_inference<'a>(
     prev_ref: UnitRef<'a>,
 ) -> (UnitContainer<'a, SoftmaxUnit<'a>>, PenaltyContainer<'a>) {
     let learning_rate: f32 = config.params().learning_rate();
+    let descent_type: DescentType = config.params().descent().to_type();
     let hidden_len: usize = config.units().len();
     let inference_config = config.units().get(hidden_len - 1).unwrap();
 
-    let inference: UnitContainer<SoftmaxUnit> =
-        UnitContainer::new(SoftmaxUnit::from_config(inference_config, learning_rate));
+    let inference: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::from_config(
+        inference_config,
+        learning_rate,
+        descent_type,
+    ));
 
     let inference_penalty: PenaltyContainer = build_penalty(
         &penalty_config,

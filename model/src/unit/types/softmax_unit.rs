@@ -14,6 +14,7 @@ use crate::{
         },
         NodeRef,
     },
+    optimization::momentum::DescentType,
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -32,9 +33,14 @@ impl<'a> SoftmaxUnit<'a> {
         input_size: usize,
         output_size: usize,
         learning_rate: f32,
+        descent_type: DescentType,
     ) -> SoftmaxUnit<'a> {
-        let weights_ref: NodeRef =
-            NodeRef::new(WeightNode::new(input_size, output_size, learning_rate));
+        let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
+            input_size,
+            output_size,
+            learning_rate,
+            descent_type,
+        ));
         let biases_ref = NodeRef::new(BiasNode::new(output_size, learning_rate));
         let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
         let add_ref: NodeRef = NodeRef::new(AddNode::new());
@@ -64,7 +70,11 @@ impl<'a> SoftmaxUnit<'a> {
         }
     }
 
-    pub fn from_config(config: &UnitParams, learning_rate: f32) -> SoftmaxUnit<'a> {
+    pub fn from_config(
+        config: &UnitParams,
+        learning_rate: f32,
+        descent_type: DescentType,
+    ) -> SoftmaxUnit<'a> {
         if let UnitParams::Softmax {
             input_size,
             output_size,
@@ -72,7 +82,13 @@ impl<'a> SoftmaxUnit<'a> {
             ..
         } = config
         {
-            let unit: SoftmaxUnit = Self::new(activation, *input_size, *output_size, learning_rate);
+            let unit: SoftmaxUnit = Self::new(
+                activation,
+                *input_size,
+                *output_size,
+                learning_rate,
+                descent_type,
+            );
 
             let weights = config.get_weights();
             let biases = config.get_biases();

@@ -2,8 +2,8 @@
 
 // external
 
-use crate::data::data_container::DataContainer;
 // internal
+use crate::data::data_container::DataContainer;
 use crate::node::NodeRef;
 
 pub struct NodeBase<'a> {
@@ -12,6 +12,7 @@ pub struct NodeBase<'a> {
     data: DataContainer,
     grad_count: usize,
     grad: DataContainer,
+    momentum: DataContainer,
 }
 
 impl<'a> NodeBase<'a> {
@@ -22,6 +23,7 @@ impl<'a> NodeBase<'a> {
             data: DataContainer::zero(),
             grad_count: 0,
             grad: DataContainer::zero(),
+            momentum: DataContainer::zero(),
         }
     }
 }
@@ -44,8 +46,12 @@ impl<'a> NodeBase<'a> {
         &self.outputs
     }
 
-    pub fn get_data(&mut self) -> DataContainer {
+    pub fn get_data(&self) -> DataContainer {
         self.data.clone()
+    }
+
+    pub fn get_nesterov_data(&self) -> DataContainer {
+        self.data.plus(&self.momentum)
     }
 
     pub fn set_data(&mut self, data: DataContainer) {
@@ -80,5 +86,12 @@ impl<'a> NodeBase<'a> {
         let update = self.grad.average_batch().times(learning_rate);
 
         self.data = self.data.minus(&update);
+    }
+
+    pub fn process_momentum(&mut self, learning_rate: &DataContainer, decay: &DataContainer) {
+        let update = self.grad.average_batch().times(learning_rate);
+        self.momentum = self.momentum.times(decay).minus(&update);
+
+        self.data = self.data.plus(&self.momentum);
     }
 }

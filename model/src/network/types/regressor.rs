@@ -11,6 +11,7 @@ use crate::{
         types::regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
+    optimization::momentum::DescentType,
     regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -28,6 +29,7 @@ pub struct RegressorNetwork<'a> {
     learning_rate: f32,
     penalty_type: PenaltyType,
     with_dropout: bool,
+    descent_type: DescentType,
 }
 
 impl<'a> RegressorNetwork<'a> {
@@ -38,6 +40,7 @@ impl<'a> RegressorNetwork<'a> {
         learning_rate: f32,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
+        descent_type: DescentType,
     ) -> RegressorNetwork<'a> {
         let config: RegressorConfig = RegressorConfig::new(
             input_size,
@@ -46,6 +49,7 @@ impl<'a> RegressorNetwork<'a> {
             learning_rate,
             penalty_config,
             with_dropout,
+            descent_type,
         );
         RegressorNetwork::from_config(config)
     }
@@ -106,6 +110,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::regressor::RegressorNetwork, Network},
+        optimization::momentum::DescentType,
         regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
     };
 
@@ -134,8 +139,15 @@ mod tests {
     fn regressor_regularization_test() {
         let config: PenaltyConfig = PenaltyConfig::new(L2PenaltyBuilder::new(0.2));
 
-        let regressor: RegressorNetwork =
-            RegressorNetwork::new(vec![1], vec![1], vec![6, 3], 0.005, config, false);
+        let regressor: RegressorNetwork = RegressorNetwork::new(
+            vec![1],
+            vec![1],
+            vec![6, 3],
+            0.005,
+            config,
+            false,
+            DescentType::Base,
+        );
 
         for _i in 0..200 {
             let mut inputs = Vec::new();
