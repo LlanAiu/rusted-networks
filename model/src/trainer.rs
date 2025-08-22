@@ -78,13 +78,15 @@ where
     pub fn train(&self, save_path: &str) {
         let (config, error) = self.train_epoch();
 
+        println!("Test error 0: {:?}\n", error);
+
         let mut prev_config: Config = config;
         let mut prev_error: PredictionError = error;
 
-        for i in 0..self.config.total_iterations() {
+        for i in 1..self.config.total_iterations() {
             let (config, error) = self.train_epoch();
 
-            println!("Test error {i}: {:?}", error);
+            println!("Test error {i}: {:?}\n", error);
 
             if prev_error < error {
                 prev_config.save_to_file(save_path).expect("Save Failed");
@@ -98,6 +100,19 @@ where
 
         prev_config.save_to_file(save_path).expect("Save Failed");
         println!("Training finished.");
+    }
+
+    pub fn evaluate(&self) -> PredictionError {
+        let mut error_sum: PredictionError = PredictionError::empty();
+        for example in self.config.test_ref().iter() {
+            let input = DataContainer::Inference(example.get_input());
+            let predicted = self.model.predict(input);
+            let error = example.get_test_error(predicted);
+
+            error_sum = error_sum.plus(&error);
+        }
+
+        error_sum
     }
 }
 
