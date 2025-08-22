@@ -21,6 +21,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
+        optimization::momentum::DescentType,
         regularization::penalty::PenaltyConfig,
         unit::{
             types::{input_unit::InputUnit, loss_unit::LossUnit, softmax_unit::SoftmaxUnit},
@@ -32,7 +33,7 @@ mod tests {
     fn loss_test() {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![3]));
         let hidden: UnitContainer<SoftmaxUnit> =
-            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001));
+            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001, DescentType::Base));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(vec![2], "base_cross_entropy"));
 
@@ -84,7 +85,7 @@ mod tests {
     fn batch_test() {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![3]));
         let hidden: UnitContainer<SoftmaxUnit> =
-            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001));
+            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001, DescentType::Base));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(vec![2], "base_cross_entropy"));
 
@@ -130,8 +131,15 @@ mod tests {
     fn network_test() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
 
-        let classifier: ClassifierNetwork =
-            ClassifierNetwork::new(vec![3], vec![2], vec![5], 0.001, penalty_config, false);
+        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+            vec![3],
+            vec![2],
+            vec![5],
+            0.001,
+            penalty_config,
+            false,
+            DescentType::Base,
+        );
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);
         let input = DataContainer::Inference(Data::VectorF32(input_arr1));

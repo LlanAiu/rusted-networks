@@ -11,6 +11,7 @@ mod tests {
     use model::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
+        optimization::momentum::DescentType,
         regularization::penalty::PenaltyConfig,
         trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
@@ -20,8 +21,15 @@ mod tests {
     #[test]
     fn tiny_dataset_init() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
-        let classifier: ClassifierNetwork =
-            ClassifierNetwork::new(vec![784], vec![10], vec![50], 0.01, penalty_config, false);
+        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+            vec![784],
+            vec![10],
+            vec![50],
+            0.01,
+            penalty_config,
+            false,
+            DescentType::Base,
+        );
 
         let data = load_data_from_csv("../data/mnist_train.csv", 2).expect("Failed to read data");
 
@@ -76,8 +84,15 @@ mod tests {
     #[test]
     fn small_dataset_init() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
-        let classifier: ClassifierNetwork =
-            ClassifierNetwork::new(vec![784], vec![10], vec![50], 0.01, penalty_config, false);
+        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+            vec![784],
+            vec![10],
+            vec![50],
+            0.01,
+            penalty_config,
+            false,
+            DescentType::Base,
+        );
 
         let train: Vec<HandwrittenExample> =
             load_data_from_csv("../data/mnist_train.csv", 100).expect("Failed to read data");

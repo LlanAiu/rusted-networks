@@ -72,14 +72,14 @@ mod tests {
     use crate::{
         data::data_container::DataContainer,
         node::{types::weight_node::WeightNode, NodeRef},
-        regularization::penalty::l1_penalty::L1PenaltyUnit,
-        regularization::penalty::PenaltyUnit,
+        optimization::momentum::DescentType,
+        regularization::penalty::{l1_penalty::L1PenaltyUnit, PenaltyUnit},
     };
 
     #[test]
     fn penalty_test() {
         let mut unit: L1PenaltyUnit = L1PenaltyUnit::new(1.0);
-        let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 0.001));
+        let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 0.001, DescentType::Base));
 
         println!("Weights: {:?}", weight.borrow_mut().get_data());
 
@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn penalty_backprop() {
         let mut unit: L1PenaltyUnit = L1PenaltyUnit::new(1.0);
-        let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 1.0));
+        let weight: NodeRef = NodeRef::new(WeightNode::new(4, 2, 1.0, DescentType::Base));
 
         let old_weights = weight.borrow_mut().get_data();
         println!("Weights: {:?}", old_weights);

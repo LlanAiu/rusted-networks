@@ -108,6 +108,7 @@ mod tests {
 
     use crate::{
         network::types::regressor::RegressorNetwork,
+        optimization::momentum::DescentType,
         regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
         trainer::{examples::QuadraticExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
@@ -130,8 +131,15 @@ mod tests {
         }
 
         let config: PenaltyConfig = PenaltyConfig::new(L2PenaltyBuilder::new(0.2));
-        let regressor: RegressorNetwork =
-            RegressorNetwork::new(vec![1], vec![1], vec![12, 6], 0.001, config, false);
+        let regressor: RegressorNetwork = RegressorNetwork::new(
+            vec![1],
+            vec![1],
+            vec![12, 6],
+            0.001,
+            config,
+            false,
+            DescentType::nesterov(0.95),
+        );
 
         let train_config: TrainerConfig<QuadraticExample> = TrainerConfig::new(25, 16, train, test);
 
