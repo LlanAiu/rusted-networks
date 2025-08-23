@@ -176,13 +176,14 @@ mod tests {
         let classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/mnist_med.json");
 
+        // JUST RAN -- change offset to 40000 before running again
         let train: Vec<HandwrittenExample> =
-            load_data_from_csv("../data/mnist_train.csv", 10000, 1000)
+            load_data_from_csv("../data/mnist_train.csv", 35000, 5000)
                 .expect("Failed to read data");
         let test: Vec<HandwrittenExample> =
             load_data_from_csv("../data/mnist_test.csv", 0, 1000).expect("Failed to read data");
 
-        let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(3, 4, train, test);
+        let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(2, 4, train, test);
 
         let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
             SupervisedTrainer::new(classifier, config);
