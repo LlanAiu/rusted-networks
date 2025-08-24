@@ -10,4 +10,5 @@ pub mod plus;
 pub mod sqrt;
 pub mod sum_assign;
 pub mod times;
+pub mod times_assign;
 pub mod transpose;

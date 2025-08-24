@@ -6,7 +6,8 @@ use ndarray::{Array1, Array2};
 // internal
 use crate::data::operations::{
     element_sum::DataElementSum, matmul::DataMatMul, minus::DataMinus, plus::DataPlus,
-    sqrt::DataSquareRoot, sum_assign::DataSumAssign, times::DataTimes, transpose::DataTranspose,
+    sqrt::DataSquareRoot, sum_assign::DataSumAssign, times::DataTimes,
+    times_assign::DataTimesAssign, transpose::DataTranspose,
 };
 pub mod data_container;
 pub mod operations;
@@ -107,7 +108,7 @@ impl Data {
                 DataSumAssign::sum_matrices(l_matrix, r_matrix);
             }
             _ => {
-                Data::warn_mutate(variant, other, "PLUS");
+                Data::warn_mutate(variant, other, "PLUS_INPLACE");
             }
         }
     }
@@ -168,6 +169,30 @@ impl Data {
             _ => {
                 Data::warn_operation(self, other, "TIMES");
                 Data::None
+            }
+        }
+    }
+
+    pub fn times_assign(&mut self, other: &Data) {
+        let variant = self.variant_name();
+        match (self, other) {
+            (Data::ScalarF32(l_scalar), Data::ScalarF32(r_scalar)) => {
+                DataTimesAssign::multiply_scalars(l_scalar, r_scalar);
+            }
+            (Data::VectorF32(vector), Data::ScalarF32(scalar)) => {
+                DataTimesAssign::multiply_vector_scalar(vector, scalar);
+            }
+            (Data::VectorF32(l_vector), Data::VectorF32(r_vector)) => {
+                DataTimesAssign::multiply_vectors(l_vector, r_vector);
+            }
+            (Data::MatrixF32(matrix), Data::ScalarF32(scalar)) => {
+                DataTimesAssign::multiply_matrix_scalar(matrix, scalar);
+            }
+            (Data::MatrixF32(l_matrix), Data::MatrixF32(r_matrix)) => {
+                DataTimesAssign::multiply_matrices(l_matrix, r_matrix);
+            }
+            _ => {
+                Data::warn_mutate(variant, other, "TIMES_INPLACE");
             }
         }
     }

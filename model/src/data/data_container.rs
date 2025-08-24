@@ -7,7 +7,7 @@ use crate::data::{
     data_container::operations::{
         element_sum::ContainerElementSum, matmul::ContainerMatMul, minus::ContainerMinus,
         plus::ContainerPlus, sqrt::ContainerSquareRoot, sum_assign::ContainerSumAssign,
-        times::ContainerTimes, transpose::ContainerTranspose,
+        times::ContainerTimes, times_assign::ContainerTimesAssign, transpose::ContainerTranspose,
     },
     Data,
 };
@@ -207,6 +207,36 @@ impl DataContainer {
         }
     }
 
+    pub fn times_assign(&mut self, other: &DataContainer) {
+        let variant = self.container_name();
+        match (self, other) {
+            (DataContainer::Batch(l_batch), DataContainer::Batch(r_batch)) => {
+                ContainerTimesAssign::times_batches(l_batch, r_batch);
+            }
+            (DataContainer::Batch(batch), DataContainer::Inference(data)) => {
+                ContainerTimesAssign::times_batch_data(batch, data);
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerTimesAssign::times_batch_data(batch, data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Inference(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Inference(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            _ => {
+                DataContainer::warn_mutate(variant, other, "TIMES_INPLACE");
+            }
+        }
+    }
+
     pub fn matmul(&self, other: &DataContainer) -> DataContainer {
         match (self, other) {
             (DataContainer::Batch(batch1), DataContainer::Batch(batch2)) => {
@@ -331,11 +361,12 @@ impl DataContainer {
                     return DataContainer::Empty;
                 }
                 let len_scale: f32 = 1.0 / batch.len() as f32;
-                let mut average: Data = Data::zero();
-                for data in batch {
-                    average = average.plus(&data);
+                let mut average: Data = batch[0].clone();
+                for i in 1..batch.len() {
+                    let data: &Data = batch.get(i).unwrap();
+                    average.sum_assign(data);
                 }
-                average = average.times(&Data::ScalarF32(len_scale));
+                average.times_assign(&Data::ScalarF32(len_scale));
                 DataContainer::Parameter(average)
             }
             _ => self.clone(),

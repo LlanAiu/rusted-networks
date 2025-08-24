@@ -86,9 +86,10 @@ impl<'a> Node<'a> for ActivationNode<'a> {
 
         for node in self.get_inputs() {
             let data = node.borrow_mut().get_data();
-            let grad = data.apply_function(|data| self.function.diff_all(data));
-            node.borrow_mut()
-                .add_gradient(&grad.times(self.base.get_gradient()));
+            let mut grad = data.apply_function(|data| self.function.diff_all(data));
+            grad.times_assign(self.base.get_gradient());
+
+            node.borrow_mut().add_gradient(&grad);
             if node.borrow().should_process_backprop() {
                 node.borrow_mut().apply_jacobian();
             }
