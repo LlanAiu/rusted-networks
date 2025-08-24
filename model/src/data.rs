@@ -6,7 +6,7 @@ use ndarray::{Array1, Array2};
 // internal
 use crate::data::operations::{
     element_sum::DataElementSum, matmul::DataMatMul, minus::DataMinus, plus::DataPlus,
-    sqrt::DataSquareRoot, times::DataTimes, transpose::DataTranspose,
+    sqrt::DataSquareRoot, sum_assign::DataSumAssign, times::DataTimes, transpose::DataTranspose,
 };
 pub mod data_container;
 pub mod operations;
@@ -37,6 +37,13 @@ impl Data {
         let other_type = other.variant_name();
         println!(
             "Data::None returned on unsupported data type pair for operation [{operation}]: {this_type} and {other_type}!"
+        );
+    }
+
+    fn warn_mutate(this_type: &str, other: &Data, operation: &str) {
+        let other_type = other.variant_name();
+        println!(
+            "Mutation failed on unsupported data type pair for operation [{operation}]: {this_type} and {other_type}!"
         );
     }
 }
@@ -77,6 +84,30 @@ impl Data {
             _ => {
                 Data::warn_operation(self, other, "PLUS");
                 Data::None
+            }
+        }
+    }
+
+    pub fn sum_assign(&mut self, other: &Data) {
+        let variant = self.variant_name();
+        match (self, other) {
+            (Data::ScalarF32(l_scalar), Data::ScalarF32(r_scalar)) => {
+                DataSumAssign::sum_scalars(l_scalar, r_scalar);
+            }
+            (Data::VectorF32(vector), Data::ScalarF32(scalar)) => {
+                DataSumAssign::sum_vector_scalar(vector, scalar);
+            }
+            (Data::VectorF32(l_vector), Data::VectorF32(r_vector)) => {
+                DataSumAssign::sum_vectors(l_vector, r_vector);
+            }
+            (Data::MatrixF32(matrix), Data::ScalarF32(scalar)) => {
+                DataSumAssign::sum_matrix_scalar(matrix, scalar);
+            }
+            (Data::MatrixF32(l_matrix), Data::MatrixF32(r_matrix)) => {
+                DataSumAssign::sum_matrices(l_matrix, r_matrix);
+            }
+            _ => {
+                Data::warn_mutate(variant, other, "PLUS");
             }
         }
     }

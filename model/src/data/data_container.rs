@@ -6,8 +6,8 @@
 use crate::data::{
     data_container::operations::{
         element_sum::ContainerElementSum, matmul::ContainerMatMul, minus::ContainerMinus,
-        plus::ContainerPlus, sqrt::ContainerSquareRoot, times::ContainerTimes,
-        transpose::ContainerTranspose,
+        plus::ContainerPlus, sqrt::ContainerSquareRoot, sum_assign::ContainerSumAssign,
+        times::ContainerTimes, transpose::ContainerTranspose,
     },
     Data,
 };
@@ -49,7 +49,7 @@ impl DataContainer {
         }
     }
 
-    pub fn container_name(&self) -> &str {
+    pub fn container_name(&self) -> &'static str {
         match self {
             DataContainer::Batch(_) => "Batch",
             DataContainer::Inference(_) => "Inference",
@@ -74,6 +74,13 @@ impl DataContainer {
 impl DataContainer {
     fn warn_operation(this: &DataContainer, other: &DataContainer, operation: &str) {
         let this_type = this.container_name();
+        let other_type = other.container_name();
+        println!(
+            "DataContainer::Empty returned on unsupported container type pair for operation [{operation}]: {this_type} and {other_type}!"
+        );
+    }
+
+    fn warn_mutate(this_type: &str, other: &DataContainer, operation: &str) {
         let other_type = other.container_name();
         println!(
             "DataContainer::Empty returned on unsupported container type pair for operation [{operation}]: {this_type} and {other_type}!"
@@ -106,6 +113,36 @@ impl DataContainer {
             _ => {
                 DataContainer::warn_operation(self, other, "PLUS");
                 DataContainer::Empty
+            }
+        }
+    }
+
+    pub fn sum_assign(&mut self, other: &DataContainer) {
+        let variant = self.container_name();
+        match (self, other) {
+            (DataContainer::Batch(l_batch), DataContainer::Batch(r_batch)) => {
+                ContainerSumAssign::sum_batches(l_batch, r_batch);
+            }
+            (DataContainer::Batch(batch), DataContainer::Inference(data)) => {
+                ContainerSumAssign::sum_batch_data(batch, data);
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerSumAssign::sum_batch_data(batch, data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Inference(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Inference(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            _ => {
+                DataContainer::warn_mutate(variant, other, "SUM_INPLACE");
             }
         }
     }

@@ -8,5 +8,6 @@ pub mod matmul;
 pub mod minus;
 pub mod plus;
 pub mod sqrt;
+pub mod sum_assign;
 pub mod times;
 pub mod transpose;
