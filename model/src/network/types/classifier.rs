@@ -59,7 +59,7 @@ impl<'a> ClassifierNetwork<'a> {
         ClassifierNetwork::from_config(config)
     }
 
-    pub fn load_from_file(path: &str) -> ClassifierNetwork {
+    pub fn load_from_file(path: &str) -> ClassifierNetwork<'a> {
         let config: ClassifierConfig = ClassifierConfig::load_from_file(path).unwrap();
         ClassifierNetwork::from_config(config)
     }

@@ -13,7 +13,7 @@ pub mod l1_penalty;
 pub mod l2_penalty;
 pub mod no_penalty;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum PenaltyType {
     L2 { alpha: f32 },
     L1 { alpha: f32 },
@@ -71,11 +71,11 @@ impl<'a> PenaltyContainer<'a> {
         }
     }
 
-    pub fn borrow(&self) -> Ref<dyn PenaltyUnit<'a> + 'a> {
+    pub fn borrow(&self) -> Ref<'_, dyn PenaltyUnit<'a> + 'a> {
         self.unit.borrow()
     }
 
-    pub fn borrow_mut(&self) -> RefMut<dyn PenaltyUnit<'a> + 'a> {
+    pub fn borrow_mut(&self) -> RefMut<'_, dyn PenaltyUnit<'a> + 'a> {
         self.unit.borrow_mut()
     }
 

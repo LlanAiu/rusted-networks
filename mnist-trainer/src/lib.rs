@@ -3,8 +3,40 @@
 // external
 
 // internal
+use crate::{import_csv::load_data_from_csv, types::HandwrittenExample};
+use model::{
+    network::types::classifier::ClassifierNetwork,
+    optimization::momentum::DescentType,
+    regularization::penalty::PenaltyConfig,
+    trainer::{trainer_params::TrainerConfig, SupervisedTrainer},
+};
 pub mod import_csv;
 pub mod types;
+
+pub fn train_dataset() {
+    let penalty_config: PenaltyConfig = PenaltyConfig::none();
+    let classifier: ClassifierNetwork = ClassifierNetwork::new(
+        vec![784],
+        vec![10],
+        vec![50],
+        0.01,
+        penalty_config,
+        false,
+        DescentType::nesterov(0.95),
+    );
+
+    let train: Vec<HandwrittenExample> =
+        load_data_from_csv("../data/mnist_train.csv", 0, 250).expect("Failed to read data");
+    let test: Vec<HandwrittenExample> =
+        load_data_from_csv("../data/mnist_test.csv", 0, 50).expect("Failed to read data");
+
+    let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
+
+    let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+        SupervisedTrainer::new(classifier, config);
+
+    trainer.train("test/mnist_build_test.json");
+}
 
 #[cfg(test)]
 mod tests {
