@@ -105,6 +105,10 @@ impl Network for ClassifierNetwork<'_> {
         let classifier_config = ClassifierConfig::from_network(self);
         Config::Classifier(classifier_config)
     }
+
+    fn reset(&mut self) {
+        todo!()
+    }
 }
 
 #[cfg(test)]

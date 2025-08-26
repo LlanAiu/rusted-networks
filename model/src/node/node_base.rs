@@ -14,6 +14,7 @@ pub struct NodeBase<'a> {
     grad: DataContainer,
     momentum: DataContainer,
     is_grad_null: bool,
+    is_momentum_null: bool,
 }
 
 impl<'a> NodeBase<'a> {
@@ -26,6 +27,7 @@ impl<'a> NodeBase<'a> {
             grad: DataContainer::zero(),
             momentum: DataContainer::zero(),
             is_grad_null: true,
+            is_momentum_null: true,
         }
     }
 }
@@ -58,6 +60,11 @@ impl<'a> NodeBase<'a> {
 
     pub fn set_data(&mut self, data: DataContainer) {
         self.data = data;
+    }
+
+    pub fn reset_momentum(&mut self) {
+        self.momentum = DataContainer::zero();
+        self.is_momentum_null = true;
     }
 
     pub fn reset_grad_count(&mut self) {
@@ -101,8 +108,12 @@ impl<'a> NodeBase<'a> {
         let mut update = self.grad.average_batch();
         update.times_assign(learning_rate);
 
-        self.momentum.times_assign(decay);
-        self.momentum.minus_assign(&update);
+        if self.is_momentum_null {
+            self.momentum = DataContainer::neg_one().times(&update);
+        } else {
+            self.momentum.times_assign(decay);
+            self.momentum.minus_assign(&update);
+        }
 
         self.data.sum_assign(&self.momentum);
     }

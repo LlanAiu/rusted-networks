@@ -100,6 +100,10 @@ impl Network for RegressorNetwork<'_> {
         let regressor_config = RegressorConfig::to_config(self);
         Config::Regressor(regressor_config)
     }
+
+    fn reset(&mut self) {
+        todo!()
+    }
 }
 
 #[cfg(test)]

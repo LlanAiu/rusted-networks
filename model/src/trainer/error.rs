@@ -17,8 +17,19 @@ impl PredictionError {
         println!("Got mismatched PredictionError types, returning PredictionError::None");
     }
 
+    fn warn_mutate() {
+        println!("Got mismatched PredictionError types, skipping mutation");
+    }
+
     pub fn empty() -> PredictionError {
         PredictionError::Empty
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            PredictionError::Empty => true,
+            _ => false,
+        }
     }
 
     pub fn plus(&self, other: &PredictionError) -> PredictionError {
@@ -46,6 +57,30 @@ impl PredictionError {
             _ => {
                 PredictionError::warn();
                 PredictionError::None
+            }
+        }
+    }
+
+    pub fn plus_assign(&mut self, other: &PredictionError) {
+        match (self, other) {
+            (PredictionError::Loss { loss }, PredictionError::Loss { loss: second_loss }) => {
+                *loss += second_loss;
+            }
+            (
+                PredictionError::Misclassification {
+                    incorrect: l_incorrect,
+                    total: l_total,
+                },
+                PredictionError::Misclassification {
+                    incorrect: r_incorrect,
+                    total: r_total,
+                },
+            ) => {
+                *l_incorrect += r_incorrect;
+                *l_total += r_total;
+            }
+            _ => {
+                PredictionError::warn_mutate();
             }
         }
     }
