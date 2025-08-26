@@ -6,8 +6,9 @@
 use crate::data::{
     data_container::operations::{
         element_sum::ContainerElementSum, matmul::ContainerMatMul, minus::ContainerMinus,
-        plus::ContainerPlus, sqrt::ContainerSquareRoot, sum_assign::ContainerSumAssign,
-        times::ContainerTimes, times_assign::ContainerTimesAssign, transpose::ContainerTranspose,
+        minus_assign::ContainerMinusAssign, plus::ContainerPlus, sqrt::ContainerSquareRoot,
+        sum_assign::ContainerSumAssign, times::ContainerTimes, times_assign::ContainerTimesAssign,
+        transpose::ContainerTranspose,
     },
     Data,
 };
@@ -173,6 +174,36 @@ impl DataContainer {
             _ => {
                 DataContainer::warn_operation(self, other, "MINUS");
                 DataContainer::Empty
+            }
+        }
+    }
+
+    pub fn minus_assign(&mut self, other: &DataContainer) {
+        let variant = self.container_name();
+        match (self, other) {
+            (DataContainer::Batch(l_batch), DataContainer::Batch(r_batch)) => {
+                ContainerMinusAssign::minus_batches(l_batch, r_batch);
+            }
+            (DataContainer::Batch(batch), DataContainer::Inference(data)) => {
+                ContainerMinusAssign::minus_batch_data(batch, data);
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerMinusAssign::minus_batch_data(batch, data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Inference(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Inference(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            _ => {
+                DataContainer::warn_mutate(variant, other, "MINUS_INPLACE");
             }
         }
     }

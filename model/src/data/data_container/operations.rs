@@ -6,6 +6,7 @@
 pub mod element_sum;
 pub mod matmul;
 pub mod minus;
+pub mod minus_assign;
 pub mod plus;
 pub mod sqrt;
 pub mod sum_assign;

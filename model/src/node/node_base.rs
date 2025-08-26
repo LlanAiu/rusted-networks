@@ -94,7 +94,7 @@ impl<'a> NodeBase<'a> {
         let mut update = self.grad.average_batch();
         update.times_assign(learning_rate);
 
-        self.data = self.data.minus(&update);
+        self.data.minus_assign(&update);
     }
 
     pub fn process_momentum(&mut self, learning_rate: &DataContainer, decay: &DataContainer) {
@@ -102,7 +102,7 @@ impl<'a> NodeBase<'a> {
         update.times_assign(learning_rate);
 
         self.momentum.times_assign(decay);
-        self.momentum = self.momentum.minus(&update);
+        self.momentum.minus_assign(&update);
 
         self.data.sum_assign(&self.momentum);
     }
