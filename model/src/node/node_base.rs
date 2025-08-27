@@ -62,11 +62,6 @@ impl<'a> NodeBase<'a> {
         self.data = data;
     }
 
-    pub fn reset_momentum(&mut self) {
-        self.momentum = DataContainer::zero();
-        self.is_momentum_null = true;
-    }
-
     pub fn reset_grad_count(&mut self) {
         self.grad_count = 0;
     }
