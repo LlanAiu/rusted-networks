@@ -69,7 +69,11 @@ where
             let predicted = self.model.predict(input);
             let error = example.get_test_error(predicted);
 
-            error_sum = error_sum.plus(&error);
+            if error_sum.is_empty() {
+                error_sum = error_sum.plus(&error);
+            } else {
+                error_sum.plus_assign(&error);
+            }
         }
 
         (Config::from_network(&self.model), error_sum)
@@ -109,7 +113,11 @@ where
             let predicted = self.model.predict(input);
             let error = example.get_test_error(predicted);
 
-            error_sum = error_sum.plus(&error);
+            if error_sum.is_empty() {
+                error_sum = error_sum.plus(&error);
+            } else {
+                error_sum.plus_assign(&error);
+            }
         }
 
         error_sum

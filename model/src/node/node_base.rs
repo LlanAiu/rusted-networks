@@ -13,6 +13,8 @@ pub struct NodeBase<'a> {
     grad_count: usize,
     grad: DataContainer,
     momentum: DataContainer,
+    is_grad_null: bool,
+    is_momentum_null: bool,
 }
 
 impl<'a> NodeBase<'a> {
@@ -24,6 +26,8 @@ impl<'a> NodeBase<'a> {
             grad_count: 0,
             grad: DataContainer::zero(),
             momentum: DataContainer::zero(),
+            is_grad_null: true,
+            is_momentum_null: true,
         }
     }
 }
@@ -72,10 +76,16 @@ impl<'a> NodeBase<'a> {
 
     pub fn reset_gradient(&mut self) {
         self.grad = DataContainer::zero();
+        self.is_grad_null = true;
     }
 
     pub fn add_to_gradient(&mut self, component: &DataContainer) {
-        self.grad = self.grad.plus(component);
+        if self.is_grad_null {
+            self.grad = self.grad.plus(component);
+            self.is_grad_null = false;
+        } else {
+            self.grad.sum_assign(component);
+        }
     }
 
     pub fn get_gradient(&self) -> &DataContainer {
@@ -83,15 +93,23 @@ impl<'a> NodeBase<'a> {
     }
 
     pub fn process_gradient(&mut self, learning_rate: &DataContainer) {
-        let update = self.grad.average_batch().times(learning_rate);
+        let mut update = self.grad.average_batch();
+        update.times_assign(learning_rate);
 
-        self.data = self.data.minus(&update);
+        self.data.minus_assign(&update);
     }
 
     pub fn process_momentum(&mut self, learning_rate: &DataContainer, decay: &DataContainer) {
-        let update = self.grad.average_batch().times(learning_rate);
-        self.momentum = self.momentum.times(decay).minus(&update);
+        let mut update = self.grad.average_batch();
+        update.times_assign(learning_rate);
 
-        self.data = self.data.plus(&self.momentum);
+        if self.is_momentum_null {
+            self.momentum = DataContainer::neg_one().times(&update);
+        } else {
+            self.momentum.times_assign(decay);
+            self.momentum.minus_assign(&update);
+        }
+
+        self.data.sum_assign(&self.momentum);
     }
 }

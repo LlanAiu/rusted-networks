@@ -83,12 +83,13 @@ impl<'a> Node<'a> for SquareNode<'a> {
         let scale = DataContainer::Parameter(Data::ScalarF32(2.0));
         let input = self.base.get_inputs().get(0).unwrap();
 
-        let grad = input.borrow_mut().get_data().times(&scale);
+        let mut grad = input.borrow_mut().get_data();
+        grad.times_assign(&scale);
         let prev_grad = self.base.get_gradient();
 
-        let update = grad.times(&prev_grad);
+        grad.times_assign(&prev_grad);
         for node in self.base.get_inputs() {
-            node.borrow_mut().add_gradient(&update);
+            node.borrow_mut().add_gradient(&grad);
 
             if node.borrow().should_process_backprop() {
                 node.borrow_mut().apply_jacobian();

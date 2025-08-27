@@ -144,6 +144,10 @@ impl<'a> LinearUnit<'a> {
     pub fn get_activation(&self) -> &str {
         &self.activation
     }
+
+    pub fn reset(&mut self) {
+        todo!()
+    }
 }
 
 impl<'a> Unit<'a> for LinearUnit<'a> {

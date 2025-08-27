@@ -6,7 +6,8 @@
 use crate::data::{
     data_container::operations::{
         element_sum::ContainerElementSum, matmul::ContainerMatMul, minus::ContainerMinus,
-        plus::ContainerPlus, sqrt::ContainerSquareRoot, times::ContainerTimes,
+        minus_assign::ContainerMinusAssign, plus::ContainerPlus, sqrt::ContainerSquareRoot,
+        sum_assign::ContainerSumAssign, times::ContainerTimes, times_assign::ContainerTimesAssign,
         transpose::ContainerTranspose,
     },
     Data,
@@ -49,7 +50,7 @@ impl DataContainer {
         }
     }
 
-    pub fn container_name(&self) -> &str {
+    pub fn container_name(&self) -> &'static str {
         match self {
             DataContainer::Batch(_) => "Batch",
             DataContainer::Inference(_) => "Inference",
@@ -74,6 +75,13 @@ impl DataContainer {
 impl DataContainer {
     fn warn_operation(this: &DataContainer, other: &DataContainer, operation: &str) {
         let this_type = this.container_name();
+        let other_type = other.container_name();
+        println!(
+            "DataContainer::Empty returned on unsupported container type pair for operation [{operation}]: {this_type} and {other_type}!"
+        );
+    }
+
+    fn warn_mutate(this_type: &str, other: &DataContainer, operation: &str) {
         let other_type = other.container_name();
         println!(
             "DataContainer::Empty returned on unsupported container type pair for operation [{operation}]: {this_type} and {other_type}!"
@@ -110,6 +118,36 @@ impl DataContainer {
         }
     }
 
+    pub fn sum_assign(&mut self, other: &DataContainer) {
+        let variant = self.container_name();
+        match (self, other) {
+            (DataContainer::Batch(l_batch), DataContainer::Batch(r_batch)) => {
+                ContainerSumAssign::sum_batches(l_batch, r_batch);
+            }
+            (DataContainer::Batch(batch), DataContainer::Inference(data)) => {
+                ContainerSumAssign::sum_batch_data(batch, data);
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerSumAssign::sum_batch_data(batch, data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Inference(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Inference(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerSumAssign::sum_data(l_data, r_data);
+            }
+            _ => {
+                DataContainer::warn_mutate(variant, other, "SUM_INPLACE");
+            }
+        }
+    }
+
     pub fn minus(&self, other: &DataContainer) -> DataContainer {
         match (self, other) {
             (DataContainer::Batch(batch1), DataContainer::Batch(batch2)) => {
@@ -140,6 +178,36 @@ impl DataContainer {
         }
     }
 
+    pub fn minus_assign(&mut self, other: &DataContainer) {
+        let variant = self.container_name();
+        match (self, other) {
+            (DataContainer::Batch(l_batch), DataContainer::Batch(r_batch)) => {
+                ContainerMinusAssign::minus_batches(l_batch, r_batch);
+            }
+            (DataContainer::Batch(batch), DataContainer::Inference(data)) => {
+                ContainerMinusAssign::minus_batch_data(batch, data);
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerMinusAssign::minus_batch_data(batch, data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Inference(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Inference(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerMinusAssign::minus_data(l_data, r_data);
+            }
+            _ => {
+                DataContainer::warn_mutate(variant, other, "MINUS_INPLACE");
+            }
+        }
+    }
+
     pub fn times(&self, other: &DataContainer) -> DataContainer {
         match (self, other) {
             (DataContainer::Batch(batch1), DataContainer::Batch(batch2)) => {
@@ -166,6 +234,36 @@ impl DataContainer {
             _ => {
                 DataContainer::warn_operation(self, other, "PLUS");
                 DataContainer::Empty
+            }
+        }
+    }
+
+    pub fn times_assign(&mut self, other: &DataContainer) {
+        let variant = self.container_name();
+        match (self, other) {
+            (DataContainer::Batch(l_batch), DataContainer::Batch(r_batch)) => {
+                ContainerTimesAssign::times_batches(l_batch, r_batch);
+            }
+            (DataContainer::Batch(batch), DataContainer::Inference(data)) => {
+                ContainerTimesAssign::times_batch_data(batch, data);
+            }
+            (DataContainer::Batch(batch), DataContainer::Parameter(data)) => {
+                ContainerTimesAssign::times_batch_data(batch, data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Inference(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            (DataContainer::Inference(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Inference(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            (DataContainer::Parameter(l_data), DataContainer::Parameter(r_data)) => {
+                ContainerTimesAssign::times_data(l_data, r_data);
+            }
+            _ => {
+                DataContainer::warn_mutate(variant, other, "TIMES_INPLACE");
             }
         }
     }
@@ -294,11 +392,12 @@ impl DataContainer {
                     return DataContainer::Empty;
                 }
                 let len_scale: f32 = 1.0 / batch.len() as f32;
-                let mut average: Data = Data::zero();
-                for data in batch {
-                    average = average.plus(&data);
+                let mut average: Data = batch[0].clone();
+                for i in 1..batch.len() {
+                    let data: &Data = batch.get(i).unwrap();
+                    average.sum_assign(data);
                 }
-                average = average.times(&Data::ScalarF32(len_scale));
+                average.times_assign(&Data::ScalarF32(len_scale));
                 DataContainer::Parameter(average)
             }
             _ => self.clone(),
