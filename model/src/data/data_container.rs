@@ -385,6 +385,26 @@ impl DataContainer {
         }
     }
 
+    pub fn apply_inplace<F>(&mut self, func: F)
+    where
+        F: Fn(&mut f32) + Copy,
+    {
+        match self {
+            DataContainer::Batch(datas) => {
+                for data in datas.iter_mut() {
+                    data.apply_inplace(func);
+                }
+            }
+            DataContainer::Inference(data) => {
+                data.apply_inplace(func);
+            }
+            DataContainer::Parameter(data) => {
+                data.apply_inplace(func);
+            }
+            _ => {}
+        }
+    }
+
     pub fn average_batch(&self) -> DataContainer {
         match self {
             DataContainer::Batch(batch) => {

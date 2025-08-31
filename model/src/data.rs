@@ -278,6 +278,15 @@ impl Data {
         }
     }
 
+    pub fn apply_inplace(&mut self, func: impl Fn(&mut f32)) {
+        match self {
+            Data::ScalarF32(scalar) => func(scalar),
+            Data::VectorF32(vector) => vector.map_inplace(func),
+            Data::MatrixF32(matrix) => matrix.map_inplace(func),
+            _ => {}
+        }
+    }
+
     pub fn dim(&self) -> &[usize] {
         match self {
             Data::ScalarF32(_) => &[1],
