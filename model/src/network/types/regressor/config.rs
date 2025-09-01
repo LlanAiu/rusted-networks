@@ -16,7 +16,7 @@ use crate::{
         },
         types::regressor::RegressorNetwork,
     },
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecay, momentum::DescentType},
     regularization::penalty::PenaltyConfig,
 };
 
@@ -34,7 +34,7 @@ impl RegressorConfig {
         input_size: Vec<usize>,
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
-        learning_rate: f32,
+        learning_decay: LearningDecay,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
         descent_type: DescentType,
@@ -52,7 +52,7 @@ impl RegressorConfig {
             loss_type: String::from("mean_squared_error"),
             output_size: output_size,
         };
-        let hyperparams: HyperParams = HyperParams::new(learning_rate, descent_type);
+        let hyperparams: HyperParams = HyperParams::new(learning_decay, descent_type);
 
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
@@ -91,7 +91,7 @@ impl RegressorConfig {
         units.push(UnitParams::from_linear_unit(&network.inference));
 
         let hyperparams: HyperParams =
-            HyperParams::new(network.learning_rate, network.descent_type.clone());
+            HyperParams::new(network.learning_decay.clone(), network.descent_type.clone());
 
         let regularization: RegularizationParams =
             RegularizationParams::new(network.penalty_type.clone(), network.with_dropout);

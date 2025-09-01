@@ -9,7 +9,7 @@ use crate::{
         types::regressor::{config::RegressorConfig, RegressorNetwork},
     },
     node::NodeRef,
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecay, momentum::DescentType},
     regularization::penalty::{PenaltyConfig, PenaltyContainer},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub fn build_from_config<'a>(config: RegressorConfig) -> RegressorNetwork<'a> {
-    let learning_rate: f32 = config.params().learning_rate();
+    let learning_decay: LearningDecay = config.params().learning_decay().clone();
     let descent_type: DescentType = config.params().descent().to_type();
     let penalty_config: PenaltyConfig = config.regularization().get_config();
 
@@ -38,7 +38,7 @@ pub fn build_from_config<'a>(config: RegressorConfig) -> RegressorNetwork<'a> {
         hidden,
         inference,
         loss,
-        learning_rate,
+        learning_decay,
         penalty_type: penalty_config.get_type(),
         with_dropout: config.regularization().is_dropout_enabled(),
         descent_type,
@@ -54,7 +54,7 @@ fn build_hidden_units<'a>(
     UnitRef<'a>,
     Option<PenaltyContainer<'a>>,
 ) {
-    let learning_rate: f32 = config.params().learning_rate();
+    let learning_rate: f32 = *config.params().learning_decay().get_learning_rate_f32();
     let descent_type: DescentType = config.params().descent().to_type();
     let hidden_len: usize = config.units().len();
     let units: &Vec<UnitParams> = config.units();
@@ -104,7 +104,7 @@ fn build_inference<'a>(
     prev_penalty: Option<PenaltyContainer<'a>>,
     prev_ref: UnitRef<'a>,
 ) -> (UnitContainer<'a, LinearUnit<'a>>, PenaltyContainer<'a>) {
-    let learning_rate: f32 = config.params().learning_rate();
+    let learning_rate: f32 = *config.params().learning_decay().get_learning_rate_f32();
     let descent_type: DescentType = config.params().descent().to_type();
     let hidden_len: usize = config.units().len();
     let inference_config = config.units().get(hidden_len - 1).unwrap();

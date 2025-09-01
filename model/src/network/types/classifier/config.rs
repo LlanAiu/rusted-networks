@@ -16,7 +16,7 @@ use crate::{
         },
         types::classifier::ClassifierNetwork,
     },
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecay, momentum::DescentType},
     regularization::penalty::PenaltyConfig,
 };
 
@@ -34,7 +34,7 @@ impl ClassifierConfig {
         input_size: Vec<usize>,
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
-        learning_rate: f32,
+        learning_decay: LearningDecay,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
         descent_type: DescentType,
@@ -51,7 +51,7 @@ impl ClassifierConfig {
             output_size,
         };
 
-        let params: HyperParams = HyperParams::new(learning_rate, descent_type);
+        let params: HyperParams = HyperParams::new(learning_decay, descent_type);
 
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
@@ -90,7 +90,7 @@ impl ClassifierConfig {
         units.push(UnitParams::from_softmax_unit(&network.inference));
 
         let params: HyperParams =
-            HyperParams::new(network.learning_rate, network.descent_type.clone());
+            HyperParams::new(network.learning_decay.clone(), network.descent_type.clone());
 
         let regularization: RegularizationParams =
             RegularizationParams::new(network.penalty_type.clone(), network.with_dropout);

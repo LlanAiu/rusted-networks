@@ -11,7 +11,7 @@ use crate::{
         types::regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecay, momentum::DescentType},
     regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -26,7 +26,7 @@ pub struct RegressorNetwork<'a> {
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
-    learning_rate: f32,
+    learning_decay: LearningDecay,
     penalty_type: PenaltyType,
     with_dropout: bool,
     descent_type: DescentType,
@@ -37,7 +37,7 @@ impl<'a> RegressorNetwork<'a> {
         input_size: Vec<usize>,
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
-        learning_rate: f32,
+        learning_decay: LearningDecay,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
         descent_type: DescentType,
@@ -46,7 +46,7 @@ impl<'a> RegressorNetwork<'a> {
             input_size,
             output_size,
             hidden_sizes,
-            learning_rate,
+            learning_decay,
             penalty_config,
             with_dropout,
             descent_type,
@@ -110,7 +110,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::regressor::RegressorNetwork, Network},
-        optimization::momentum::DescentType,
+        optimization::{learning_decay::LearningDecay, momentum::DescentType},
         regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
     };
 
@@ -143,7 +143,7 @@ mod tests {
             vec![1],
             vec![1],
             vec![6, 3],
-            0.005,
+            LearningDecay::constant(0.005),
             config,
             false,
             DescentType::Base,
