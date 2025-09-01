@@ -18,7 +18,7 @@ pub struct BiasNode<'a> {
 }
 
 impl<'a> BiasNode<'a> {
-    pub fn new(dim: usize, learning_rate: f32) -> BiasNode<'a> {
+    pub fn new(dim: usize, learning_rate: f32, descent_type: DescentType) -> BiasNode<'a> {
         let mut base = NodeBase::new();
 
         let initial_biases: Array1<f32> = Array1::zeros(dim);
@@ -28,7 +28,7 @@ impl<'a> BiasNode<'a> {
             base,
             dim,
             learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
-            descent_type: DescentType::Base,
+            descent_type,
         }
     }
 }
