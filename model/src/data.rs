@@ -1,5 +1,7 @@
 // builtin
 
+use core::panic;
+
 // external
 use ndarray::{Array1, Array2};
 
@@ -31,6 +33,18 @@ impl Data {
 
     pub fn neg_one() -> Data {
         Data::ScalarF32(-1.0)
+    }
+
+    pub fn zero_dim(dim: &[usize]) -> Data {
+        if dim.len() == 0 {
+            return Data::ScalarF32(0.0);
+        } else if dim.len() == 1 {
+            return Data::VectorF32(Array1::zeros(dim[0]));
+        } else if dim.len() == 2 {
+            return Data::MatrixF32(Array2::zeros((dim[0], dim[1])));
+        }
+
+        panic!("[ZERO_INIT] Unsupported data type dimensions");
     }
 
     fn warn_operation(this: &Data, other: &Data, operation: &str) {

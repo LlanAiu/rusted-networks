@@ -70,6 +70,10 @@ impl DataContainer {
     pub fn neg_one() -> DataContainer {
         DataContainer::Parameter(Data::neg_one())
     }
+
+    pub fn zero_dim(dim: &[usize]) -> DataContainer {
+        DataContainer::Parameter(Data::zero_dim(dim))
+    }
 }
 
 impl DataContainer {

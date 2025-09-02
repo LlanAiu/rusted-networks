@@ -9,15 +9,16 @@ use ndarray_rand::RandomExt;
 // internal
 use crate::data::data_container::DataContainer;
 use crate::data::Data;
+use crate::node::node_base::momentum_base::NodeMomentum;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 use crate::optimization::momentum::DescentType;
 
 pub struct WeightNode<'a> {
     base: NodeBase<'a>,
+    momentum_base: NodeMomentum,
     dim: (usize, usize),
     learning_rate: DataContainer,
-    descent_type: DescentType,
 }
 
 impl<'a> WeightNode<'a> {
@@ -32,11 +33,13 @@ impl<'a> WeightNode<'a> {
         let initial_weights: DataContainer = Self::get_initial_weights(input_size, output_size);
         base.set_data(initial_weights);
 
+        let momentum_base: NodeMomentum = NodeMomentum::new(descent_type);
+
         WeightNode {
             base,
+            momentum_base,
             dim: (output_size, input_size),
             learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
-            descent_type,
         }
     }
 
@@ -79,10 +82,10 @@ impl<'a> Node<'a> for WeightNode<'a> {
     }
 
     fn get_data(&mut self) -> DataContainer {
-        if let DescentType::Nesterov { .. } = &self.descent_type {
-            return self.base.get_nesterov_data();
-        }
-        self.base.get_data()
+        let mut data = self.base.get_data();
+        self.momentum_base.alter_data(&mut data);
+
+        data
     }
 
     fn apply_operation(&mut self) {}
@@ -95,14 +98,13 @@ impl<'a> Node<'a> for WeightNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        match &self.descent_type {
-            DescentType::Base => self.base.process_gradient(&self.learning_rate),
-            DescentType::Momentum { decay } => {
-                self.base.process_momentum(&self.learning_rate, decay)
-            }
-            DescentType::Nesterov { decay } => {
-                self.base.process_momentum(&self.learning_rate, decay)
-            }
+        let update = self.base.get_gradient().average_batch();
+
+        if self.momentum_base.is_momentum_update() {
+            let momentum_update = self.momentum_base.get_momentum_update(&update);
+            self.base.update_gradient(momentum_update);
+        } else {
+            self.base.update_gradient(&update);
         }
 
         self.base.reset_gradient();
