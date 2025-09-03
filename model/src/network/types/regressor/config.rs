@@ -16,7 +16,10 @@ use crate::{
         },
         types::regressor::RegressorNetwork,
     },
-    optimization::{learning_decay::LearningDecay, momentum::DescentType},
+    optimization::{
+        learning_decay::{LearningDecay, LearningDecayType},
+        momentum::DescentType,
+    },
     regularization::penalty::PenaltyConfig,
 };
 
@@ -34,9 +37,9 @@ impl RegressorConfig {
         input_size: Vec<usize>,
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
-        learning_decay: LearningDecay,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> RegressorConfig {
         if input_size.len() != 1 || output_size.len() != 1 {

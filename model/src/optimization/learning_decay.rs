@@ -1,5 +1,7 @@
 // builtin
 
+use std::mem::take;
+
 // external
 use serde::{Deserialize, Serialize};
 
@@ -29,6 +31,36 @@ pub enum LearningDecayType {
 }
 
 impl LearningDecayType {
+    pub fn exponential(initial_rate: f32, decay_rate: f32) -> LearningDecayType {
+        LearningDecayType::Exponential {
+            initial_rate,
+            decay_rate,
+        }
+    }
+
+    pub fn linear_schedule(
+        initial_rate: f32,
+        end_rate: f32,
+        decay_time: usize,
+    ) -> LearningDecayType {
+        LearningDecayType::LinearSchedule {
+            initial_rate,
+            end_rate,
+            decay_time,
+        }
+    }
+
+    pub fn constant(initial_rate: f32) -> LearningDecayType {
+        LearningDecayType::None { rate: initial_rate }
+    }
+
+    pub fn rms_prop(global_rate: f32, decay_rate: f32) -> LearningDecayType {
+        LearningDecayType::RMSProp {
+            global_rate,
+            decay_rate,
+        }
+    }
+
     pub fn get_initial_rate_f32(&self) -> f32 {
         match self {
             LearningDecayType::Exponential { initial_rate, .. } => *initial_rate,
@@ -189,5 +221,20 @@ impl LearningDecay {
     pub fn next(&mut self) {
         self.learning_rate = self.decay_type.get_next(self.learning_rate, self.time_step);
         self.time_step += 1;
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LearningRateParams {
+    adaptive_rate: Vec<f32>,
+}
+
+impl LearningRateParams {
+    pub fn new(adaptive_rate: Vec<f32>) -> LearningRateParams {
+        LearningRateParams { adaptive_rate }
+    }
+
+    pub fn get_adaptive_learning_rate(&mut self) -> Vec<f32> {
+        take(&mut self.adaptive_rate)
     }
 }

@@ -4,7 +4,7 @@
 
 // internal
 use crate::{
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::penalty::PenaltyConfig,
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -22,7 +22,7 @@ impl<'a> TestNetwork<'a> {
     pub fn new(
         input_size: usize,
         output_size: usize,
-        learning_rate: f32,
+        decay_type: LearningDecayType,
         penalty: PenaltyConfig<'a>,
     ) -> TestNetwork<'a> {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![input_size]));
@@ -30,7 +30,7 @@ impl<'a> TestNetwork<'a> {
             "none",
             input_size,
             output_size,
-            learning_rate,
+            decay_type,
             DescentType::Base,
         ));
 
@@ -57,6 +57,7 @@ impl<'a> TestNetwork<'a> {
 mod test {
     use crate::{
         network::types::test_network::TestNetwork,
+        optimization::learning_decay::LearningDecayType,
         regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
     };
 
@@ -64,6 +65,7 @@ mod test {
     fn create_test() {
         let builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.2);
         let penalty_config = PenaltyConfig::new(builder);
-        let _net: TestNetwork = TestNetwork::new(3, 4, 0.001, penalty_config);
+        let _net: TestNetwork =
+            TestNetwork::new(3, 4, LearningDecayType::constant(0.001), penalty_config);
     }
 }

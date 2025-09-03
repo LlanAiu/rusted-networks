@@ -6,32 +6,39 @@ use ndarray::Array1;
 // internal
 use crate::data::data_container::DataContainer;
 use crate::data::Data;
+use crate::node::node_base::adaptive_learning_base::NodeLearningDecay;
 use crate::node::node_base::momentum_base::NodeMomentum;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::optimization::learning_decay::LearningDecayType;
 use crate::optimization::momentum::DescentType;
 
 pub struct BiasNode<'a> {
     base: NodeBase<'a>,
-    momentum_base: NodeMomentum,
     dim: usize,
-    learning_rate: DataContainer,
+    momentum_base: NodeMomentum,
+    learning_base: NodeLearningDecay,
 }
 
 impl<'a> BiasNode<'a> {
-    pub fn new(dim: usize, learning_rate: f32, descent_type: DescentType) -> BiasNode<'a> {
+    pub fn new(
+        dim: usize,
+        decay_type: LearningDecayType,
+        descent_type: DescentType,
+    ) -> BiasNode<'a> {
         let mut base = NodeBase::new();
 
         let initial_biases: Array1<f32> = Array1::zeros(dim);
         base.set_data(DataContainer::Parameter(Data::VectorF32(initial_biases)));
 
-        let momentum_base: NodeMomentum = NodeMomentum::new(descent_type);
+        let momentum_base = NodeMomentum::new(descent_type);
+        let learning_base = NodeLearningDecay::new(decay_type);
 
         BiasNode {
             base,
-            momentum_base,
             dim,
-            learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
+            momentum_base,
+            learning_base,
         }
     }
 }
@@ -83,10 +90,12 @@ impl<'a> Node<'a> for BiasNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        let update = self.base.get_gradient().average_batch();
+        let mut update: DataContainer = self.base.get_gradient().average_batch();
+        self.learning_base.update_learning_rate(&update);
+        self.learning_base.scale_update(&mut update);
 
         if self.momentum_base.is_momentum_update() {
-            let momentum_update = self.momentum_base.get_momentum_update(&update);
+            let momentum_update: &DataContainer = self.momentum_base.get_momentum_update(&update);
             self.base.update_gradient(momentum_update);
         } else {
             self.base.update_gradient(&update);

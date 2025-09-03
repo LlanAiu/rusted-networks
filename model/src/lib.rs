@@ -21,7 +21,10 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecay, momentum::DescentType},
+        optimization::{
+            learning_decay::{LearningDecay, LearningDecayType},
+            momentum::DescentType,
+        },
         regularization::penalty::PenaltyConfig,
         unit::{
             types::{input_unit::InputUnit, loss_unit::LossUnit, softmax_unit::SoftmaxUnit},
@@ -32,8 +35,13 @@ mod tests {
     #[test]
     fn loss_test() {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![3]));
-        let hidden: UnitContainer<SoftmaxUnit> =
-            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001, DescentType::Base));
+        let hidden: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::new(
+            "relu",
+            3,
+            2,
+            LearningDecayType::constant(0.001),
+            DescentType::Base,
+        ));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(vec![2], "base_cross_entropy"));
 
@@ -84,8 +92,13 @@ mod tests {
     #[test]
     fn batch_test() {
         let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![3]));
-        let hidden: UnitContainer<SoftmaxUnit> =
-            UnitContainer::new(SoftmaxUnit::new("relu", 3, 2, 0.001, DescentType::Base));
+        let hidden: UnitContainer<SoftmaxUnit> = UnitContainer::new(SoftmaxUnit::new(
+            "relu",
+            3,
+            2,
+            LearningDecayType::constant(0.001),
+            DescentType::Base,
+        ));
         let loss: UnitContainer<LossUnit> =
             UnitContainer::new(LossUnit::new(vec![2], "base_cross_entropy"));
 

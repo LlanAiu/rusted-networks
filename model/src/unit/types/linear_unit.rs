@@ -16,7 +16,7 @@ use crate::{
         },
         NodeRef,
     },
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -34,17 +34,17 @@ impl<'a> LinearUnit<'a> {
         function: &str,
         input_size: usize,
         output_size: usize,
-        learning_rate: f32,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> LinearUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
             input_size,
             output_size,
-            learning_rate,
+            decay_type.clone(),
             descent_type.clone(),
         ));
         let biases_ref: NodeRef =
-            NodeRef::new(BiasNode::new(output_size, learning_rate, descent_type));
+            NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
         let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
         let add_ref: NodeRef = NodeRef::new(AddNode::new());
         let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
@@ -70,7 +70,7 @@ impl<'a> LinearUnit<'a> {
 
     pub fn from_config(
         config: &UnitParams,
-        learning_rate: f32,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> LinearUnit<'a> {
         if let UnitParams::Linear {
@@ -84,7 +84,7 @@ impl<'a> LinearUnit<'a> {
                 activation,
                 *input_size,
                 *output_size,
-                learning_rate,
+                decay_type,
                 descent_type,
             );
 

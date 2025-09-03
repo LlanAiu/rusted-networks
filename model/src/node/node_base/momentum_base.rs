@@ -3,7 +3,10 @@
 // external
 
 // internal
-use crate::{data::data_container::DataContainer, optimization::momentum::DescentType};
+use crate::{
+    data::{data_container::DataContainer, Data},
+    optimization::momentum::{DescentType, MomentumParams},
+};
 
 pub struct NodeMomentum {
     momentum: DataContainer,
@@ -48,16 +51,33 @@ impl NodeMomentum {
 
         match &self.descent_type {
             DescentType::Momentum { decay } => {
-                self.momentum.times_assign(decay);
+                self.momentum.apply_inplace(|f| *f *= decay);
                 self.momentum.sum_assign(&update);
             }
             DescentType::Nesterov { decay } => {
-                self.momentum.times_assign(decay);
+                self.momentum.apply_inplace(|f| *f *= decay);
                 self.momentum.sum_assign(&update);
             }
             _ => panic!("Tried to get invalid momentum update"),
         }
 
         &self.momentum
+    }
+
+    pub fn get_momentum_save(&self) -> MomentumParams {
+        if self.is_momentum_null {
+            return MomentumParams::new(Vec::new());
+        }
+
+        if let DataContainer::Parameter(data) = &self.momentum {
+            return match data {
+                Data::ScalarF32(scalar) => MomentumParams::new(vec![*scalar]),
+                Data::VectorF32(vec) => MomentumParams::new(vec.to_vec()),
+                Data::MatrixF32(matrix) => MomentumParams::new(matrix.flatten().to_vec()),
+                Data::None => MomentumParams::new(Vec::new()),
+            };
+        }
+
+        MomentumParams::new(Vec::new())
     }
 }

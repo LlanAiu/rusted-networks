@@ -4,7 +4,10 @@
 
 // internal
 
-use crate::{data::data_container::DataContainer, optimization::learning_decay::LearningDecayType};
+use crate::{
+    data::{data_container::DataContainer, Data},
+    optimization::learning_decay::{LearningDecayType, LearningRateParams},
+};
 
 pub struct NodeLearningDecay {
     learning_rate: DataContainer,
@@ -48,5 +51,18 @@ impl NodeLearningDecay {
             self.decay_type
                 .update_global(&mut self.learning_rate, self.time_step);
         }
+    }
+
+    pub fn get_learning_rate_save(&self) -> LearningRateParams {
+        if let DataContainer::Parameter(data) = &self.learning_rate {
+            return match data {
+                Data::ScalarF32(scalar) => LearningRateParams::new(vec![*scalar]),
+                Data::VectorF32(vec) => LearningRateParams::new(vec.to_vec()),
+                Data::MatrixF32(matrix) => LearningRateParams::new(matrix.flatten().to_vec()),
+                Data::None => LearningRateParams::new(Vec::new()),
+            };
+        }
+
+        LearningRateParams::new(Vec::new())
     }
 }

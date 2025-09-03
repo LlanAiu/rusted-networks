@@ -9,23 +9,25 @@ use ndarray_rand::RandomExt;
 // internal
 use crate::data::data_container::DataContainer;
 use crate::data::Data;
+use crate::node::node_base::adaptive_learning_base::NodeLearningDecay;
 use crate::node::node_base::momentum_base::NodeMomentum;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::optimization::learning_decay::LearningDecayType;
 use crate::optimization::momentum::DescentType;
 
 pub struct WeightNode<'a> {
     base: NodeBase<'a>,
-    momentum_base: NodeMomentum,
     dim: (usize, usize),
-    learning_rate: DataContainer,
+    momentum_base: NodeMomentum,
+    learning_base: NodeLearningDecay,
 }
 
 impl<'a> WeightNode<'a> {
     pub fn new(
         input_size: usize,
         output_size: usize,
-        learning_rate: f32,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> WeightNode<'a> {
         let mut base = NodeBase::new();
@@ -33,13 +35,14 @@ impl<'a> WeightNode<'a> {
         let initial_weights: DataContainer = Self::get_initial_weights(input_size, output_size);
         base.set_data(initial_weights);
 
-        let momentum_base: NodeMomentum = NodeMomentum::new(descent_type);
+        let momentum_base = NodeMomentum::new(descent_type);
+        let learning_base = NodeLearningDecay::new(decay_type);
 
         WeightNode {
             base,
-            momentum_base,
             dim: (output_size, input_size),
-            learning_rate: DataContainer::Parameter(Data::ScalarF32(learning_rate)),
+            momentum_base,
+            learning_base,
         }
     }
 
@@ -98,10 +101,12 @@ impl<'a> Node<'a> for WeightNode<'a> {
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
-        let update = self.base.get_gradient().average_batch();
+        let mut update: DataContainer = self.base.get_gradient().average_batch();
+        self.learning_base.update_learning_rate(&update);
+        self.learning_base.scale_update(&mut update);
 
         if self.momentum_base.is_momentum_update() {
-            let momentum_update = self.momentum_base.get_momentum_update(&update);
+            let momentum_update: &DataContainer = self.momentum_base.get_momentum_update(&update);
             self.base.update_gradient(momentum_update);
         } else {
             self.base.update_gradient(&update);
