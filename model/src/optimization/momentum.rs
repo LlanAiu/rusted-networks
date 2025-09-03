@@ -33,6 +33,12 @@ impl MomentumParams {
         MomentumParams { momentum }
     }
 
+    pub fn null() -> MomentumParams {
+        MomentumParams {
+            momentum: Vec::new(),
+        }
+    }
+
     pub fn get_momentum(&mut self) -> Vec<f32> {
         take(&mut self.momentum)
     }

@@ -234,6 +234,12 @@ impl LearningRateParams {
         LearningRateParams { adaptive_rate }
     }
 
+    pub fn null() -> LearningRateParams {
+        LearningRateParams {
+            adaptive_rate: Vec::new(),
+        }
+    }
+
     pub fn get_adaptive_learning_rate(&mut self) -> Vec<f32> {
         take(&mut self.adaptive_rate)
     }

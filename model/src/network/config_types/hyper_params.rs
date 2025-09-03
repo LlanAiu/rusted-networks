@@ -3,29 +3,28 @@
 // external
 use serde::{Deserialize, Serialize};
 
-use crate::optimization::{learning_decay::LearningDecay, momentum::DescentType};
-
 // internal
+use crate::optimization::{learning_decay::LearningDecayType, momentum::DescentType};
 
 #[derive(Serialize, Deserialize)]
 pub struct HyperParams {
-    learning_decay: LearningDecay,
+    decay_type: LearningDecayType,
     descent_type: DescentType,
 }
 
 impl HyperParams {
-    pub fn new(learning_decay: LearningDecay, descent_type: DescentType) -> HyperParams {
+    pub fn new(decay_type: LearningDecayType, descent_type: DescentType) -> HyperParams {
         HyperParams {
-            learning_decay,
+            decay_type,
             descent_type,
         }
     }
 
-    pub fn learning_decay(&self) -> &LearningDecay {
-        &self.learning_decay
+    pub fn decay_type(&self) -> &LearningDecayType {
+        &self.decay_type
     }
 
-    pub fn descent(&self) -> &DescentType {
+    pub fn descent_type(&self) -> &DescentType {
         &self.descent_type
     }
 }

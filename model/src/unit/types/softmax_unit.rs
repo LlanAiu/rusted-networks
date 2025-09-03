@@ -5,7 +5,7 @@
 // internal
 use crate::{
     data::{data_container::DataContainer, Data},
-    network::config_types::unit_params::UnitParams,
+    network::config_types::{learned_params::LearnedParams, unit_params::UnitParams},
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
@@ -99,6 +99,14 @@ impl<'a> SoftmaxUnit<'a> {
         }
 
         panic!("Mismatched unit parameter types for initialization: expected UnitParams::Softmax but got {},", config.type_name());
+    }
+
+    pub fn get_weights_params(&self) -> LearnedParams {
+        todo!()
+    }
+
+    pub fn get_biases_params(&self) -> LearnedParams {
+        todo!()
     }
 
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {

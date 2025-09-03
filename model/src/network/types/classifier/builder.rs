@@ -22,7 +22,7 @@ use crate::{
 
 pub fn build_from_config<'a>(config: ClassifierConfig) -> ClassifierNetwork<'a> {
     let learning_decay: LearningDecay = config.params().learning_decay().clone();
-    let descent_type: DescentType = config.params().descent().to_type();
+    let descent_type: DescentType = config.params().descent_type().to_type();
     let penalty_config: PenaltyConfig = config.regularization().get_config();
 
     let input: UnitContainer<InputUnit> =
@@ -58,7 +58,7 @@ fn build_hidden_units<'a>(
     Option<PenaltyContainer<'a>>,
 ) {
     let learning_rate: f32 = *config.params().learning_decay().get_learning_rate_f32();
-    let descent_type: DescentType = config.params().descent().to_type();
+    let descent_type: DescentType = config.params().descent_type().to_type();
     let hidden_len: usize = config.units().len();
     let units: &Vec<UnitParams> = config.units();
 
@@ -108,7 +108,7 @@ fn build_inference<'a>(
     prev_ref: UnitRef<'a>,
 ) -> (UnitContainer<'a, SoftmaxUnit<'a>>, PenaltyContainer<'a>) {
     let learning_rate: f32 = *config.params().learning_decay().get_learning_rate_f32();
-    let descent_type: DescentType = config.params().descent().to_type();
+    let descent_type: DescentType = config.params().descent_type().to_type();
     let hidden_len: usize = config.units().len();
     let inference_config = config.units().get(hidden_len - 1).unwrap();
 
