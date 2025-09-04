@@ -4,6 +4,7 @@
 
 // internal
 use crate::data::data_container::DataContainer;
+use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::NodeType;
 use crate::node::{
     activation::activation_function::ActivationFunction, node_base::NodeBase, Node, NodeRef,
@@ -100,5 +101,20 @@ impl<'a> Node<'a> for ActivationNode<'a> {
 
     fn should_process_backprop(&self) -> bool {
         self.base.should_process_backprop()
+    }
+
+    fn set_momentum(&mut self, _momentum: DataContainer) {
+        println!("[ACTIVATION] Unsupported Operation: Cannot set momentum of an operation node");
+    }
+
+    fn set_learning_rate(&mut self, _learning_rate: DataContainer) {
+        println!(
+            "[ACTIVATION] Unsupported Operation: Cannot set learning rate of an operation node"
+        );
+    }
+
+    fn save_parameters(&self) -> LearnedParams {
+        println!("[ACTIVATION] Unsupported Operation: Cannot save parameters of an operation node");
+        LearnedParams::null()
     }
 }

@@ -80,4 +80,8 @@ impl NodeMomentum {
 
         MomentumParams::new(Vec::new())
     }
+
+    pub fn set_momentum(&mut self, momentum: DataContainer) {
+        self.momentum = momentum;
+    }
 }

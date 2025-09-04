@@ -3,7 +3,6 @@
 // external
 
 // internal
-
 use crate::{
     data::{data_container::DataContainer, Data},
     optimization::learning_decay::{LearningDecayType, LearningRateParams},
@@ -64,5 +63,9 @@ impl NodeLearningDecay {
         }
 
         LearningRateParams::new(Vec::new())
+    }
+
+    pub fn set_learning_rate(&mut self, learning_rate: DataContainer) {
+        self.learning_rate = learning_rate;
     }
 }

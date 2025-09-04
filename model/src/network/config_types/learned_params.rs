@@ -22,6 +22,15 @@ pub struct LearnedParams {
 }
 
 impl LearnedParams {
+    pub fn null() -> LearnedParams {
+        LearnedParams {
+            dim: Vec::new(),
+            parameters: Vec::new(),
+            momentum: MomentumParams::null(),
+            learning_rate: LearningRateParams::null(),
+        }
+    }
+
     pub fn new(
         dim: Vec<usize>,
         parameters: Vec<f32>,
@@ -71,5 +80,13 @@ impl LearnedParams {
             momentum: MomentumParams::null(),
             learning_rate: LearningRateParams::null(),
         }
+    }
+
+    pub fn get_momentum(&self) -> DataContainer {
+        todo!()
+    }
+
+    pub fn get_learning_rate(&self) -> DataContainer {
+        todo!()
     }
 }

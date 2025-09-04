@@ -76,6 +76,8 @@ impl<'a> LinearUnit<'a> {
         if let UnitParams::Linear {
             input_size,
             output_size,
+            weights,
+            biases,
             activation,
             ..
         } = config
@@ -87,9 +89,6 @@ impl<'a> LinearUnit<'a> {
                 decay_type,
                 descent_type,
             );
-
-            let weights = config.get_weights();
-            let biases = config.get_biases();
 
             unit.set_weights(weights);
             unit.set_biases(biases);
@@ -112,12 +111,32 @@ impl<'a> LinearUnit<'a> {
         &self.weights
     }
 
-    pub fn set_biases(&self, data: DataContainer) {
-        self.biases.borrow_mut().set_data(data);
+    pub fn set_biases(&self, data: &LearnedParams) {
+        let biases: DataContainer = data.get_parameters();
+        let momentum: DataContainer = data.get_momentum();
+        let learning_rate: DataContainer = data.get_learning_rate();
+
+        self.biases.borrow_mut().set_data(biases);
+        if !matches!(&momentum, DataContainer::Empty) {
+            self.biases.borrow_mut().set_momentum(momentum);
+        }
+        if !matches!(&learning_rate, DataContainer::Empty) {
+            self.biases.borrow_mut().set_learning_rate(learning_rate);
+        }
     }
 
-    pub fn set_weights(&self, data: DataContainer) {
-        self.weights.borrow_mut().set_data(data);
+    pub fn set_weights(&self, data: &LearnedParams) {
+        let weights = data.get_parameters();
+        let momentum = data.get_momentum();
+        let learning_rate = data.get_learning_rate();
+
+        self.weights.borrow_mut().set_data(weights);
+        if !matches!(&momentum, DataContainer::Empty) {
+            self.weights.borrow_mut().set_momentum(momentum);
+        }
+        if !matches!(&learning_rate, DataContainer::Empty) {
+            self.weights.borrow_mut().set_learning_rate(learning_rate);
+        }
     }
 
     pub fn get_input_size(&self) -> usize {
@@ -129,7 +148,7 @@ impl<'a> LinearUnit<'a> {
     }
 
     pub fn get_weights(&self) -> Vec<f32> {
-        let data = self.weights.borrow_mut().get_data();
+        let data: DataContainer = self.weights.borrow_mut().get_data();
 
         if let DataContainer::Parameter(Data::MatrixF32(matrix)) = data {
             return matrix.flatten().to_vec();

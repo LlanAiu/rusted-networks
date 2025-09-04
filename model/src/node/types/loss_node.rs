@@ -4,6 +4,7 @@
 
 // internal
 use crate::data::data_container::DataContainer;
+use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::loss::loss_function::LossFunction;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
@@ -153,5 +154,18 @@ impl<'a> Node<'a> for LossNode<'a> {
 
     fn should_process_backprop(&self) -> bool {
         self.base.should_process_backprop()
+    }
+
+    fn set_momentum(&mut self, _momentum: DataContainer) {
+        println!("[LOSS] Unsupported Operation: Cannot set momentum of an operation node");
+    }
+
+    fn set_learning_rate(&mut self, _learning_rate: DataContainer) {
+        println!("[LOSS] Unsupported Operation: Cannot set learning rate of an operation node");
+    }
+
+    fn save_parameters(&self) -> LearnedParams {
+        println!("[LOSS] Unsupported Operation: Cannot save parameters of an operation node");
+        LearnedParams::null()
     }
 }

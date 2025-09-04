@@ -5,6 +5,7 @@
 // internal
 use crate::{
     data::data_container::DataContainer,
+    network::config_types::learned_params::LearnedParams,
     node::{node_base::NodeBase, Node, NodeRef, NodeType},
 };
 
@@ -107,5 +108,24 @@ impl<'a> Node<'a> for AbsoluteValueNode<'a> {
 
     fn should_process_backprop(&self) -> bool {
         self.base.should_process_backprop()
+    }
+
+    fn set_momentum(&mut self, _momentum: DataContainer) {
+        println!(
+            "[ABSOLUTE_VALUE] Unsupported Operation: Cannot set momentum of an operation node"
+        );
+    }
+
+    fn set_learning_rate(&mut self, _learning_rate: DataContainer) {
+        println!(
+            "[ABSOLUTE_VALUE] Unsupported Operation: Cannot set learning rate of an operation node"
+        );
+    }
+
+    fn save_parameters(&self) -> LearnedParams {
+        println!(
+            "[ABSOLUTE_VALUE] Unsupported Operation: Cannot save parameters of an operation node"
+        );
+        LearnedParams::null()
     }
 }

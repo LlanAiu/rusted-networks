@@ -9,6 +9,7 @@ use ndarray_rand::RandomExt;
 // internal
 use crate::data::data_container::DataContainer;
 use crate::data::Data;
+use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::node_base::adaptive_learning_base::NodeLearningDecay;
 use crate::node::node_base::momentum_base::NodeMomentum;
 use crate::node::NodeType;
@@ -117,5 +118,17 @@ impl<'a> Node<'a> for WeightNode<'a> {
 
     fn should_process_backprop(&self) -> bool {
         self.base.should_process_backprop()
+    }
+
+    fn set_momentum(&mut self, momentum: DataContainer) {
+        self.momentum_base.set_momentum(momentum);
+    }
+
+    fn set_learning_rate(&mut self, learning_rate: DataContainer) {
+        self.learning_base.set_learning_rate(learning_rate);
+    }
+
+    fn save_parameters(&self) -> LearnedParams {
+        todo!()
     }
 }
