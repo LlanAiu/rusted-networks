@@ -83,6 +83,7 @@ impl LearnedParams {
     }
 
     pub fn get_momentum(&self) -> DataContainer {
+        let momentum_vec: Vec<f32> = self.momentum.get_momentum();
         todo!()
     }
 

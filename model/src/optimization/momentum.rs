@@ -1,5 +1,4 @@
 // builtin
-use std::mem::take;
 
 // external
 use serde::{Deserialize, Serialize};
@@ -39,7 +38,7 @@ impl MomentumParams {
         }
     }
 
-    pub fn get_momentum(&mut self) -> Vec<f32> {
-        take(&mut self.momentum)
+    pub fn get_momentum(&self) -> Vec<f32> {
+        self.momentum.clone()
     }
 }

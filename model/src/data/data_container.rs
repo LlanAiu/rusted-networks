@@ -385,7 +385,7 @@ impl DataContainer {
                 let new_data = data.apply_elementwise(func);
                 DataContainer::Parameter(new_data)
             }
-            DataContainer::Empty => todo!(),
+            DataContainer::Empty => DataContainer::Empty,
         }
     }
 

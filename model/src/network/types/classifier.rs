@@ -12,7 +12,7 @@ use crate::{
         types::classifier::{builder::build_from_config, config::ClassifierConfig},
         Network,
     },
-    optimization::{learning_decay::LearningDecay, momentum::DescentType},
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{
@@ -30,9 +30,9 @@ pub struct ClassifierNetwork<'a> {
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
-    learning_decay: LearningDecay,
     penalty_type: PenaltyType,
     with_dropout: bool,
+    decay_type: LearningDecayType,
     descent_type: DescentType,
 }
 
@@ -41,18 +41,18 @@ impl<'a> ClassifierNetwork<'a> {
         input_size: Vec<usize>,
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
-        learning_decay: LearningDecay,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> ClassifierNetwork<'a> {
         let config: ClassifierConfig = ClassifierConfig::new(
             input_size,
             output_size,
             hidden_sizes,
-            learning_decay,
             penalty_config,
             with_dropout,
+            decay_type,
             descent_type,
         );
 
@@ -115,7 +115,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecay, momentum::DescentType},
+        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
         regularization::penalty::PenaltyConfig,
     };
 
@@ -127,9 +127,9 @@ mod tests {
             vec![1],
             vec![2],
             vec![2],
-            LearningDecay::constant(0.05),
             penalty_config,
             false,
+            LearningDecayType::constant(0.05),
             DescentType::Base,
         );
 

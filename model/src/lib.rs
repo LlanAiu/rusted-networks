@@ -20,7 +20,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecay, momentum::DescentType},
+        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
         regularization::penalty::PenaltyConfig,
     };
 
@@ -32,9 +32,9 @@ mod tests {
             vec![3],
             vec![2],
             vec![5],
-            LearningDecay::constant(0.001),
             penalty_config,
             false,
+            LearningDecayType::constant(0.001),
             DescentType::Base,
         );
 

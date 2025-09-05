@@ -11,10 +11,7 @@ use crate::{
         types::regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
-    optimization::{
-        learning_decay::{LearningDecay, LearningDecayType},
-        momentum::DescentType,
-    },
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -29,9 +26,9 @@ pub struct RegressorNetwork<'a> {
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
-    learning_decay: LearningDecay,
     penalty_type: PenaltyType,
     with_dropout: bool,
+    decay_type: LearningDecayType,
     descent_type: DescentType,
 }
 
