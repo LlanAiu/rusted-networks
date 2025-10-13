@@ -129,6 +129,18 @@ impl<'a> Node<'a> for WeightNode<'a> {
     }
 
     fn save_parameters(&self) -> LearnedParams {
-        todo!()
+        let data = self.base.get_data();
+
+        if let DataContainer::Parameter(Data::MatrixF32(matrix)) = data {
+            let parameters = matrix.flatten().to_vec();
+
+            let dim: Vec<usize> = vec![self.dim.0, self.dim.1];
+            let momentum = self.momentum_base.get_momentum_save();
+            let learning_rate = self.learning_base.get_learning_rate_save();
+
+            return LearnedParams::new(dim, parameters, momentum, learning_rate);
+        }
+
+        panic!("[WEIGHT] Unexpected data type for weights!");
     }
 }

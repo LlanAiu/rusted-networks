@@ -3,7 +3,7 @@
 use core::panic;
 
 // external
-use ndarray::{Array1, Array2};
+use ndarray::{arr1, Array1, Array2};
 
 // internal
 use crate::data::operations::{
@@ -45,6 +45,33 @@ impl Data {
         }
 
         panic!("[ZERO_INIT] Unsupported data type dimensions");
+    }
+
+    pub fn from_dim(dim: &[usize], data: Vec<f32>) -> Data {
+        if dim.len() == 0 {
+            if data.len() > 0 {
+                return Data::ScalarF32(data[0]);
+            }
+            println!("Data::None returned on null momentum data");
+            return Data::None;
+        } else if dim.len() == 1 {
+            if data.len() == dim[0] {
+                return Data::VectorF32(arr1(&data));
+            }
+            println!("Data::None returned on mismatched dimensions and momentum data");
+            return Data::None;
+        } else if dim.len() == 2 {
+            if data.len() == dim[0] * dim[1] {
+                let matrix = Array2::from_shape_vec((dim[0], dim[1]), data)
+                    .expect("Couldn't create matrix from shape");
+
+                return Data::MatrixF32(matrix);
+            }
+            println!("Data::None returned on mismatched dimensions and momentum data");
+            return Data::None;
+        } else {
+            panic!("Unsupported dimensions to coerce momentum data to data type!");
+        }
     }
 
     fn warn_operation(this: &Data, other: &Data, operation: &str) {

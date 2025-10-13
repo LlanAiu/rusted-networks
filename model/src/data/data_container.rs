@@ -74,6 +74,17 @@ impl DataContainer {
     pub fn zero_dim(dim: &[usize]) -> DataContainer {
         DataContainer::Parameter(Data::zero_dim(dim))
     }
+
+    pub fn from_dim(dim: &[usize], data: Vec<f32>, container_type: ContainerType) -> DataContainer {
+        let data = Data::from_dim(dim, data);
+
+        if let Data::None = data {
+            println!("DataContainer::Empty returned on Data::None from dimension coercion");
+            return DataContainer::Empty;
+        }
+
+        DataContainer::data_with_type(data, container_type)
+    }
 }
 
 impl DataContainer {

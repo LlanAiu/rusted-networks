@@ -66,7 +66,7 @@ impl NodeMomentum {
 
     pub fn get_momentum_save(&self) -> MomentumParams {
         if self.is_momentum_null {
-            return MomentumParams::new(Vec::new());
+            return MomentumParams::null();
         }
 
         if let DataContainer::Parameter(data) = &self.momentum {
@@ -74,11 +74,11 @@ impl NodeMomentum {
                 Data::ScalarF32(scalar) => MomentumParams::new(vec![*scalar]),
                 Data::VectorF32(vec) => MomentumParams::new(vec.to_vec()),
                 Data::MatrixF32(matrix) => MomentumParams::new(matrix.flatten().to_vec()),
-                Data::None => MomentumParams::new(Vec::new()),
+                _ => MomentumParams::null(),
             };
         }
 
-        MomentumParams::new(Vec::new())
+        MomentumParams::null()
     }
 
     pub fn set_momentum(&mut self, momentum: DataContainer) {

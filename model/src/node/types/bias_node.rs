@@ -118,6 +118,18 @@ impl<'a> Node<'a> for BiasNode<'a> {
     }
 
     fn save_parameters(&self) -> LearnedParams {
-        todo!()
+        let data = self.base.get_data();
+
+        if let DataContainer::Parameter(Data::VectorF32(vec)) = data {
+            let parameters = vec.to_vec();
+
+            let dim: Vec<usize> = vec![self.dim];
+            let momentum = self.momentum_base.get_momentum_save();
+            let learning_rate = self.learning_base.get_learning_rate_save();
+
+            return LearnedParams::new(dim, parameters, momentum, learning_rate);
+        }
+
+        panic!("[BIAS] Unexpected data type for biases");
     }
 }
