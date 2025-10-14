@@ -100,11 +100,11 @@ impl<'a> LinearUnit<'a> {
     }
 
     pub fn get_weights_params(&self) -> LearnedParams {
-        todo!()
+        self.weights.borrow().save_parameters()
     }
 
     pub fn get_biases_params(&self) -> LearnedParams {
-        todo!()
+        self.biases.borrow().save_parameters()
     }
 
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {
