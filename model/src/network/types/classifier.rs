@@ -130,7 +130,7 @@ mod tests {
             penalty_config,
             false,
             LearningDecayType::rms_prop(0.05, 0.95),
-            DescentType::momentum(0.95),
+            DescentType::nesterov(0.95),
         );
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
