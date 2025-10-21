@@ -66,7 +66,7 @@ impl LearnedParams {
     }
 
     pub fn get_learning_rate(&self) -> DataContainer {
-        let learning_vec: Vec<f32> = self.learning_rate.get_adaptive_learning_rate();
+        let learning_vec: Vec<f32> = self.learning_rate.get_learning_rate();
 
         if learning_vec.is_empty() {
             return DataContainer::Empty;

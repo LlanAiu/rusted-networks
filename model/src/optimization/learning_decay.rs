@@ -59,15 +59,6 @@ impl LearningDecayType {
         }
     }
 
-    pub fn get_initial_rate_f32(&self) -> f32 {
-        match self {
-            LearningDecayType::Exponential { initial_rate, .. } => *initial_rate,
-            LearningDecayType::LinearSchedule { initial_rate, .. } => *initial_rate,
-            LearningDecayType::RMSProp { global_rate, .. } => *global_rate,
-            LearningDecayType::None { rate } => *rate,
-        }
-    }
-
     pub fn is_adaptive(&self) -> bool {
         match self {
             LearningDecayType::Exponential { .. } => false,
@@ -149,21 +140,21 @@ impl LearningDecayType {
 
 #[derive(Serialize, Deserialize)]
 pub struct LearningRateParams {
-    adaptive_rate: Vec<f32>,
+    learning_rate: Vec<f32>,
 }
 
 impl LearningRateParams {
-    pub fn new(adaptive_rate: Vec<f32>) -> LearningRateParams {
-        LearningRateParams { adaptive_rate }
+    pub fn new(learning_rate: Vec<f32>) -> LearningRateParams {
+        LearningRateParams { learning_rate }
     }
 
     pub fn null() -> LearningRateParams {
         LearningRateParams {
-            adaptive_rate: Vec::new(),
+            learning_rate: Vec::new(),
         }
     }
 
-    pub fn get_adaptive_learning_rate(&self) -> Vec<f32> {
-        self.adaptive_rate.clone()
+    pub fn get_learning_rate(&self) -> Vec<f32> {
+        self.learning_rate.clone()
     }
 }

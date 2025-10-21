@@ -129,7 +129,7 @@ mod tests {
             vec![2],
             penalty_config,
             false,
-            LearningDecayType::constant(0.05),
+            LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::Base,
         );
 
@@ -191,5 +191,28 @@ mod tests {
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = classifier.predict(after_data2);
         println!("Loaded output 2: {:?}", after_output2);
+
+        let mut inputs = Vec::new();
+        let mut responses = Vec::new();
+
+        for _j in 0..8 {
+            let rand = random_range(0.0..1.0);
+            if rand < 0.5 {
+                let x: f32 = random_range(-1.0..-0.5);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
+            } else {
+                let x: f32 = random_range(0.5..1.0);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
+            }
+        }
+
+        let input = DataContainer::Batch(inputs);
+        let response = DataContainer::Batch(responses);
+
+        classifier.train(input, response);
     }
 }

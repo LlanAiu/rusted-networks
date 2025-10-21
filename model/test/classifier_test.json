@@ -10,38 +10,90 @@
         "unit_type": "Linear",
         "input_size": 1,
         "output_size": 2,
-        "weights_dim": [
-          2,
-          1
-        ],
-        "weights": [
-          -1.2964071,
-          1.6623123
-        ],
-        "biases": [
-          0.24592993,
-          0.8649533
-        ],
+        "weights": {
+          "dim": [
+            2,
+            1
+          ],
+          "parameters": [
+            -3.8108137,
+            0.4370206
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "learning_rate": [
+              1.9908133e-7,
+              3.3867303e-7
+            ]
+          }
+        },
+        "biases": {
+          "dim": [
+            2
+          ],
+          "parameters": [
+            1.9093868,
+            -0.44105747
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "learning_rate": [
+              3.569638e-7,
+              4.906652e-7
+            ]
+          }
+        },
         "activation": "relu"
       },
       {
         "unit_type": "Softmax",
         "input_size": 2,
         "output_size": 2,
-        "weights_dim": [
-          2,
-          2
-        ],
-        "weights": [
-          0.3295302,
-          -1.9181314,
-          -0.8967011,
-          0.3171859
-        ],
-        "biases": [
-          0.5805523,
-          -0.58055234
-        ],
+        "weights": {
+          "dim": [
+            2,
+            2
+          ],
+          "parameters": [
+            1.4634181,
+            0.54890054,
+            -2.7233043,
+            -0.08127786
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "learning_rate": [
+              6.640742e-7,
+              1.4089206e-7,
+              6.640726e-7,
+              1.4089206e-7
+            ]
+          }
+        },
+        "biases": {
+          "dim": [
+            2
+          ],
+          "parameters": [
+            -3.8169386,
+            3.8169508
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "learning_rate": [
+              8.09497e-7,
+              8.0950053e-7
+            ]
+          }
+        },
         "activation": "none"
       }
     ],
@@ -52,7 +104,13 @@
       ]
     },
     "params": {
-      "learning_rate": 0.05
+      "decay_type": {
+        "RMSProp": {
+          "global_rate": 0.05,
+          "decay_rate": 0.95
+        }
+      },
+      "descent_type": "Base"
     },
     "regularization": {
       "norm_penalty": "None",
