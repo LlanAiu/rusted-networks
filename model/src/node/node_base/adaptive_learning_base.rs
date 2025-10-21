@@ -40,7 +40,6 @@ impl NodeLearningDecay {
         self.time_step += 1;
 
         if self.is_adaptive {
-            println!("Updating adaptive learning rate");
             if !self.matches_dim {
                 self.learning_rate = DataContainer::zero_dim(gradient.dim().1);
                 self.matches_dim = true;
@@ -48,7 +47,6 @@ impl NodeLearningDecay {
             self.decay_type
                 .update_adaptive(&mut self.learning_rate, gradient, self.time_step);
         } else {
-            println!("Updating global learning rate");
             self.decay_type
                 .update_global(&mut self.learning_rate, self.time_step);
         }
