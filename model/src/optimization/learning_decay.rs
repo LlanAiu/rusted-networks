@@ -10,22 +10,9 @@ const DELTA: f32 = 1e-7;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum LearningDecayType {
-    Exponential {
-        initial_rate: f32,
-        decay_rate: f32,
-    },
-    LinearSchedule {
-        initial_rate: f32,
-        end_rate: f32,
-        decay_time: usize,
-    },
-    RMSProp {
-        global_rate: f32,
-        decay_rate: f32,
-    },
-    None {
-        rate: f32,
-    },
+    Exponential { initial_rate: f32, decay_rate: f32 },
+    RMSProp { global_rate: f32, decay_rate: f32 },
+    None { rate: f32 },
 }
 
 impl LearningDecayType {
@@ -33,18 +20,6 @@ impl LearningDecayType {
         LearningDecayType::Exponential {
             initial_rate,
             decay_rate,
-        }
-    }
-
-    pub fn linear_schedule(
-        initial_rate: f32,
-        end_rate: f32,
-        decay_time: usize,
-    ) -> LearningDecayType {
-        LearningDecayType::LinearSchedule {
-            initial_rate,
-            end_rate,
-            decay_time,
         }
     }
 
@@ -62,7 +37,6 @@ impl LearningDecayType {
     pub fn is_adaptive(&self) -> bool {
         match self {
             LearningDecayType::Exponential { .. } => false,
-            LearningDecayType::LinearSchedule { .. } => false,
             LearningDecayType::RMSProp { .. } => true,
             LearningDecayType::None { .. } => false,
         }
@@ -71,9 +45,6 @@ impl LearningDecayType {
     pub fn get_initial_rate(&self) -> DataContainer {
         match self {
             LearningDecayType::Exponential { initial_rate, .. } => {
-                DataContainer::Parameter(Data::ScalarF32(*initial_rate))
-            }
-            LearningDecayType::LinearSchedule { initial_rate, .. } => {
                 DataContainer::Parameter(Data::ScalarF32(*initial_rate))
             }
             LearningDecayType::RMSProp { .. } => DataContainer::zero(),
@@ -85,15 +56,6 @@ impl LearningDecayType {
         match self {
             LearningDecayType::Exponential { decay_rate, .. } => {
                 learning_rate.apply_inplace(|f| *f *= decay_rate);
-            }
-            LearningDecayType::LinearSchedule {
-                initial_rate,
-                end_rate,
-                decay_time,
-            } => {
-                let percent = (time_step as f32) / (*decay_time as f32);
-                let new_rate = initial_rate * (1.0 - percent) + percent * end_rate;
-                learning_rate.apply_inplace(|f| *f = new_rate);
             }
             LearningDecayType::None { .. } => {}
             _ => {
