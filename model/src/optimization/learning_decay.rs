@@ -140,21 +140,23 @@ impl LearningDecayType {
 
 #[derive(Serialize, Deserialize)]
 pub struct LearningRateParams {
-    learning_rate: Vec<f32>,
+    adaptive_rate: Vec<f32>,
 }
 
 impl LearningRateParams {
     pub fn new(learning_rate: Vec<f32>) -> LearningRateParams {
-        LearningRateParams { learning_rate }
+        LearningRateParams {
+            adaptive_rate: learning_rate,
+        }
     }
 
     pub fn null() -> LearningRateParams {
         LearningRateParams {
-            learning_rate: Vec::new(),
+            adaptive_rate: Vec::new(),
         }
     }
 
-    pub fn get_learning_rate(&self) -> Vec<f32> {
-        self.learning_rate.clone()
+    pub fn get_adaptive_learning_rate(&self) -> Vec<f32> {
+        self.adaptive_rate.clone()
     }
 }

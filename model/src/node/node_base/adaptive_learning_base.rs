@@ -55,7 +55,6 @@ impl NodeLearningDecay {
     pub fn get_learning_rate_save(&self) -> LearningRateParams {
         if let DataContainer::Parameter(data) = &self.learning_rate {
             return match data {
-                Data::ScalarF32(scalar) => LearningRateParams::new(vec![*scalar]),
                 Data::VectorF32(vec) => LearningRateParams::new(vec.to_vec()),
                 Data::MatrixF32(matrix) => LearningRateParams::new(matrix.flatten().to_vec()),
                 _ => LearningRateParams::null(),

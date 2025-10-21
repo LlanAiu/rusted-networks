@@ -71,7 +71,6 @@ impl NodeMomentum {
 
         if let DataContainer::Parameter(data) = &self.momentum {
             return match data {
-                Data::ScalarF32(scalar) => MomentumParams::new(vec![*scalar]),
                 Data::VectorF32(vec) => MomentumParams::new(vec.to_vec()),
                 Data::MatrixF32(matrix) => MomentumParams::new(matrix.flatten().to_vec()),
                 _ => MomentumParams::null(),
