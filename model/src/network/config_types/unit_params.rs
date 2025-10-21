@@ -1,13 +1,14 @@
 // builtin
 
 // external
-use ndarray::{Array1, Array2};
+use ndarray::Array1;
 use ndarray_rand::{rand_distr::Uniform, RandomExt};
 use serde::{Deserialize, Serialize};
 
 // internal
 use crate::{
-    data::{data_container::DataContainer, Data},
+    data::data_container::DataContainer,
+    network::config_types::learned_params::LearnedParams,
     unit::{
         types::{linear_unit::LinearUnit, softmax_unit::SoftmaxUnit},
         UnitContainer,
@@ -20,17 +21,15 @@ pub enum UnitParams {
     Linear {
         input_size: usize,
         output_size: usize,
-        weights_dim: (usize, usize),
-        weights: Vec<f32>,
-        biases: Vec<f32>,
+        weights: LearnedParams,
+        biases: LearnedParams,
         activation: String,
     },
     Softmax {
         input_size: usize,
         output_size: usize,
-        weights_dim: (usize, usize),
-        weights: Vec<f32>,
-        biases: Vec<f32>,
+        weights: LearnedParams,
+        biases: LearnedParams,
         activation: String,
     },
 }
@@ -38,35 +37,15 @@ pub enum UnitParams {
 impl UnitParams {
     pub fn get_weights(&self) -> DataContainer {
         match self {
-            UnitParams::Linear {
-                weights_dim,
-                weights,
-                ..
-            } => {
-                let matrix = Array2::from_shape_vec(*weights_dim, weights.clone()).unwrap();
-                DataContainer::Parameter(Data::MatrixF32(matrix))
-            }
-            UnitParams::Softmax {
-                weights_dim,
-                weights,
-                ..
-            } => {
-                let matrix = Array2::from_shape_vec(*weights_dim, weights.clone()).unwrap();
-                DataContainer::Parameter(Data::MatrixF32(matrix))
-            }
+            UnitParams::Linear { weights, .. } => weights.get_parameters(),
+            UnitParams::Softmax { weights, .. } => weights.get_parameters(),
         }
     }
 
     pub fn get_biases(&self) -> DataContainer {
         match self {
-            UnitParams::Linear { biases, .. } => {
-                let vec = Array1::from_vec(biases.clone());
-                DataContainer::Parameter(Data::VectorF32(vec))
-            }
-            UnitParams::Softmax { biases, .. } => {
-                let vec = Array1::from_vec(biases.clone());
-                DataContainer::Parameter(Data::VectorF32(vec))
-            }
+            UnitParams::Linear { biases, .. } => biases.get_parameters(),
+            UnitParams::Softmax { biases, .. } => biases.get_parameters(),
         }
     }
 
@@ -83,17 +62,14 @@ impl UnitParams {
         let input_size = unit_ref.get_input_size();
         let output_size = unit_ref.get_output_size();
 
-        let weights_dim = (output_size, input_size);
-
-        let weights = unit_ref.get_weights();
-        let biases = unit_ref.get_biases();
+        let weights = unit_ref.get_weights_params();
+        let biases = unit_ref.get_biases_params();
 
         let activation = unit_ref.get_activation().to_string();
 
         UnitParams::Linear {
             input_size,
             output_size,
-            weights_dim,
             weights,
             biases,
             activation,
@@ -106,17 +82,14 @@ impl UnitParams {
         let input_size = unit_ref.get_input_size();
         let output_size = unit_ref.get_output_size();
 
-        let weights_dim = (output_size, input_size);
-
-        let weights = unit_ref.get_weights();
-        let biases = unit_ref.get_biases();
+        let weights = unit_ref.get_weights_params();
+        let biases = unit_ref.get_biases_params();
 
         let activation = unit_ref.get_activation().to_string();
 
         UnitParams::Softmax {
             input_size,
             output_size,
-            weights_dim,
             weights,
             biases,
             activation,
@@ -128,19 +101,19 @@ impl UnitParams {
         output_size: usize,
         activation_function: &str,
     ) -> UnitParams {
-        let weights_dim = (output_size, input_size);
+        let weights_dim: Vec<usize> = vec![output_size, input_size];
+        let biases_dim: Vec<usize> = vec![output_size];
 
         let weights = UnitParams::generate_new_weights(input_size, output_size);
-        let biases = vec![0.0; output_size];
+        let biases: Vec<f32> = vec![0.0; output_size];
 
         let activation = activation_function.to_string();
 
         UnitParams::Linear {
             input_size,
             output_size,
-            weights_dim,
-            weights,
-            biases,
+            weights: LearnedParams::new_from_parameters(weights_dim, weights),
+            biases: LearnedParams::new_from_parameters(biases_dim, biases),
             activation,
         }
     }
@@ -150,19 +123,19 @@ impl UnitParams {
         output_size: usize,
         activation_function: &str,
     ) -> UnitParams {
-        let weights_dim = (output_size, input_size);
+        let weights_dim: Vec<usize> = vec![output_size, input_size];
+        let biases_dim: Vec<usize> = vec![output_size];
 
         let weights = UnitParams::generate_new_weights(input_size, output_size);
-        let biases = vec![0.0; output_size];
+        let biases: Vec<f32> = vec![0.0; output_size];
 
         let activation = activation_function.to_string();
 
         UnitParams::Softmax {
             input_size,
             output_size,
-            weights_dim,
-            weights,
-            biases,
+            weights: LearnedParams::new_from_parameters(weights_dim, weights),
+            biases: LearnedParams::new_from_parameters(biases_dim, biases),
             activation,
         }
     }

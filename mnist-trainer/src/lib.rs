@@ -6,7 +6,7 @@
 use crate::{import_csv::load_data_from_csv, types::HandwrittenExample};
 use model::{
     network::types::classifier::ClassifierNetwork,
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::penalty::PenaltyConfig,
     trainer::{trainer_params::TrainerConfig, SupervisedTrainer},
 };
@@ -19,9 +19,9 @@ pub fn train_dataset() {
         vec![784],
         vec![10],
         vec![50],
-        0.01,
         penalty_config,
         false,
+        LearningDecayType::constant(0.01),
         DescentType::nesterov(0.95),
     );
 
@@ -43,7 +43,7 @@ mod tests {
     use model::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::momentum::DescentType,
+        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
         regularization::penalty::PenaltyConfig,
         trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
@@ -57,9 +57,9 @@ mod tests {
             vec![784],
             vec![10],
             vec![50],
-            0.01,
             penalty_config,
             false,
+            LearningDecayType::constant(0.01),
             DescentType::Base,
         );
 
@@ -122,9 +122,9 @@ mod tests {
             vec![784],
             vec![10],
             vec![50],
-            0.01,
             penalty_config,
             false,
+            LearningDecayType::constant(0.01),
             DescentType::nesterov(0.95),
         );
 
@@ -184,9 +184,9 @@ mod tests {
             vec![784],
             vec![10],
             vec![72],
-            0.01,
             penalty_config,
             false,
+            LearningDecayType::constant(0.01),
             DescentType::nesterov(0.95),
         );
 

@@ -5,7 +5,7 @@
 // internal
 use crate::{
     data::{data_container::DataContainer, Data},
-    network::config_types::unit_params::UnitParams,
+    network::config_types::{learned_params::LearnedParams, unit_params::UnitParams},
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
@@ -14,7 +14,7 @@ use crate::{
         },
         NodeRef,
     },
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -32,16 +32,16 @@ impl<'a> SoftmaxUnit<'a> {
         function: &str,
         input_size: usize,
         output_size: usize,
-        learning_rate: f32,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> SoftmaxUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
             input_size,
             output_size,
-            learning_rate,
-            descent_type,
+            decay_type.clone(),
+            descent_type.clone(),
         ));
-        let biases_ref = NodeRef::new(BiasNode::new(output_size, learning_rate));
+        let biases_ref = NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
         let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
         let add_ref: NodeRef = NodeRef::new(AddNode::new());
         let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
@@ -72,13 +72,15 @@ impl<'a> SoftmaxUnit<'a> {
 
     pub fn from_config(
         config: &UnitParams,
-        learning_rate: f32,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> SoftmaxUnit<'a> {
         if let UnitParams::Softmax {
             input_size,
             output_size,
             activation,
+            weights,
+            biases,
             ..
         } = config
         {
@@ -86,12 +88,10 @@ impl<'a> SoftmaxUnit<'a> {
                 activation,
                 *input_size,
                 *output_size,
-                learning_rate,
+                decay_type,
                 descent_type,
             );
 
-            let weights = config.get_weights();
-            let biases = config.get_biases();
             unit.set_weights(weights);
             unit.set_biases(biases);
 
@@ -101,16 +101,44 @@ impl<'a> SoftmaxUnit<'a> {
         panic!("Mismatched unit parameter types for initialization: expected UnitParams::Softmax but got {},", config.type_name());
     }
 
+    pub fn get_weights_params(&self) -> LearnedParams {
+        self.weights.borrow().save_parameters()
+    }
+
+    pub fn get_biases_params(&self) -> LearnedParams {
+        self.biases.borrow().save_parameters()
+    }
+
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {
         &self.weights
     }
 
-    pub fn set_biases(&self, data: DataContainer) {
-        self.biases.borrow_mut().set_data(data);
+    pub fn set_biases(&self, data: &LearnedParams) {
+        let biases: DataContainer = data.get_parameters();
+        let momentum: DataContainer = data.get_momentum();
+        let learning_rate: DataContainer = data.get_learning_rate();
+
+        self.biases.borrow_mut().set_data(biases);
+        if !matches!(&momentum, DataContainer::Empty) {
+            self.biases.borrow_mut().set_momentum(momentum);
+        }
+        if !matches!(&learning_rate, DataContainer::Empty) {
+            self.biases.borrow_mut().set_learning_rate(learning_rate);
+        }
     }
 
-    pub fn set_weights(&self, data: DataContainer) {
-        self.weights.borrow_mut().set_data(data);
+    pub fn set_weights(&self, data: &LearnedParams) {
+        let weights = data.get_parameters();
+        let momentum = data.get_momentum();
+        let learning_rate = data.get_learning_rate();
+
+        self.weights.borrow_mut().set_data(weights);
+        if !matches!(&momentum, DataContainer::Empty) {
+            self.weights.borrow_mut().set_momentum(momentum);
+        }
+        if !matches!(&learning_rate, DataContainer::Empty) {
+            self.weights.borrow_mut().set_learning_rate(learning_rate);
+        }
     }
 
     pub fn get_input_size(&self) -> usize {

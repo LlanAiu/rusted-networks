@@ -8,7 +8,9 @@ use std::{
 // external
 
 // internal
-use crate::data::data_container::DataContainer;
+use crate::{
+    data::data_container::DataContainer, network::config_types::learned_params::LearnedParams,
+};
 pub mod activation;
 pub mod loss;
 pub mod node_base;
@@ -86,9 +88,15 @@ pub trait Node<'a> {
 
     fn get_outputs(&self) -> &Vec<NodeRef<'a>>;
 
+    fn get_data(&mut self) -> DataContainer;
+
+    fn save_parameters(&self) -> LearnedParams;
+
     fn set_data(&mut self, data: DataContainer);
 
-    fn get_data(&mut self) -> DataContainer;
+    fn set_momentum(&mut self, momentum: DataContainer);
+
+    fn set_learning_rate(&mut self, learning_rate: DataContainer);
 
     fn apply_operation(&mut self);
 

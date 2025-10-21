@@ -1,7 +1,9 @@
 // builtin
 
+use core::panic;
+
 // external
-use ndarray::{Array1, Array2};
+use ndarray::{arr1, Array1, Array2};
 
 // internal
 use crate::data::operations::{
@@ -31,6 +33,45 @@ impl Data {
 
     pub fn neg_one() -> Data {
         Data::ScalarF32(-1.0)
+    }
+
+    pub fn zero_dim(dim: &[usize]) -> Data {
+        if dim.len() == 0 {
+            return Data::ScalarF32(0.0);
+        } else if dim.len() == 1 {
+            return Data::VectorF32(Array1::zeros(dim[0]));
+        } else if dim.len() == 2 {
+            return Data::MatrixF32(Array2::zeros((dim[0], dim[1])));
+        }
+
+        panic!("[ZERO_INIT] Unsupported data type dimensions");
+    }
+
+    pub fn from_dim(dim: &[usize], data: Vec<f32>) -> Data {
+        if dim.len() == 0 {
+            if data.len() > 0 {
+                return Data::ScalarF32(data[0]);
+            }
+            println!("Data::None returned on null momentum data");
+            return Data::None;
+        } else if dim.len() == 1 {
+            if data.len() == dim[0] {
+                return Data::VectorF32(arr1(&data));
+            }
+            println!("Data::None returned on mismatched dimensions and momentum data");
+            return Data::None;
+        } else if dim.len() == 2 {
+            if data.len() == dim[0] * dim[1] {
+                let matrix = Array2::from_shape_vec((dim[0], dim[1]), data)
+                    .expect("Couldn't create matrix from shape");
+
+                return Data::MatrixF32(matrix);
+            }
+            println!("Data::None returned on mismatched dimensions and momentum data");
+            return Data::None;
+        } else {
+            panic!("Unsupported dimensions to coerce momentum data to data type!");
+        }
     }
 
     fn warn_operation(this: &Data, other: &Data, operation: &str) {
@@ -275,6 +316,15 @@ impl Data {
             Data::VectorF32(vector) => Data::VectorF32(vector.mapv(func)),
             Data::MatrixF32(matrix) => Data::MatrixF32(matrix.mapv(func)),
             Data::None => Data::None,
+        }
+    }
+
+    pub fn apply_inplace(&mut self, func: impl Fn(&mut f32)) {
+        match self {
+            Data::ScalarF32(scalar) => func(scalar),
+            Data::VectorF32(vector) => vector.map_inplace(func),
+            Data::MatrixF32(matrix) => matrix.map_inplace(func),
+            _ => {}
         }
     }
 

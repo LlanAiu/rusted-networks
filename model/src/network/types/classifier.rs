@@ -12,7 +12,7 @@ use crate::{
         types::classifier::{builder::build_from_config, config::ClassifierConfig},
         Network,
     },
-    optimization::momentum::DescentType,
+    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::penalty::{PenaltyConfig, PenaltyType},
     unit::{
         types::{
@@ -30,9 +30,9 @@ pub struct ClassifierNetwork<'a> {
     hidden: Vec<UnitContainer<'a, LinearUnit<'a>>>,
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
-    learning_rate: f32,
     penalty_type: PenaltyType,
     with_dropout: bool,
+    decay_type: LearningDecayType,
     descent_type: DescentType,
 }
 
@@ -41,18 +41,18 @@ impl<'a> ClassifierNetwork<'a> {
         input_size: Vec<usize>,
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
-        learning_rate: f32,
         penalty_config: PenaltyConfig,
         with_dropout: bool,
+        decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> ClassifierNetwork<'a> {
         let config: ClassifierConfig = ClassifierConfig::new(
             input_size,
             output_size,
             hidden_sizes,
-            learning_rate,
             penalty_config,
             with_dropout,
+            decay_type,
             descent_type,
         );
 
@@ -115,7 +115,7 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::momentum::DescentType,
+        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
         regularization::penalty::PenaltyConfig,
     };
 
@@ -127,10 +127,10 @@ mod tests {
             vec![1],
             vec![2],
             vec![2],
-            0.05,
             penalty_config,
             false,
-            DescentType::Base,
+            LearningDecayType::rms_prop(0.05, 0.95),
+            DescentType::nesterov(0.95),
         );
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
@@ -191,5 +191,28 @@ mod tests {
         let after_data2 = DataContainer::Inference(Data::VectorF32(test_arr2.clone()));
         let after_output2 = classifier.predict(after_data2);
         println!("Loaded output 2: {:?}", after_output2);
+
+        let mut inputs = Vec::new();
+        let mut responses = Vec::new();
+
+        for _j in 0..8 {
+            let rand = random_range(0.0..1.0);
+            if rand < 0.5 {
+                let x: f32 = random_range(-1.0..-0.5);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
+            } else {
+                let x: f32 = random_range(0.5..1.0);
+
+                inputs.push(Data::VectorF32(arr1(&[x])));
+                responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
+            }
+        }
+
+        let input = DataContainer::Batch(inputs);
+        let response = DataContainer::Batch(responses);
+
+        classifier.train(input, response);
     }
 }

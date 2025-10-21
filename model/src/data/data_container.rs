@@ -70,6 +70,21 @@ impl DataContainer {
     pub fn neg_one() -> DataContainer {
         DataContainer::Parameter(Data::neg_one())
     }
+
+    pub fn zero_dim(dim: &[usize]) -> DataContainer {
+        DataContainer::Parameter(Data::zero_dim(dim))
+    }
+
+    pub fn from_dim(dim: &[usize], data: Vec<f32>, container_type: ContainerType) -> DataContainer {
+        let data = Data::from_dim(dim, data);
+
+        if let Data::None = data {
+            println!("DataContainer::Empty returned on Data::None from dimension coercion");
+            return DataContainer::Empty;
+        }
+
+        DataContainer::data_with_type(data, container_type)
+    }
 }
 
 impl DataContainer {
@@ -381,7 +396,27 @@ impl DataContainer {
                 let new_data = data.apply_elementwise(func);
                 DataContainer::Parameter(new_data)
             }
-            DataContainer::Empty => todo!(),
+            DataContainer::Empty => DataContainer::Empty,
+        }
+    }
+
+    pub fn apply_inplace<F>(&mut self, func: F)
+    where
+        F: Fn(&mut f32) + Copy,
+    {
+        match self {
+            DataContainer::Batch(datas) => {
+                for data in datas.iter_mut() {
+                    data.apply_inplace(func);
+                }
+            }
+            DataContainer::Inference(data) => {
+                data.apply_inplace(func);
+            }
+            DataContainer::Parameter(data) => {
+                data.apply_inplace(func);
+            }
+            _ => {}
         }
     }
 

@@ -131,7 +131,7 @@ mod tests {
 
     use crate::{
         network::types::regressor::RegressorNetwork,
-        optimization::momentum::DescentType,
+        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
         regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
         trainer::{examples::QuadraticExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
@@ -158,9 +158,9 @@ mod tests {
             vec![1],
             vec![1],
             vec![12, 6],
-            0.001,
             config,
             false,
+            LearningDecayType::constant(0.001),
             DescentType::nesterov(0.95),
         );
 

@@ -10,38 +10,104 @@
         "unit_type": "Linear",
         "input_size": 1,
         "output_size": 2,
-        "weights_dim": [
-          2,
-          1
-        ],
-        "weights": [
-          -1.2964071,
-          1.6623123
-        ],
-        "biases": [
-          0.24592993,
-          0.8649533
-        ],
+        "weights": {
+          "dim": [
+            2,
+            1
+          ],
+          "parameters": [
+            8.793248,
+            -19.523785
+          ],
+          "momentum": {
+            "momentum": [
+              -0.000019171162,
+              0.000042113195
+            ]
+          },
+          "learning_rate": {
+            "adaptive_rate": [
+              1.23798e-7,
+              0.0000015234818
+            ]
+          }
+        },
+        "biases": {
+          "dim": [
+            2
+          ],
+          "parameters": [
+            -9.970401,
+            3.8410225
+          ],
+          "momentum": {
+            "momentum": [
+              0.000019056391,
+              -0.0000012251629
+            ]
+          },
+          "learning_rate": {
+            "adaptive_rate": [
+              2.399924e-7,
+              0.000003637935
+            ]
+          }
+        },
         "activation": "relu"
       },
       {
         "unit_type": "Softmax",
         "input_size": 2,
         "output_size": 2,
-        "weights_dim": [
-          2,
-          2
-        ],
-        "weights": [
-          0.3295302,
-          -1.9181314,
-          -0.8967011,
-          0.3171859
-        ],
-        "biases": [
-          0.5805523,
-          -0.58055234
-        ],
+        "weights": {
+          "dim": [
+            2,
+            2
+          ],
+          "parameters": [
+            9.4515915,
+            10.439719,
+            -8.7237,
+            -9.925739
+          ],
+          "momentum": {
+            "momentum": [
+              -0.000018753253,
+              -0.000016076829,
+              0.000018753253,
+              0.000016076829
+            ]
+          },
+          "learning_rate": {
+            "adaptive_rate": [
+              8.504163e-8,
+              7.339325e-8,
+              8.504163e-8,
+              7.339325e-8
+            ]
+          }
+        },
+        "biases": {
+          "dim": [
+            2
+          ],
+          "parameters": [
+            -12.520434,
+            12.5204315
+          ],
+          "momentum": {
+            "momentum": [
+              0.000026876529,
+              -0.00002686965
+            ]
+          },
+          "learning_rate": {
+            "adaptive_rate": [
+              4.1083428e-7,
+              4.1083428e-7
+            ]
+          }
+        },
         "activation": "none"
       }
     ],
@@ -52,7 +118,17 @@
       ]
     },
     "params": {
-      "learning_rate": 0.05
+      "decay_type": {
+        "RMSProp": {
+          "global_rate": 0.05,
+          "decay_rate": 0.95
+        }
+      },
+      "descent_type": {
+        "Nesterov": {
+          "decay": 0.95
+        }
+      }
     },
     "regularization": {
       "norm_penalty": "None",

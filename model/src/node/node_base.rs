@@ -5,6 +5,8 @@
 // internal
 use crate::data::data_container::DataContainer;
 use crate::node::NodeRef;
+pub mod adaptive_learning_base;
+pub mod momentum_base;
 
 pub struct NodeBase<'a> {
     inputs: Vec<NodeRef<'a>>,
@@ -111,5 +113,9 @@ impl<'a> NodeBase<'a> {
         }
 
         self.data.sum_assign(&self.momentum);
+    }
+
+    pub fn update_gradient(&mut self, update: &DataContainer) {
+        self.data.minus_assign(update);
     }
 }
