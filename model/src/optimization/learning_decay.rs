@@ -10,9 +10,23 @@ const DELTA: f32 = 1e-7;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum LearningDecayType {
-    Exponential { initial_rate: f32, decay_rate: f32 },
-    RMSProp { global_rate: f32, decay_rate: f32 },
-    None { rate: f32 },
+    Exponential {
+        initial_rate: f32,
+        decay_rate: f32,
+    },
+    RMSProp {
+        global_rate: f32,
+        decay_rate: f32,
+    },
+    LinearSchedule {
+        start_rate: f32,
+        end_rate: f32,
+        end_time: usize,
+        time: usize,
+    },
+    None {
+        rate: f32,
+    },
 }
 
 impl LearningDecayType {
@@ -39,6 +53,14 @@ impl LearningDecayType {
             LearningDecayType::Exponential { .. } => false,
             LearningDecayType::RMSProp { .. } => true,
             LearningDecayType::None { .. } => false,
+            LearningDecayType::LinearSchedule { .. } => false,
+        }
+    }
+
+    pub fn get_initial_timestep(&self) -> usize {
+        match self {
+            LearningDecayType::LinearSchedule { time, .. } => *time,
+            _ => 0,
         }
     }
 
@@ -47,15 +69,55 @@ impl LearningDecayType {
             LearningDecayType::Exponential { initial_rate, .. } => {
                 DataContainer::Parameter(Data::ScalarF32(*initial_rate))
             }
+            LearningDecayType::LinearSchedule {
+                start_rate,
+                end_rate,
+                end_time,
+                time,
+            } => {
+                let percent = (*time as f32) / (*end_time as f32);
+                let rate = (1.0 - percent) * *start_rate + percent * *end_rate;
+
+                DataContainer::Parameter(Data::ScalarF32(rate))
+            }
             LearningDecayType::RMSProp { .. } => DataContainer::zero(),
             LearningDecayType::None { rate } => DataContainer::Parameter(Data::ScalarF32(*rate)),
         }
     }
 
-    pub fn update_global(&self, learning_rate: &mut DataContainer, time_step: usize) {
-        match self {
+    pub fn update_timestep(&mut self, time_step: usize) {
+        if let LearningDecayType::LinearSchedule {
+            start_rate,
+            end_rate,
+            end_time,
+            ..
+        } = self
+        {
+            *self = LearningDecayType::LinearSchedule {
+                start_rate: *start_rate,
+                end_rate: *end_rate,
+                end_time: *end_time,
+                time: time_step,
+            }
+        }
+    }
+
+    pub fn update_global(&mut self, learning_rate: &mut DataContainer, time_step: usize) {
+        self.update_timestep(time_step);
+        match &self {
             LearningDecayType::Exponential { decay_rate, .. } => {
                 learning_rate.apply_inplace(|f| *f *= decay_rate);
+            }
+            LearningDecayType::LinearSchedule {
+                start_rate,
+                end_rate,
+                end_time,
+                time,
+            } => {
+                let percent = (*time as f32) / (*end_time as f32);
+                let rate = (1.0 - percent) * *start_rate + percent * *end_rate;
+
+                learning_rate.apply_inplace(|f| *f = rate);
             }
             LearningDecayType::None { .. } => {}
             _ => {
@@ -65,12 +127,13 @@ impl LearningDecayType {
     }
 
     pub fn update_adaptive(
-        &self,
+        &mut self,
         learning_rate: &mut DataContainer,
         gradient: &DataContainer,
-        _time_step: usize,
+        time_step: usize,
     ) {
-        match self {
+        self.update_timestep(time_step);
+        match &self {
             LearningDecayType::RMSProp { decay_rate, .. } => {
                 let learning_update: DataContainer =
                     gradient.apply_elementwise(|f| (1.0 - decay_rate) * f32::powi(f, 2));
