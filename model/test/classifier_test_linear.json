@@ -1,0 +1,109 @@
+{
+  "Classifier": {
+    "input": {
+      "input_size": [
+        1
+      ]
+    },
+    "units": [
+      {
+        "unit_type": "Linear",
+        "input_size": 1,
+        "output_size": 2,
+        "weights": {
+          "dim": [
+            2,
+            1
+          ],
+          "parameters": [
+            1.6672949,
+            0.6504066
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "adaptive_rate": []
+          }
+        },
+        "biases": {
+          "dim": [
+            2
+          ],
+          "parameters": [
+            0.9105237,
+            0.009223324
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "adaptive_rate": []
+          }
+        },
+        "activation": "relu"
+      },
+      {
+        "unit_type": "Softmax",
+        "input_size": 2,
+        "output_size": 2,
+        "weights": {
+          "dim": [
+            2,
+            2
+          ],
+          "parameters": [
+            -1.3146085,
+            -1.026379,
+            1.2783314,
+            -0.63694745
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "adaptive_rate": []
+          }
+        },
+        "biases": {
+          "dim": [
+            2
+          ],
+          "parameters": [
+            0.9848728,
+            -0.984873
+          ],
+          "momentum": {
+            "momentum": []
+          },
+          "learning_rate": {
+            "adaptive_rate": []
+          }
+        },
+        "activation": "none"
+      }
+    ],
+    "loss": {
+      "loss_type": "base_cross_entropy",
+      "output_size": [
+        2
+      ]
+    },
+    "params": {
+      "decay_type": {
+        "LinearSchedule": {
+          "start_rate": 0.07,
+          "end_rate": 0.03,
+          "end_time": 1000,
+          "time": 210
+        }
+      },
+      "descent_type": "Base"
+    },
+    "regularization": {
+      "norm_penalty": "None",
+      "with_dropout": false
+    },
+    "time_step": 210
+  }
+}

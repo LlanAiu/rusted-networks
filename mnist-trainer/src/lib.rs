@@ -32,7 +32,7 @@ pub fn train_dataset() {
 
     let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
 
-    let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+    let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
         SupervisedTrainer::new(classifier, config);
 
     trainer.train("test/mnist_build_test.json");
@@ -53,7 +53,7 @@ mod tests {
     #[test]
     fn tiny_dataset_init() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
-        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+        let mut classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![784],
             vec![10],
             vec![50],
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn small_dataset_init() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
-        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+        let mut classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![784],
             vec![10],
             vec![50],
@@ -135,7 +135,7 @@ mod tests {
 
         let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
 
-        let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+        let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
             SupervisedTrainer::new(classifier, config);
 
         trainer.train("test/mnist_small.json");
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn small_dataset_load_train() {
-        let classifier: ClassifierNetwork =
+        let mut classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/mnist_small.json");
 
         let train: Vec<HandwrittenExample> =
@@ -153,7 +153,7 @@ mod tests {
 
         let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
 
-        let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+        let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
             SupervisedTrainer::new(classifier, config);
 
         trainer.train("test/mnist_small.json");
@@ -197,7 +197,7 @@ mod tests {
 
         let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(3, 4, train, test);
 
-        let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+        let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
             SupervisedTrainer::new(classifier, config);
 
         trainer.train("test/mnist_med.json");
@@ -217,7 +217,7 @@ mod tests {
 
         let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(2, 4, train, test);
 
-        let trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
+        let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
             SupervisedTrainer::new(classifier, config);
 
         trainer.train("test/mnist_med.json");

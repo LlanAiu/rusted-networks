@@ -13,6 +13,10 @@ pub enum DescentType {
 }
 
 impl DescentType {
+    pub fn none() -> DescentType {
+        DescentType::Base
+    }
+
     pub fn momentum(decay: f32) -> DescentType {
         DescentType::Momentum { decay }
     }

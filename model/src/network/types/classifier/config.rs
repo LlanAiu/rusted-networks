@@ -27,6 +27,7 @@ pub struct ClassifierConfig {
     loss: LossParams,
     params: HyperParams,
     regularization: RegularizationParams,
+    time_step: usize,
 }
 
 impl ClassifierConfig {
@@ -74,6 +75,7 @@ impl ClassifierConfig {
             loss,
             params,
             regularization,
+            time_step: 0,
         }
     }
 
@@ -101,6 +103,7 @@ impl ClassifierConfig {
             loss,
             params,
             regularization,
+            time_step: network.time_step,
         }
     }
 
@@ -143,5 +146,9 @@ impl ClassifierConfig {
 
     pub fn regularization(&self) -> &RegularizationParams {
         &self.regularization
+    }
+
+    pub fn timestep(&self) -> usize {
+        self.time_step
     }
 }

@@ -41,6 +41,15 @@ impl LearningDecayType {
         LearningDecayType::None { rate: initial_rate }
     }
 
+    pub fn linear_schedule(start_rate: f32, end_rate: f32, end_time: usize) -> LearningDecayType {
+        LearningDecayType::LinearSchedule {
+            start_rate,
+            end_rate,
+            end_time,
+            time: 0,
+        }
+    }
+
     pub fn rms_prop(global_rate: f32, decay_rate: f32) -> LearningDecayType {
         LearningDecayType::RMSProp {
             global_rate,

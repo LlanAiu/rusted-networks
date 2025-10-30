@@ -10,7 +10,7 @@ pub mod types;
 pub trait Network {
     fn predict(&self, input: DataContainer) -> DataContainer;
 
-    fn train(&self, input: DataContainer, response: DataContainer);
+    fn train(&mut self, input: DataContainer, response: DataContainer);
 
     fn create_config(&self) -> Config;
 }
