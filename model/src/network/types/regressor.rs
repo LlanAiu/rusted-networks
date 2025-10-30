@@ -30,6 +30,7 @@ pub struct RegressorNetwork<'a> {
     with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
+    time_step: usize,
 }
 
 impl<'a> RegressorNetwork<'a> {

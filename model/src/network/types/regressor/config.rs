@@ -27,6 +27,7 @@ pub struct RegressorConfig {
     loss: LossParams,
     hyperparams: HyperParams,
     regularization: RegularizationParams,
+    time_step: usize,
 }
 
 impl RegressorConfig {
@@ -75,6 +76,7 @@ impl RegressorConfig {
             loss,
             hyperparams,
             regularization,
+            time_step: 0,
         }
     }
 
@@ -102,6 +104,7 @@ impl RegressorConfig {
             loss,
             hyperparams,
             regularization,
+            time_step: network.time_step,
         }
     }
 
@@ -144,5 +147,9 @@ impl RegressorConfig {
 
     pub fn regularization(&self) -> &RegularizationParams {
         &self.regularization
+    }
+
+    pub fn timestep(&self) -> usize {
+        self.time_step
     }
 }

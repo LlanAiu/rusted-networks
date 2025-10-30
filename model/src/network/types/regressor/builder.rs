@@ -42,6 +42,7 @@ pub fn build_from_config<'a>(config: RegressorConfig) -> RegressorNetwork<'a> {
         with_dropout: config.regularization().is_dropout_enabled(),
         decay_type: decay_type.clone(),
         descent_type: descent_type.clone(),
+        time_step: config.timestep(),
     }
 }
 
