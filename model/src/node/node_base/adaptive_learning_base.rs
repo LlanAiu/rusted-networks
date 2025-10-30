@@ -21,8 +21,8 @@ impl NodeLearningDecay {
         NodeLearningDecay {
             learning_rate: decay_type.get_initial_rate(),
             is_adaptive: decay_type.is_adaptive(),
+            time_step: decay_type.get_initial_timestep(),
             decay_type: decay_type,
-            time_step: 0,
             matches_dim: false,
         }
     }

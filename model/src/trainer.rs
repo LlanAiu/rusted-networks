@@ -34,7 +34,7 @@ where
         }
     }
 
-    fn train_epoch(&self) -> (Config, PredictionError) {
+    fn train_epoch(&mut self) -> (Config, PredictionError) {
         let mut inputs: Vec<Data> = Vec::new();
         let mut responses: Vec<Data> = Vec::new();
 
@@ -79,7 +79,7 @@ where
         (Config::from_network(&self.model), error_sum)
     }
 
-    pub fn train(&self, save_path: &str) {
+    pub fn train(&mut self, save_path: &str) {
         let (config, error) = self.train_epoch();
 
         println!("Test error 0: {:?}\n", error);
@@ -166,7 +166,7 @@ mod tests {
 
         let train_config: TrainerConfig<QuadraticExample> = TrainerConfig::new(25, 16, train, test);
 
-        let trainer: SupervisedTrainer<RegressorNetwork, QuadraticExample> =
+        let mut trainer: SupervisedTrainer<RegressorNetwork, QuadraticExample> =
             SupervisedTrainer::new(regressor, train_config);
 
         trainer.train("test/quadratic_training.json");

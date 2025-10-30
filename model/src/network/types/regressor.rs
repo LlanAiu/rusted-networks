@@ -30,6 +30,7 @@ pub struct RegressorNetwork<'a> {
     with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
+    time_step: usize,
 }
 
 impl<'a> RegressorNetwork<'a> {
@@ -83,7 +84,7 @@ impl Network for RegressorNetwork<'_> {
         output
     }
 
-    fn train(&self, input: DataContainer, response: DataContainer) {
+    fn train(&mut self, input: DataContainer, response: DataContainer) {
         self.input.borrow().set_input_data(input);
         self.loss.borrow().set_expected_response(response);
 
@@ -139,7 +140,7 @@ mod tests {
     fn regressor_regularization_test() {
         let config: PenaltyConfig = PenaltyConfig::new(L2PenaltyBuilder::new(0.2));
 
-        let regressor: RegressorNetwork = RegressorNetwork::new(
+        let mut regressor: RegressorNetwork = RegressorNetwork::new(
             vec![1],
             vec![1],
             vec![6, 3],

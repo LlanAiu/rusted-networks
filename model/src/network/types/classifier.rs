@@ -34,6 +34,7 @@ pub struct ClassifierNetwork<'a> {
     with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
+    time_step: usize,
 }
 
 impl<'a> ClassifierNetwork<'a> {
@@ -88,7 +89,9 @@ impl Network for ClassifierNetwork<'_> {
         output
     }
 
-    fn train(&self, input: DataContainer, response: DataContainer) {
+    fn train(&mut self, input: DataContainer, response: DataContainer) {
+        self.time_step += 1;
+
         self.input.borrow().set_input_data(input);
         self.loss.borrow().set_expected_response(response);
 
@@ -99,6 +102,8 @@ impl Network for ClassifierNetwork<'_> {
 
         loss_node.borrow_mut().add_gradient(&DataContainer::one());
         loss_node.borrow_mut().apply_jacobian();
+
+        self.decay_type.update_timestep(self.time_step);
     }
 
     fn create_config(&self) -> Config {
@@ -123,7 +128,7 @@ mod tests {
     fn classification_test() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
 
-        let classifier: ClassifierNetwork = ClassifierNetwork::new(
+        let mut classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![1],
             vec![2],
             vec![2],
@@ -179,7 +184,7 @@ mod tests {
 
     #[test]
     fn classifier_load_test() {
-        let classifier: ClassifierNetwork =
+        let mut classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/classifier_test.json");
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);
