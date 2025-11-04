@@ -74,6 +74,14 @@ impl Data {
         }
     }
 
+    pub fn constant(value: f32, dim: &[usize]) -> Data {
+        todo!()
+    }
+
+    pub fn bernoulli(probability: f32, dim: &[usize]) -> Data {
+        todo!()
+    }
+
     fn warn_operation(this: &Data, other: &Data, operation: &str) {
         let this_type = this.variant_name();
         let other_type = other.variant_name();

@@ -12,6 +12,7 @@ pub mod element_sum_node;
 pub mod expected_response_node;
 pub mod input_node;
 pub mod loss_node;
+pub mod mask_node;
 pub mod matrix_multiply_node;
 pub mod multiply_node;
 pub mod softmax_node;
