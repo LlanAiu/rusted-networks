@@ -56,9 +56,7 @@ impl<'a> Node<'a> for MaskNode<'a> {
 
     fn apply_operation(&mut self) {
         if self.inference_mode {
-            let data: Data = Data::constant(self.mask_probability, &self.dim);
-
-            let mask: DataContainer = DataContainer::Parameter(data);
+            let mask: DataContainer = DataContainer::Parameter(Data::one());
             self.base.set_data(mask);
         } else {
             let mut data: Data = Data::bernoulli(self.mask_probability, &self.dim);

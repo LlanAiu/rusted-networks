@@ -106,7 +106,7 @@ impl Network for RegressorNetwork<'_> {
 #[cfg(test)]
 mod tests {
     use ndarray::{arr1, Array1};
-    use rand::random_range;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use crate::{
         data::{data_container::DataContainer, Data},
@@ -150,12 +150,15 @@ mod tests {
             DescentType::Base,
         );
 
+        let mut rng = rand::thread_rng();
+        let distribution = Uniform::new(1.0, 4.0);
+
         for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
             for _j in 0..8 {
-                let x: f32 = random_range(1.0..4.0);
+                let x: f32 = distribution.sample(&mut rng);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
                 responses.push(Data::VectorF32(arr1(&[x * x])));

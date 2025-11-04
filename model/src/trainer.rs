@@ -127,7 +127,8 @@ where
 #[cfg(test)]
 
 mod tests {
-    use rand::random_range;
+
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use crate::{
         network::types::regressor::RegressorNetwork,
@@ -140,9 +141,11 @@ mod tests {
     fn trainer_test() {
         let mut train: Vec<QuadraticExample> = Vec::new();
         let mut test: Vec<QuadraticExample> = Vec::new();
+        let mut rng = rand::thread_rng();
+        let distribution = Uniform::new(1.0, 4.0);
 
         for _i in 0..1600 {
-            let x: f32 = random_range(1.0..4.0);
+            let x: f32 = distribution.sample(&mut rng);
             let example: QuadraticExample = QuadraticExample::new(x);
             train.push(example);
         }

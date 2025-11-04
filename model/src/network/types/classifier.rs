@@ -115,7 +115,7 @@ impl Network for ClassifierNetwork<'_> {
 #[cfg(test)]
 mod tests {
     use ndarray::{arr1, Array1};
-    use rand::random_range;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use crate::{
         data::{data_container::DataContainer, Data},
@@ -143,19 +143,25 @@ mod tests {
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
+        let mut rng = rand::thread_rng();
+        let low_distribution = Uniform::new(-1.0, -0.5);
+        let high_distribution = Uniform::new(0.5, 1.0);
+
+        let sample_distribution = Uniform::new(0.0, 1.0);
+
         for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
             for _j in 0..8 {
-                let rand = random_range(0.0..1.0);
+                let rand = sample_distribution.sample(&mut rng);
                 if rand < 0.5 {
-                    let x: f32 = random_range(-1.0..-0.5);
+                    let x: f32 = low_distribution.sample(&mut rng);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
                     responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
                 } else {
-                    let x: f32 = random_range(0.5..1.0);
+                    let x: f32 = high_distribution.sample(&mut rng);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
                     responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
@@ -200,15 +206,21 @@ mod tests {
         let mut inputs = Vec::new();
         let mut responses = Vec::new();
 
+        let mut rng = rand::thread_rng();
+        let low_distribution = Uniform::new(-1.0, -0.5);
+        let high_distribution = Uniform::new(0.5, 1.0);
+
+        let sample_distribution = Uniform::new(0.0, 1.0);
+
         for _j in 0..8 {
-            let rand = random_range(0.0..1.0);
+            let rand = sample_distribution.sample(&mut rng);
             if rand < 0.5 {
-                let x: f32 = random_range(-1.0..-0.5);
+                let x: f32 = low_distribution.sample(&mut rng);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
                 responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
             } else {
-                let x: f32 = random_range(0.5..1.0);
+                let x: f32 = high_distribution.sample(&mut rng);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
                 responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));

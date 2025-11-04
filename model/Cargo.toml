@@ -7,6 +7,6 @@ edition = "2021"
 ndarray = "0.16.1"
 ndarray-rand = "0.15.0"
 approx = "0.5.1"
-rand = "0.9.2"
+rand = "0.8.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
