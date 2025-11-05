@@ -7,6 +7,7 @@ use crate::data::data_container::DataContainer;
 use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::regularization::dropout::NetworkMode;
 
 pub struct ExpectedResponseNode<'a> {
     base: NodeBase<'a>,
@@ -84,4 +85,6 @@ impl<'a> Node<'a> for ExpectedResponseNode<'a> {
         println!("[RESPONSE] Unsupported Operation: Cannot save parameters of a response node");
         LearnedParams::null()
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

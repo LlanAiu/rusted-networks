@@ -7,6 +7,7 @@ use crate::{
     data::data_container::DataContainer,
     network::config_types::input_params::InputParams,
     node::{types::input_node::InputNode, NodeRef},
+    regularization::dropout::NetworkMode,
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -21,7 +22,7 @@ impl<'a> InputUnit<'a> {
         let input_ref = NodeRef::new(InputNode::new(input_size.clone()));
 
         InputUnit {
-            base: UnitBase::new(&input_ref, &input_ref),
+            base: UnitBase::new(&input_ref, &input_ref, Option::None),
             input: input_ref,
             input_size,
         }
@@ -59,5 +60,13 @@ impl<'a> Unit<'a> for InputUnit<'a> {
 
     fn get_output_node(&self) -> &NodeRef<'a> {
         self.base.get_output_node()
+    }
+
+    fn update_mode(&mut self, new_mode: NetworkMode) {
+        self.base.update_mode(new_mode);
+
+        for unit in self.base.get_outputs() {
+            unit.borrow_mut().update_mode(new_mode);
+        }
     }
 }

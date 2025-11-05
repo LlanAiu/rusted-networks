@@ -8,6 +8,7 @@ use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::loss::loss_function::LossFunction;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::regularization::dropout::NetworkMode;
 
 pub struct LossNode<'a> {
     base: NodeBase<'a>,
@@ -168,4 +169,6 @@ impl<'a> Node<'a> for LossNode<'a> {
         println!("[LOSS] Unsupported Operation: Cannot save parameters of an operation node");
         LearnedParams::null()
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

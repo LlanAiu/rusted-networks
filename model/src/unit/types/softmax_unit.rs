@@ -15,6 +15,7 @@ use crate::{
         NodeRef,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    regularization::dropout::NetworkMode,
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -28,6 +29,7 @@ pub struct SoftmaxUnit<'a> {
 }
 
 impl<'a> SoftmaxUnit<'a> {
+    // TODO: update config to handle dropout parameters
     pub fn new(
         function: &str,
         input_size: usize,
@@ -61,7 +63,8 @@ impl<'a> SoftmaxUnit<'a> {
             .add_input(&softmax_ref, &activation_ref);
 
         SoftmaxUnit {
-            base: UnitBase::new(&matmul_ref, &softmax_ref),
+            // TODO: Swap out the Option::None for a potential dropout mask node
+            base: UnitBase::new(&matmul_ref, &softmax_ref, Option::None),
             weights: weights_ref,
             biases: biases_ref,
             input_size,
@@ -195,5 +198,13 @@ impl<'a> Unit<'a> for SoftmaxUnit<'a> {
 
     fn get_output_node(&self) -> &NodeRef<'a> {
         self.base.get_output_node()
+    }
+
+    fn update_mode(&mut self, new_mode: NetworkMode) {
+        self.base.update_mode(new_mode);
+
+        for unit in self.base.get_outputs() {
+            unit.borrow_mut().update_mode(new_mode);
+        }
     }
 }

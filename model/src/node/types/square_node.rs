@@ -7,6 +7,7 @@ use crate::{
     data::{data_container::DataContainer, Data},
     network::config_types::learned_params::LearnedParams,
     node::{node_base::NodeBase, Node, NodeRef, NodeType},
+    regularization::dropout::NetworkMode,
 };
 
 pub struct SquareNode<'a> {
@@ -116,4 +117,6 @@ impl<'a> Node<'a> for SquareNode<'a> {
         println!("[SQUARE] Unsupported Operation: Cannot save parameters of an operation node");
         LearnedParams::null()
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

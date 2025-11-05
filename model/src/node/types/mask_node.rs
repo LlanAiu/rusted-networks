@@ -8,12 +8,13 @@ use crate::data::data_container::DataContainer;
 use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::regularization::dropout::NetworkMode;
 
 pub struct MaskNode<'a> {
     base: NodeBase<'a>,
     dim: Vec<usize>,
     mask_probability: f32,
-    inference_mode: bool,
+    mode: NetworkMode,
 }
 
 impl<'a> MaskNode<'a> {
@@ -22,7 +23,7 @@ impl<'a> MaskNode<'a> {
             base: NodeBase::new(),
             dim,
             mask_probability,
-            inference_mode: false,
+            mode: NetworkMode::None,
         };
     }
 }
@@ -55,16 +56,22 @@ impl<'a> Node<'a> for MaskNode<'a> {
     }
 
     fn apply_operation(&mut self) {
-        if self.inference_mode {
-            let mask: DataContainer = DataContainer::Parameter(Data::one());
-            self.base.set_data(mask);
-        } else {
-            let mut data: Data = Data::bernoulli(self.mask_probability, &self.dim);
-            let scale: Data = Data::ScalarF32(1.0 / self.mask_probability);
-            data.times_assign(&scale);
+        match self.mode {
+            NetworkMode::Inference => {
+                let mask: DataContainer = DataContainer::Parameter(Data::one());
+                self.base.set_data(mask);
+            }
+            NetworkMode::Train => {
+                let mut data: Data = Data::bernoulli(self.mask_probability, &self.dim);
+                let scale: Data = Data::ScalarF32(1.0 / self.mask_probability);
+                data.times_assign(&scale);
 
-            let mask: DataContainer = DataContainer::Parameter(data);
-            self.base.set_data(mask);
+                let mask: DataContainer = DataContainer::Parameter(data);
+                self.base.set_data(mask);
+            }
+            NetworkMode::None => {
+                panic!("Network mode is set to Mode::None, which shouldn't happen for either inference/train procedures");
+            }
         }
     }
 
@@ -78,6 +85,10 @@ impl<'a> Node<'a> for MaskNode<'a> {
 
     fn should_process_backprop(&self) -> bool {
         self.base.should_process_backprop()
+    }
+
+    fn set_mode(&mut self, new_mode: NetworkMode) {
+        self.mode = new_mode;
     }
 
     fn set_momentum(&mut self, _momentum: DataContainer) {

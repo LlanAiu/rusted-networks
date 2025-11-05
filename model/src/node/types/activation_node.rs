@@ -9,6 +9,7 @@ use crate::node::NodeType;
 use crate::node::{
     activation::activation_function::ActivationFunction, node_base::NodeBase, Node, NodeRef,
 };
+use crate::regularization::dropout::NetworkMode;
 
 pub struct ActivationNode<'a> {
     base: NodeBase<'a>,
@@ -117,4 +118,6 @@ impl<'a> Node<'a> for ActivationNode<'a> {
         println!("[ACTIVATION] Unsupported Operation: Cannot save parameters of an operation node");
         LearnedParams::null()
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

@@ -7,6 +7,7 @@ use crate::{
     data::data_container::DataContainer,
     network::config_types::learned_params::LearnedParams,
     node::{node_base::NodeBase, Node, NodeRef, NodeType},
+    regularization::dropout::NetworkMode,
 };
 
 pub struct AbsoluteValueNode<'a> {
@@ -128,4 +129,6 @@ impl<'a> Node<'a> for AbsoluteValueNode<'a> {
         );
         LearnedParams::null()
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

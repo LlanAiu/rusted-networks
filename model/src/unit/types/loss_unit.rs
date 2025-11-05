@@ -12,7 +12,7 @@ use crate::{
         },
         NodeRef,
     },
-    regularization::penalty::PenaltyRef,
+    regularization::{dropout::NetworkMode, penalty::PenaltyRef},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -34,7 +34,7 @@ impl<'a> LossUnit<'a> {
         sum_ref.borrow_mut().add_input(&sum_ref, &loss_ref);
 
         LossUnit {
-            base: UnitBase::new(&loss_ref, &sum_ref),
+            base: UnitBase::new(&loss_ref, &sum_ref, Option::None),
             response_node: response_ref,
             sum_node: sum_ref,
             loss_type: loss_type.to_string(),
@@ -88,5 +88,13 @@ impl<'a> Unit<'a> for LossUnit<'a> {
 
     fn get_output_node(&self) -> &NodeRef<'a> {
         self.base.get_output_node()
+    }
+
+    fn update_mode(&mut self, new_mode: NetworkMode) {
+        self.base.update_mode(new_mode);
+
+        for unit in self.base.get_outputs() {
+            unit.borrow_mut().update_mode(new_mode);
+        }
     }
 }
