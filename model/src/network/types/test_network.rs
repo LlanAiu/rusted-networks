@@ -25,7 +25,8 @@ impl<'a> TestNetwork<'a> {
         decay_type: LearningDecayType,
         penalty: PenaltyConfig<'a>,
     ) -> TestNetwork<'a> {
-        let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![input_size]));
+        let input: UnitContainer<InputUnit> =
+            UnitContainer::new(InputUnit::new(vec![input_size], UnitMaskType::None));
         let inference: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::new(
             "none",
             input_size,

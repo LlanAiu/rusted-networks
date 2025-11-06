@@ -12,24 +12,19 @@ use crate::regularization::penalty::{
 #[derive(Serialize, Deserialize)]
 pub struct RegularizationParams {
     norm_penalty: PenaltyType,
-    with_dropout: bool,
 }
 
 impl RegularizationParams {
-    pub fn new(norm_type: PenaltyType, with_dropout: bool) -> RegularizationParams {
+    pub fn new(norm_type: PenaltyType) -> RegularizationParams {
         RegularizationParams {
             norm_penalty: norm_type,
-            with_dropout,
         }
     }
 
-    pub fn from_builder<'a>(
-        builder: &Box<dyn PenaltyBuilder<'a> + 'a>,
-        with_dropout: bool,
-    ) -> RegularizationParams {
+    pub fn from_builder<'a>(builder: &Box<dyn PenaltyBuilder<'a> + 'a>) -> RegularizationParams {
         let penalty_type: PenaltyType = builder.get_associated_type();
 
-        RegularizationParams::new(penalty_type, with_dropout)
+        RegularizationParams::new(penalty_type)
     }
 
     pub fn get_config<'a>(&self) -> PenaltyConfig<'a> {
@@ -44,9 +39,5 @@ impl RegularizationParams {
             }
             PenaltyType::None => PenaltyConfig::none(),
         }
-    }
-
-    pub fn is_dropout_enabled(&self) -> bool {
-        self.with_dropout
     }
 }

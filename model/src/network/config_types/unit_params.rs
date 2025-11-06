@@ -25,7 +25,7 @@ pub enum UnitParams {
         weights: LearnedParams,
         biases: LearnedParams,
         activation: String,
-        dropout_probability: f32,
+        keep_probability: f32,
         is_inference: bool,
     },
     Softmax {
@@ -34,7 +34,7 @@ pub enum UnitParams {
         weights: LearnedParams,
         biases: LearnedParams,
         activation: String,
-        dropout_probability: f32,
+        keep_probability: f32,
         is_inference: bool,
     },
 }
@@ -79,7 +79,7 @@ impl UnitParams {
             biases,
             activation,
             is_inference: unit.borrow().is_inference(),
-            dropout_probability: unit.borrow().get_mask_type().probability(),
+            keep_probability: unit.borrow().get_mask_type().probability(),
         }
     }
 
@@ -101,7 +101,7 @@ impl UnitParams {
             biases,
             activation,
             is_inference: unit.borrow().is_inference(),
-            dropout_probability: unit.borrow().get_mask_type().probability(),
+            keep_probability: unit.borrow().get_mask_type().probability(),
         }
     }
 
@@ -126,7 +126,7 @@ impl UnitParams {
             weights: LearnedParams::new_from_parameters(weights_dim, weights),
             biases: LearnedParams::new_from_parameters(biases_dim, biases),
             activation,
-            dropout_probability: mask_type.probability(),
+            keep_probability: mask_type.probability(),
             is_inference,
         }
     }
@@ -152,7 +152,7 @@ impl UnitParams {
             weights: LearnedParams::new_from_parameters(weights_dim, weights),
             biases: LearnedParams::new_from_parameters(biases_dim, biases),
             activation,
-            dropout_probability: mask_type.probability(),
+            keep_probability: mask_type.probability(),
             is_inference,
         }
     }

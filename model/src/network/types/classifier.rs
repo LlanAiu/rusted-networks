@@ -13,7 +13,10 @@ use crate::{
         Network,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::{PenaltyConfig, PenaltyType},
+    regularization::{
+        dropout::NetworkMaskType,
+        penalty::{PenaltyConfig, PenaltyType},
+    },
     unit::{
         types::{
             input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
@@ -31,7 +34,6 @@ pub struct ClassifierNetwork<'a> {
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
     penalty_type: PenaltyType,
-    with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
     time_step: usize,
@@ -43,7 +45,7 @@ impl<'a> ClassifierNetwork<'a> {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         penalty_config: PenaltyConfig,
-        with_dropout: bool,
+        mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> ClassifierNetwork<'a> {
@@ -52,7 +54,7 @@ impl<'a> ClassifierNetwork<'a> {
             output_size,
             hidden_sizes,
             penalty_config,
-            with_dropout,
+            mask_type,
             decay_type,
             descent_type,
         );
@@ -121,7 +123,7 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::PenaltyConfig,
+        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     };
 
     #[test]
@@ -133,7 +135,7 @@ mod tests {
             vec![2],
             vec![2],
             penalty_config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::nesterov(0.95),
         );

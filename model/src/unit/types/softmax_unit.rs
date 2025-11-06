@@ -114,7 +114,7 @@ impl<'a> SoftmaxUnit<'a> {
             activation,
             weights,
             biases,
-            dropout_probability,
+            keep_probability,
             is_inference,
         } = config
         {
@@ -124,7 +124,7 @@ impl<'a> SoftmaxUnit<'a> {
                 *output_size,
                 decay_type,
                 descent_type,
-                UnitMaskType::from_keep_probability(*dropout_probability),
+                UnitMaskType::from_keep_probability(*keep_probability),
                 *is_inference,
             );
 

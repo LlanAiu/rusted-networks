@@ -40,3 +40,40 @@ impl UnitMaskType {
         }
     }
 }
+
+#[derive(Clone)]
+pub enum NetworkMaskType {
+    None,
+    Dropout {
+        input_keep_p: f32,
+        hidden_keep_p: f32,
+    },
+}
+
+impl NetworkMaskType {
+    pub fn from_probabilities(input_keep_p: f32, hidden_keep_p: f32) -> NetworkMaskType {
+        if input_keep_p >= 1.0 && hidden_keep_p >= 1.0 {
+            return NetworkMaskType::None;
+        } else if input_keep_p <= 0.0 || hidden_keep_p <= 0.0 {
+            panic!("[MASK] Invalid mask probability - must be in (0, 1]!");
+        }
+        NetworkMaskType::Dropout {
+            input_keep_p,
+            hidden_keep_p,
+        }
+    }
+
+    pub fn input_probability(&self) -> f32 {
+        match self {
+            NetworkMaskType::None => 1.0,
+            NetworkMaskType::Dropout { input_keep_p, .. } => *input_keep_p,
+        }
+    }
+
+    pub fn hidden_probability(&self) -> f32 {
+        match self {
+            NetworkMaskType::None => 1.0,
+            NetworkMaskType::Dropout { hidden_keep_p, .. } => *hidden_keep_p,
+        }
+    }
+}

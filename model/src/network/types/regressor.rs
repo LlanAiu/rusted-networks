@@ -12,7 +12,10 @@ use crate::{
         Network,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::{PenaltyConfig, PenaltyType},
+    regularization::{
+        dropout::NetworkMaskType,
+        penalty::{PenaltyConfig, PenaltyType},
+    },
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer,
@@ -27,7 +30,6 @@ pub struct RegressorNetwork<'a> {
     inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
     penalty_type: PenaltyType,
-    with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
     time_step: usize,
@@ -39,7 +41,7 @@ impl<'a> RegressorNetwork<'a> {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         penalty_config: PenaltyConfig,
-        with_dropout: bool,
+        mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> RegressorNetwork<'a> {
@@ -48,7 +50,7 @@ impl<'a> RegressorNetwork<'a> {
             output_size,
             hidden_sizes,
             penalty_config,
-            with_dropout,
+            mask_type,
             decay_type,
             descent_type,
         );
@@ -112,7 +114,10 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{types::regressor::RegressorNetwork, Network},
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
     };
 
     #[test]
@@ -145,7 +150,7 @@ mod tests {
             vec![1],
             vec![6, 3],
             config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.005),
             DescentType::Base,
         );

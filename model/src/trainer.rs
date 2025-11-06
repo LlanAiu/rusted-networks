@@ -133,7 +133,10 @@ mod tests {
     use crate::{
         network::types::regressor::RegressorNetwork,
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
         trainer::{examples::QuadraticExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
 
@@ -162,7 +165,7 @@ mod tests {
             vec![1],
             vec![12, 6],
             config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.001),
             DescentType::nesterov(0.95),
         );

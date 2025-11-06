@@ -112,7 +112,7 @@ impl<'a> LinearUnit<'a> {
             weights,
             biases,
             activation,
-            dropout_probability,
+            keep_probability,
             is_inference,
         } = config
         {
@@ -122,7 +122,7 @@ impl<'a> LinearUnit<'a> {
                 *output_size,
                 decay_type,
                 descent_type,
-                UnitMaskType::from_keep_probability(*dropout_probability),
+                UnitMaskType::from_keep_probability(*keep_probability),
                 *is_inference,
             );
 

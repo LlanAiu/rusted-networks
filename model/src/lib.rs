@@ -21,7 +21,7 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::PenaltyConfig,
+        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     };
 
     #[test]
@@ -33,7 +33,7 @@ mod tests {
             vec![2],
             vec![5],
             penalty_config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.001),
             DescentType::Base,
         );
