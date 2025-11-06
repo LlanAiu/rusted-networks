@@ -32,6 +32,7 @@ impl<'a> TestNetwork<'a> {
             output_size,
             decay_type,
             DescentType::Base,
+            true,
         ));
 
         let reg_unit = penalty.create_first(inference.borrow().get_weights_ref());

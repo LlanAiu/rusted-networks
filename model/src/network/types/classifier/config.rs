@@ -58,12 +58,13 @@ impl ClassifierConfig {
         let mut prev_width: usize = input_usize;
 
         for unit_size in hidden_sizes {
-            let unit: UnitParams = UnitParams::new_linear(prev_width, unit_size, "relu");
+            let unit: UnitParams = UnitParams::new_linear(prev_width, unit_size, "relu", false);
             units.push(unit);
             prev_width = unit_size;
         }
 
-        let inference_unit: UnitParams = UnitParams::new_softmax(prev_width, output_usize, "none");
+        let inference_unit: UnitParams =
+            UnitParams::new_softmax(prev_width, output_usize, "none", true);
         units.push(inference_unit);
 
         let regularization: RegularizationParams =

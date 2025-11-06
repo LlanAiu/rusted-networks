@@ -36,6 +36,7 @@ impl<'a> SoftmaxUnit<'a> {
         output_size: usize,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        is_inference: bool,
     ) -> SoftmaxUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
             input_size,
@@ -64,7 +65,7 @@ impl<'a> SoftmaxUnit<'a> {
 
         SoftmaxUnit {
             // TODO: Swap out the Option::None for a potential dropout mask node
-            base: UnitBase::new(&matmul_ref, &softmax_ref, Option::None),
+            base: UnitBase::new(&matmul_ref, &softmax_ref, Option::None, is_inference),
             weights: weights_ref,
             biases: biases_ref,
             input_size,
@@ -84,7 +85,7 @@ impl<'a> SoftmaxUnit<'a> {
             activation,
             weights,
             biases,
-            ..
+            is_inference,
         } = config
         {
             let unit: SoftmaxUnit = Self::new(
@@ -93,6 +94,7 @@ impl<'a> SoftmaxUnit<'a> {
                 *output_size,
                 decay_type,
                 descent_type,
+                *is_inference,
             );
 
             unit.set_weights(weights);
@@ -176,6 +178,10 @@ impl<'a> SoftmaxUnit<'a> {
 
     pub fn get_activation(&self) -> &str {
         &self.activation
+    }
+
+    pub fn is_inference(&self) -> bool {
+        self.base.is_inference()
     }
 }
 

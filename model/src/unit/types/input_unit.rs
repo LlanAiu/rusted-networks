@@ -22,7 +22,7 @@ impl<'a> InputUnit<'a> {
         let input_ref = NodeRef::new(InputNode::new(input_size.clone()));
 
         InputUnit {
-            base: UnitBase::new(&input_ref, &input_ref, Option::None),
+            base: UnitBase::new(&input_ref, &input_ref, Option::None, false),
             input: input_ref,
             input_size,
         }

@@ -24,6 +24,7 @@ pub enum UnitParams {
         weights: LearnedParams,
         biases: LearnedParams,
         activation: String,
+        is_inference: bool,
     },
     Softmax {
         input_size: usize,
@@ -31,6 +32,7 @@ pub enum UnitParams {
         weights: LearnedParams,
         biases: LearnedParams,
         activation: String,
+        is_inference: bool,
     },
 }
 
@@ -73,6 +75,7 @@ impl UnitParams {
             weights,
             biases,
             activation,
+            is_inference: unit.borrow().is_inference(),
         }
     }
 
@@ -93,6 +96,7 @@ impl UnitParams {
             weights,
             biases,
             activation,
+            is_inference: unit.borrow().is_inference(),
         }
     }
 
@@ -100,6 +104,7 @@ impl UnitParams {
         input_size: usize,
         output_size: usize,
         activation_function: &str,
+        is_inference: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
         let biases_dim: Vec<usize> = vec![output_size];
@@ -115,6 +120,7 @@ impl UnitParams {
             weights: LearnedParams::new_from_parameters(weights_dim, weights),
             biases: LearnedParams::new_from_parameters(biases_dim, biases),
             activation,
+            is_inference,
         }
     }
 
@@ -122,6 +128,7 @@ impl UnitParams {
         input_size: usize,
         output_size: usize,
         activation_function: &str,
+        is_inference: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
         let biases_dim: Vec<usize> = vec![output_size];
@@ -137,6 +144,7 @@ impl UnitParams {
             weights: LearnedParams::new_from_parameters(weights_dim, weights),
             biases: LearnedParams::new_from_parameters(biases_dim, biases),
             activation,
+            is_inference,
         }
     }
 

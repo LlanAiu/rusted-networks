@@ -15,6 +15,7 @@ pub struct UnitBase<'a> {
     output_node: NodeRef<'a>,
     mask_node: Option<NodeRef<'a>>,
     mode: NetworkMode,
+    is_inference: bool,
 }
 
 impl<'a> UnitBase<'a> {
@@ -22,6 +23,7 @@ impl<'a> UnitBase<'a> {
         input: &NodeRef<'a>,
         output: &NodeRef<'a>,
         mask: Option<&NodeRef<'a>>,
+        is_inference: bool,
     ) -> UnitBase<'a> {
         let mut mask_node: Option<NodeRef<'a>> = Option::None;
 
@@ -35,7 +37,12 @@ impl<'a> UnitBase<'a> {
             input_node: NodeRef::clone(input),
             output_node: NodeRef::clone(output),
             mask_node,
-            mode: NetworkMode::None,
+            is_inference,
+            mode: if is_inference {
+                NetworkMode::Inference
+            } else {
+                NetworkMode::None
+            },
         }
     }
 
@@ -64,7 +71,15 @@ impl<'a> UnitBase<'a> {
         &self.output_node
     }
 
+    pub fn is_inference(&self) -> bool {
+        self.is_inference
+    }
+
     pub fn update_mode(&mut self, new_mode: NetworkMode) {
+        if self.is_inference {
+            return;
+        }
+
         if new_mode != self.mode {
             self.mode = new_mode;
 

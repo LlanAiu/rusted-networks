@@ -38,6 +38,7 @@ impl<'a> LinearUnit<'a> {
         output_size: usize,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        is_inference: bool,
     ) -> LinearUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
             input_size,
@@ -62,7 +63,7 @@ impl<'a> LinearUnit<'a> {
 
         LinearUnit {
             // TODO: Swap out the Option::None for a potential dropout mask node
-            base: UnitBase::new(&matmul_ref, &activation_ref, Option::None),
+            base: UnitBase::new(&matmul_ref, &activation_ref, Option::None, is_inference),
             weights: weights_ref,
             biases: biases_ref,
             input_size,
@@ -82,7 +83,7 @@ impl<'a> LinearUnit<'a> {
             weights,
             biases,
             activation,
-            ..
+            is_inference,
         } = config
         {
             let unit: LinearUnit = Self::new(
@@ -91,6 +92,7 @@ impl<'a> LinearUnit<'a> {
                 *output_size,
                 decay_type,
                 descent_type,
+                *is_inference,
             );
 
             unit.set_weights(weights);
@@ -174,6 +176,10 @@ impl<'a> LinearUnit<'a> {
 
     pub fn get_activation(&self) -> &str {
         &self.activation
+    }
+
+    pub fn is_inference(&self) -> bool {
+        self.base.is_inference()
     }
 }
 

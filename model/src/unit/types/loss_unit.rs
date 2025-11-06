@@ -34,7 +34,7 @@ impl<'a> LossUnit<'a> {
         sum_ref.borrow_mut().add_input(&sum_ref, &loss_ref);
 
         LossUnit {
-            base: UnitBase::new(&loss_ref, &sum_ref, Option::None),
+            base: UnitBase::new(&loss_ref, &sum_ref, Option::None, false),
             response_node: response_ref,
             sum_node: sum_ref,
             loss_type: loss_type.to_string(),
