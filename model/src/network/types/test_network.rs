@@ -5,7 +5,7 @@
 // internal
 use crate::{
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::PenaltyConfig,
+    regularization::{dropout::UnitMaskType, penalty::PenaltyConfig},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         UnitContainer,
@@ -32,6 +32,7 @@ impl<'a> TestNetwork<'a> {
             output_size,
             decay_type,
             DescentType::Base,
+            UnitMaskType::None,
             true,
         ));
 

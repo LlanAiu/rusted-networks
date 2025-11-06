@@ -9,13 +9,13 @@ use crate::{
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
-            matrix_multiply_node::MatrixMultiplyNode, softmax_node::SoftmaxNode,
-            weight_node::WeightNode,
+            mask_node::MaskNode, matrix_multiply_node::MatrixMultiplyNode,
+            multiply_node::MultiplyNode, softmax_node::SoftmaxNode, weight_node::WeightNode,
         },
         NodeRef,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::dropout::NetworkMode,
+    regularization::dropout::{NetworkMode, UnitMaskType},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
 
@@ -26,6 +26,7 @@ pub struct SoftmaxUnit<'a> {
     input_size: usize,
     output_size: usize,
     activation: String,
+    mask_type: UnitMaskType,
 }
 
 impl<'a> SoftmaxUnit<'a> {
@@ -36,6 +37,7 @@ impl<'a> SoftmaxUnit<'a> {
         output_size: usize,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        mask_type: UnitMaskType,
         is_inference: bool,
     ) -> SoftmaxUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
@@ -63,14 +65,41 @@ impl<'a> SoftmaxUnit<'a> {
             .borrow_mut()
             .add_input(&softmax_ref, &activation_ref);
 
+        let mut output_ref: &NodeRef = &softmax_ref;
+        let mut mask: Option<&NodeRef> = Option::None;
+
+        let mask_ref: NodeRef;
+        let multiply_ref: NodeRef;
+
+        if !is_inference {
+            if let UnitMaskType::Dropout {
+                keep_probability: probability,
+            } = &mask_type
+            {
+                mask_ref = NodeRef::new(MaskNode::new(vec![output_size], *probability));
+                multiply_ref = NodeRef::new(MultiplyNode::new());
+
+                multiply_ref
+                    .borrow_mut()
+                    .add_input(&multiply_ref, &activation_ref);
+
+                multiply_ref
+                    .borrow_mut()
+                    .add_input(&multiply_ref, &mask_ref);
+
+                mask = Option::Some(&mask_ref);
+                output_ref = &multiply_ref
+            }
+        }
+
         SoftmaxUnit {
-            // TODO: Swap out the Option::None for a potential dropout mask node
-            base: UnitBase::new(&matmul_ref, &softmax_ref, Option::None, is_inference),
+            base: UnitBase::new(&matmul_ref, output_ref, mask, is_inference),
             weights: weights_ref,
             biases: biases_ref,
             input_size,
             output_size,
             activation: function.to_string(),
+            mask_type,
         }
     }
 
@@ -85,6 +114,7 @@ impl<'a> SoftmaxUnit<'a> {
             activation,
             weights,
             biases,
+            dropout_probability,
             is_inference,
         } = config
         {
@@ -94,6 +124,7 @@ impl<'a> SoftmaxUnit<'a> {
                 *output_size,
                 decay_type,
                 descent_type,
+                UnitMaskType::from_keep_probability(*dropout_probability),
                 *is_inference,
             );
 
@@ -178,6 +209,10 @@ impl<'a> SoftmaxUnit<'a> {
 
     pub fn get_activation(&self) -> &str {
         &self.activation
+    }
+
+    pub fn get_mask_type(&self) -> &UnitMaskType {
+        &self.mask_type
     }
 
     pub fn is_inference(&self) -> bool {

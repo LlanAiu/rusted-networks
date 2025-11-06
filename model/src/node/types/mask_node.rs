@@ -18,11 +18,12 @@ pub struct MaskNode<'a> {
 }
 
 impl<'a> MaskNode<'a> {
-    pub fn new(dim: Vec<usize>, mask_probability: f32) -> MaskNode<'a> {
+    // input probability is the keep node probability
+    pub fn new(dim: Vec<usize>, probability: f32) -> MaskNode<'a> {
         return MaskNode {
             base: NodeBase::new(),
             dim,
-            mask_probability,
+            mask_probability: probability,
             mode: NetworkMode::None,
         };
     }
