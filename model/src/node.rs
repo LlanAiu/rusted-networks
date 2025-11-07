@@ -10,6 +10,7 @@ use std::{
 // internal
 use crate::{
     data::data_container::DataContainer, network::config_types::learned_params::LearnedParams,
+    regularization::dropout::NetworkMode,
 };
 pub mod activation;
 pub mod loss;
@@ -95,6 +96,8 @@ pub trait Node<'a> {
     fn set_data(&mut self, data: DataContainer);
 
     fn set_momentum(&mut self, momentum: DataContainer);
+
+    fn set_mode(&mut self, new_mode: NetworkMode);
 
     fn set_learning_rate(&mut self, learning_rate: DataContainer);
 

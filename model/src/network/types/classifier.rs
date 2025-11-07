@@ -13,7 +13,10 @@ use crate::{
         Network,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::{PenaltyConfig, PenaltyType},
+    regularization::{
+        dropout::{NetworkMaskType, NetworkMode},
+        penalty::{PenaltyConfig, PenaltyType},
+    },
     unit::{
         types::{
             input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit,
@@ -31,7 +34,6 @@ pub struct ClassifierNetwork<'a> {
     inference: UnitContainer<'a, SoftmaxUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
     penalty_type: PenaltyType,
-    with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
     time_step: usize,
@@ -43,7 +45,7 @@ impl<'a> ClassifierNetwork<'a> {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         penalty_config: PenaltyConfig,
-        with_dropout: bool,
+        mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> ClassifierNetwork<'a> {
@@ -52,7 +54,7 @@ impl<'a> ClassifierNetwork<'a> {
             output_size,
             hidden_sizes,
             penalty_config,
-            with_dropout,
+            mask_type,
             decay_type,
             descent_type,
         );
@@ -77,6 +79,8 @@ impl<'a> ClassifierNetwork<'a> {
 
 impl Network for ClassifierNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
+        self.input.update_mode(NetworkMode::Inference);
+
         self.input.borrow_mut().set_input_data(input);
 
         let inference_ref = self.inference.borrow();
@@ -90,6 +94,8 @@ impl Network for ClassifierNetwork<'_> {
     }
 
     fn train(&mut self, input: DataContainer, response: DataContainer) {
+        self.input.update_mode(NetworkMode::Train);
+
         self.time_step += 1;
 
         self.input.borrow().set_input_data(input);
@@ -115,13 +121,13 @@ impl Network for ClassifierNetwork<'_> {
 #[cfg(test)]
 mod tests {
     use ndarray::{arr1, Array1};
-    use rand::random_range;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::PenaltyConfig,
+        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     };
 
     #[test]
@@ -133,7 +139,7 @@ mod tests {
             vec![2],
             vec![2],
             penalty_config,
-            false,
+            NetworkMaskType::from_probabilities(0.8, 0.5),
             LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::nesterov(0.95),
         );
@@ -143,19 +149,25 @@ mod tests {
         let before_output = classifier.predict(before_data);
         println!("Before: {:?}", before_output);
 
+        let mut rng = rand::thread_rng();
+        let low_distribution = Uniform::new(-1.0, -0.5);
+        let high_distribution = Uniform::new(0.5, 1.0);
+
+        let sample_distribution = Uniform::new(0.0, 1.0);
+
         for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
             for _j in 0..8 {
-                let rand = random_range(0.0..1.0);
+                let rand = sample_distribution.sample(&mut rng);
                 if rand < 0.5 {
-                    let x: f32 = random_range(-1.0..-0.5);
+                    let x: f32 = low_distribution.sample(&mut rng);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
                     responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
                 } else {
-                    let x: f32 = random_range(0.5..1.0);
+                    let x: f32 = high_distribution.sample(&mut rng);
 
                     inputs.push(Data::VectorF32(arr1(&[x])));
                     responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));
@@ -200,15 +212,21 @@ mod tests {
         let mut inputs = Vec::new();
         let mut responses = Vec::new();
 
+        let mut rng = rand::thread_rng();
+        let low_distribution = Uniform::new(-1.0, -0.5);
+        let high_distribution = Uniform::new(0.5, 1.0);
+
+        let sample_distribution = Uniform::new(0.0, 1.0);
+
         for _j in 0..8 {
-            let rand = random_range(0.0..1.0);
+            let rand = sample_distribution.sample(&mut rng);
             if rand < 0.5 {
-                let x: f32 = random_range(-1.0..-0.5);
+                let x: f32 = low_distribution.sample(&mut rng);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
                 responses.push(Data::VectorF32(arr1(&[1.0, 0.0])));
             } else {
-                let x: f32 = random_range(0.5..1.0);
+                let x: f32 = high_distribution.sample(&mut rng);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
                 responses.push(Data::VectorF32(arr1(&[0.0, 1.0])));

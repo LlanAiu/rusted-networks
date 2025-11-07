@@ -7,7 +7,7 @@ use crate::{import_csv::load_data_from_csv, types::HandwrittenExample};
 use model::{
     network::types::classifier::ClassifierNetwork,
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::PenaltyConfig,
+    regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     trainer::{trainer_params::TrainerConfig, SupervisedTrainer},
 };
 pub mod import_csv;
@@ -20,7 +20,7 @@ pub fn train_dataset() {
         vec![10],
         vec![50],
         penalty_config,
-        false,
+        NetworkMaskType::None,
         LearningDecayType::constant(0.01),
         DescentType::nesterov(0.95),
     );
@@ -44,7 +44,7 @@ mod tests {
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::PenaltyConfig,
+        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
         trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
 
@@ -58,7 +58,7 @@ mod tests {
             vec![10],
             vec![50],
             penalty_config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.01),
             DescentType::Base,
         );
@@ -118,12 +118,12 @@ mod tests {
     #[test]
     fn small_dataset_init() {
         let penalty_config: PenaltyConfig = PenaltyConfig::none();
-        let mut classifier: ClassifierNetwork = ClassifierNetwork::new(
+        let classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![784],
             vec![10],
             vec![50],
             penalty_config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.01),
             DescentType::nesterov(0.95),
         );
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn small_dataset_load_train() {
-        let mut classifier: ClassifierNetwork =
+        let classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/mnist_small.json");
 
         let train: Vec<HandwrittenExample> =
@@ -185,7 +185,7 @@ mod tests {
             vec![10],
             vec![72],
             penalty_config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.01),
             DescentType::nesterov(0.95),
         );

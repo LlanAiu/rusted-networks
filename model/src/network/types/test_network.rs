@@ -5,7 +5,7 @@
 // internal
 use crate::{
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::PenaltyConfig,
+    regularization::{dropout::UnitMaskType, penalty::PenaltyConfig},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         UnitContainer,
@@ -25,13 +25,16 @@ impl<'a> TestNetwork<'a> {
         decay_type: LearningDecayType,
         penalty: PenaltyConfig<'a>,
     ) -> TestNetwork<'a> {
-        let input: UnitContainer<InputUnit> = UnitContainer::new(InputUnit::new(vec![input_size]));
+        let input: UnitContainer<InputUnit> =
+            UnitContainer::new(InputUnit::new(vec![input_size], UnitMaskType::None));
         let inference: UnitContainer<LinearUnit> = UnitContainer::new(LinearUnit::new(
             "none",
             input_size,
             output_size,
             decay_type,
             DescentType::Base,
+            UnitMaskType::None,
+            true,
         ));
 
         let reg_unit = penalty.create_first(inference.borrow().get_weights_ref());

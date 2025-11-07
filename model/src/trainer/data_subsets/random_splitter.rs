@@ -1,12 +1,10 @@
 // builtin
 
 // external
+use ndarray_rand::rand_distr::num_traits::clamp;
+use rand::{distributions::Bernoulli, prelude::Distribution};
 
 // internal
-
-use ndarray_rand::rand_distr::num_traits::clamp;
-use rand::random_bool;
-
 use crate::trainer::data_subsets::{DataSplitter, DataSubsets};
 
 pub struct RandomSplitter {
@@ -25,9 +23,11 @@ impl DataSplitter for RandomSplitter {
     fn split<T>(&self, data: Vec<T>) -> DataSubsets<T> {
         let mut train: Vec<T> = Vec::new();
         let mut test: Vec<T> = Vec::new();
+        let mut rng = rand::thread_rng();
+        let distribution = Bernoulli::new(self.split_prob).unwrap();
 
         for example in data {
-            let is_train = random_bool(self.split_prob);
+            let is_train = distribution.sample(&mut rng);
 
             if is_train {
                 train.push(example);

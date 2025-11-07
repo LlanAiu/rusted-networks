@@ -17,7 +17,10 @@ use crate::{
         types::classifier::ClassifierNetwork,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::PenaltyConfig,
+    regularization::{
+        dropout::{NetworkMaskType, UnitMaskType},
+        penalty::PenaltyConfig,
+    },
 };
 
 #[derive(Serialize, Deserialize)]
@@ -36,7 +39,7 @@ impl ClassifierConfig {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         penalty_config: PenaltyConfig,
-        with_dropout: bool,
+        mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> ClassifierConfig {
@@ -46,7 +49,7 @@ impl ClassifierConfig {
         let input_usize: usize = input_size[0];
         let output_usize: usize = output_size[0];
 
-        let input: InputParams = InputParams { input_size };
+        let input: InputParams = InputParams::new(input_size, mask_type.input_probability());
         let loss: LossParams = LossParams {
             loss_type: String::from("base_cross_entropy"),
             output_size,
@@ -57,17 +60,30 @@ impl ClassifierConfig {
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
 
+        let keep_probability = mask_type.hidden_probability();
         for unit_size in hidden_sizes {
-            let unit: UnitParams = UnitParams::new_linear(prev_width, unit_size, "relu");
+            let unit: UnitParams = UnitParams::new_linear(
+                prev_width,
+                unit_size,
+                "relu",
+                UnitMaskType::from_keep_probability(keep_probability),
+                false,
+            );
             units.push(unit);
             prev_width = unit_size;
         }
 
-        let inference_unit: UnitParams = UnitParams::new_softmax(prev_width, output_usize, "none");
+        let inference_unit: UnitParams = UnitParams::new_softmax(
+            prev_width,
+            output_usize,
+            "none",
+            UnitMaskType::from_keep_probability(keep_probability),
+            true,
+        );
         units.push(inference_unit);
 
         let regularization: RegularizationParams =
-            RegularizationParams::from_builder(penalty_config.get_builder(), with_dropout);
+            RegularizationParams::from_builder(penalty_config.get_builder());
 
         ClassifierConfig {
             input,
@@ -95,7 +111,7 @@ impl ClassifierConfig {
             HyperParams::new(network.decay_type.clone(), network.descent_type.clone());
 
         let regularization: RegularizationParams =
-            RegularizationParams::new(network.penalty_type.clone(), network.with_dropout);
+            RegularizationParams::new(network.penalty_type.clone());
 
         ClassifierConfig {
             input,

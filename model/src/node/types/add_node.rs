@@ -7,6 +7,7 @@ use crate::data::data_container::DataContainer;
 use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
+use crate::regularization::dropout::NetworkMode;
 
 pub struct AddNode<'a> {
     base: NodeBase<'a>,
@@ -106,4 +107,6 @@ impl<'a> Node<'a> for AddNode<'a> {
         println!("[ADD] Unsupported Operation: Cannot save parameters of an operation node");
         LearnedParams::null()
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

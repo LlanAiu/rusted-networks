@@ -17,7 +17,10 @@ use crate::{
         types::regressor::RegressorNetwork,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::PenaltyConfig,
+    regularization::{
+        dropout::{NetworkMaskType, UnitMaskType},
+        penalty::PenaltyConfig,
+    },
 };
 
 #[derive(Serialize, Deserialize)]
@@ -36,7 +39,7 @@ impl RegressorConfig {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         penalty_config: PenaltyConfig,
-        with_dropout: bool,
+        mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> RegressorConfig {
@@ -46,9 +49,7 @@ impl RegressorConfig {
         let input_usize = input_size[0];
         let output_usize = output_size[0];
 
-        let input: InputParams = InputParams {
-            input_size: input_size,
-        };
+        let input: InputParams = InputParams::new(input_size, mask_type.input_probability());
         let loss: LossParams = LossParams {
             loss_type: String::from("mean_squared_error"),
             output_size: output_size,
@@ -58,17 +59,30 @@ impl RegressorConfig {
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
 
+        let hidden_keep_p = mask_type.hidden_probability();
         for unit_size in hidden_sizes {
-            let unit: UnitParams = UnitParams::new_linear(prev_width, unit_size, "relu");
+            let unit: UnitParams = UnitParams::new_linear(
+                prev_width,
+                unit_size,
+                "relu",
+                UnitMaskType::from_keep_probability(hidden_keep_p),
+                false,
+            );
             units.push(unit);
             prev_width = unit_size;
         }
 
-        let inference_unit: UnitParams = UnitParams::new_linear(prev_width, output_usize, "none");
+        let inference_unit: UnitParams = UnitParams::new_linear(
+            prev_width,
+            output_usize,
+            "none",
+            UnitMaskType::from_keep_probability(hidden_keep_p),
+            true,
+        );
         units.push(inference_unit);
 
         let regularization: RegularizationParams =
-            RegularizationParams::from_builder(penalty_config.get_builder(), with_dropout);
+            RegularizationParams::from_builder(penalty_config.get_builder());
 
         RegressorConfig {
             input,
@@ -96,7 +110,7 @@ impl RegressorConfig {
             HyperParams::new(network.decay_type.clone(), network.descent_type.clone());
 
         let regularization: RegularizationParams =
-            RegularizationParams::new(network.penalty_type.clone(), network.with_dropout);
+            RegularizationParams::new(network.penalty_type.clone());
 
         RegressorConfig {
             input,

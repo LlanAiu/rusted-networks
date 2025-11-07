@@ -8,7 +8,7 @@ use std::{
 // external
 
 // internal
-use crate::node::NodeRef;
+use crate::{node::NodeRef, regularization::dropout::NetworkMode};
 pub mod types;
 pub mod unit_base;
 
@@ -24,6 +24,8 @@ pub trait Unit<'a> {
     fn get_outputs(&self) -> &Vec<UnitRef<'a>>;
 
     fn get_output_node(&self) -> &NodeRef<'a>;
+
+    fn update_mode(&mut self, new_mode: NetworkMode);
 }
 
 pub struct UnitContainer<'a, T: Unit<'a> + ?Sized> {
@@ -61,6 +63,10 @@ where
         let this_ref = self.get_ref();
 
         this_ref.borrow_mut().add_input(&this_ref, input);
+    }
+
+    pub fn update_mode(&self, new_mode: NetworkMode) {
+        self.get_ref().borrow_mut().update_mode(new_mode);
     }
 
     pub fn get_ref(&self) -> UnitRef<'a> {

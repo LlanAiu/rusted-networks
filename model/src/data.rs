@@ -4,6 +4,10 @@ use core::panic;
 
 // external
 use ndarray::{arr1, Array1, Array2};
+use ndarray_rand::{
+    rand_distr::{Bernoulli, Distribution},
+    RandomExt,
+};
 
 // internal
 use crate::data::operations::{
@@ -52,13 +56,13 @@ impl Data {
             if data.len() > 0 {
                 return Data::ScalarF32(data[0]);
             }
-            println!("Data::None returned on null momentum data");
+            println!("Data::None returned on null data");
             return Data::None;
         } else if dim.len() == 1 {
             if data.len() == dim[0] {
                 return Data::VectorF32(arr1(&data));
             }
-            println!("Data::None returned on mismatched dimensions and momentum data");
+            println!("Data::None returned on mismatched dimensions and data");
             return Data::None;
         } else if dim.len() == 2 {
             if data.len() == dim[0] * dim[1] {
@@ -67,10 +71,34 @@ impl Data {
 
                 return Data::MatrixF32(matrix);
             }
-            println!("Data::None returned on mismatched dimensions and momentum data");
+            println!("Data::None returned on mismatched dimensions and data");
             return Data::None;
         } else {
-            panic!("Unsupported dimensions to coerce momentum data to data type!");
+            panic!("Unsupported dimensions to coerce data to data type!");
+        }
+    }
+
+    pub fn bernoulli(probability: f32, dim: &[usize]) -> Data {
+        if dim.len() == 0 {
+            let distribution: Bernoulli = Bernoulli::new(probability.into()).unwrap();
+            let mut rng = rand::thread_rng();
+            let sample: bool = distribution.sample(&mut rng);
+
+            Data::ScalarF32(if sample { 1.0 } else { 0.0 })
+        } else if dim.len() == 1 {
+            let distribution: Bernoulli = Bernoulli::new(probability.into()).unwrap();
+            let sample: Array1<bool> = Array1::random(dim[0], distribution);
+
+            let sample_float: Array1<f32> = sample.map(|val| if *val { 1.0 } else { 0.0 });
+            Data::VectorF32(sample_float)
+        } else if dim.len() == 2 {
+            let distribution: Bernoulli = Bernoulli::new(probability.into()).unwrap();
+            let sample: Array2<bool> = Array2::random((dim[0], dim[1]), distribution);
+
+            let sample_float: Array2<f32> = sample.map(|val| if *val { 1.0 } else { 0.0 });
+            Data::MatrixF32(sample_float)
+        } else {
+            panic!("Unsupported dimensions to coerce data to data type!");
         }
     }
 

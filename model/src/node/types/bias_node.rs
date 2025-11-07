@@ -13,6 +13,7 @@ use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
 use crate::optimization::learning_decay::LearningDecayType;
 use crate::optimization::momentum::DescentType;
+use crate::regularization::dropout::NetworkMode;
 
 pub struct BiasNode<'a> {
     base: NodeBase<'a>,
@@ -132,4 +133,6 @@ impl<'a> Node<'a> for BiasNode<'a> {
 
         panic!("[BIAS] Unexpected data type for biases");
     }
+
+    fn set_mode(&mut self, _new_mode: NetworkMode) {}
 }

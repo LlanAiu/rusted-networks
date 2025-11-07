@@ -12,7 +12,10 @@ use crate::{
         Network,
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-    regularization::penalty::{PenaltyConfig, PenaltyType},
+    regularization::{
+        dropout::{NetworkMaskType, NetworkMode},
+        penalty::{PenaltyConfig, PenaltyType},
+    },
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
         Unit, UnitContainer,
@@ -27,7 +30,6 @@ pub struct RegressorNetwork<'a> {
     inference: UnitContainer<'a, LinearUnit<'a>>,
     loss: UnitContainer<'a, LossUnit<'a>>,
     penalty_type: PenaltyType,
-    with_dropout: bool,
     decay_type: LearningDecayType,
     descent_type: DescentType,
     time_step: usize,
@@ -39,7 +41,7 @@ impl<'a> RegressorNetwork<'a> {
         output_size: Vec<usize>,
         hidden_sizes: Vec<usize>,
         penalty_config: PenaltyConfig,
-        with_dropout: bool,
+        mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
     ) -> RegressorNetwork<'a> {
@@ -48,7 +50,7 @@ impl<'a> RegressorNetwork<'a> {
             output_size,
             hidden_sizes,
             penalty_config,
-            with_dropout,
+            mask_type,
             decay_type,
             descent_type,
         );
@@ -72,6 +74,8 @@ impl<'a> RegressorNetwork<'a> {
 
 impl Network for RegressorNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
+        self.input.update_mode(NetworkMode::Inference);
+
         self.input.borrow_mut().set_input_data(input);
 
         let inference_ref = self.inference.borrow();
@@ -85,6 +89,8 @@ impl Network for RegressorNetwork<'_> {
     }
 
     fn train(&mut self, input: DataContainer, response: DataContainer) {
+        self.input.update_mode(NetworkMode::Train);
+
         self.input.borrow().set_input_data(input);
         self.loss.borrow().set_expected_response(response);
 
@@ -106,13 +112,16 @@ impl Network for RegressorNetwork<'_> {
 #[cfg(test)]
 mod tests {
     use ndarray::{arr1, Array1};
-    use rand::random_range;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::regressor::RegressorNetwork, Network},
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
     };
 
     #[test]
@@ -145,17 +154,20 @@ mod tests {
             vec![1],
             vec![6, 3],
             config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.005),
             DescentType::Base,
         );
+
+        let mut rng = rand::thread_rng();
+        let distribution = Uniform::new(1.0, 4.0);
 
         for _i in 0..200 {
             let mut inputs = Vec::new();
             let mut responses = Vec::new();
 
             for _j in 0..8 {
-                let x: f32 = random_range(1.0..4.0);
+                let x: f32 = distribution.sample(&mut rng);
 
                 inputs.push(Data::VectorF32(arr1(&[x])));
                 responses.push(Data::VectorF32(arr1(&[x * x])));

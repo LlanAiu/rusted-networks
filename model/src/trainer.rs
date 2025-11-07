@@ -127,12 +127,16 @@ where
 #[cfg(test)]
 
 mod tests {
-    use rand::random_range;
+
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use crate::{
         network::types::regressor::RegressorNetwork,
         optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
         trainer::{examples::QuadraticExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
 
@@ -140,9 +144,11 @@ mod tests {
     fn trainer_test() {
         let mut train: Vec<QuadraticExample> = Vec::new();
         let mut test: Vec<QuadraticExample> = Vec::new();
+        let mut rng = rand::thread_rng();
+        let distribution = Uniform::new(1.0, 4.0);
 
         for _i in 0..1600 {
-            let x: f32 = random_range(1.0..4.0);
+            let x: f32 = distribution.sample(&mut rng);
             let example: QuadraticExample = QuadraticExample::new(x);
             train.push(example);
         }
@@ -159,7 +165,7 @@ mod tests {
             vec![1],
             vec![12, 6],
             config,
-            false,
+            NetworkMaskType::None,
             LearningDecayType::constant(0.001),
             DescentType::nesterov(0.95),
         );
