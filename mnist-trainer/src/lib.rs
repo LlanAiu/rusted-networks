@@ -21,21 +21,21 @@ pub fn train_dataset() {
         vec![50],
         penalty_config,
         NetworkMaskType::None,
-        LearningDecayType::constant(0.01),
-        DescentType::nesterov(0.95),
+        LearningDecayType::rms_prop(0.01, 0.9),
+        DescentType::nesterov(0.5),
     );
 
     let train: Vec<HandwrittenExample> =
-        load_data_from_csv("../data/mnist_train.csv", 0, 250).expect("Failed to read data");
+        load_data_from_csv("../data/mnist_train.csv", 0, 60000).expect("Failed to read data");
     let test: Vec<HandwrittenExample> =
-        load_data_from_csv("../data/mnist_test.csv", 0, 50).expect("Failed to read data");
+        load_data_from_csv("../data/mnist_test.csv", 0, 10000).expect("Failed to read data");
 
     let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
 
     let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
         SupervisedTrainer::new(classifier, config);
 
-    trainer.train("test/mnist_build_test.json");
+    trainer.train("test/mnist_config.json");
 }
 
 #[cfg(test)]
@@ -59,8 +59,8 @@ mod tests {
             vec![50],
             penalty_config,
             NetworkMaskType::None,
-            LearningDecayType::constant(0.01),
-            DescentType::Base,
+            LearningDecayType::rms_prop(0.01, 0.95),
+            DescentType::nesterov(0.95),
         );
 
         let data =
@@ -123,9 +123,9 @@ mod tests {
             vec![10],
             vec![50],
             penalty_config,
-            NetworkMaskType::None,
-            LearningDecayType::constant(0.01),
-            DescentType::nesterov(0.95),
+            NetworkMaskType::from_probabilities(0.8, 0.5),
+            LearningDecayType::rms_prop(0.01, 0.9),
+            DescentType::nesterov(0.5),
         );
 
         let train: Vec<HandwrittenExample> =
@@ -208,7 +208,6 @@ mod tests {
         let classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/mnist_med.json");
 
-        // JUST RAN -- change offset to 40000 before running again
         let train: Vec<HandwrittenExample> =
             load_data_from_csv("../data/mnist_train.csv", 35000, 5000)
                 .expect("Failed to read data");
