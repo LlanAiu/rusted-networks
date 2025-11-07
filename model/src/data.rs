@@ -51,6 +51,18 @@ impl Data {
         panic!("[ZERO_INIT] Unsupported data type dimensions");
     }
 
+    pub fn one_dim(dim: &[usize]) -> Data {
+        if dim.len() == 0 {
+            return Data::ScalarF32(1.0);
+        } else if dim.len() == 1 {
+            return Data::VectorF32(Array1::ones(dim[0]));
+        } else if dim.len() == 2 {
+            return Data::MatrixF32(Array2::ones((dim[0], dim[1])));
+        }
+
+        panic!("[ONE_INIT] Unsupported data type dimensions");
+    }
+
     pub fn from_dim(dim: &[usize], data: Vec<f32>) -> Data {
         if dim.len() == 0 {
             if data.len() > 0 {

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 // internal
 use crate::data::{data_container::DataContainer, Data};
 
-const DELTA: f32 = 1e-7;
+const DELTA: f32 = 1e-6;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum LearningDecayType {
@@ -89,7 +89,7 @@ impl LearningDecayType {
 
                 DataContainer::Parameter(Data::ScalarF32(rate))
             }
-            LearningDecayType::RMSProp { .. } => DataContainer::zero(),
+            LearningDecayType::RMSProp { .. } => DataContainer::one(),
             LearningDecayType::None { rate } => DataContainer::Parameter(Data::ScalarF32(*rate)),
         }
     }
@@ -137,7 +137,7 @@ impl LearningDecayType {
 
     pub fn update_adaptive(
         &mut self,
-        learning_rate: &mut DataContainer,
+        accumulator: &mut DataContainer,
         gradient: &DataContainer,
         time_step: usize,
     ) {
@@ -146,8 +146,8 @@ impl LearningDecayType {
             LearningDecayType::RMSProp { decay_rate, .. } => {
                 let learning_update: DataContainer =
                     gradient.apply_elementwise(|f| (1.0 - decay_rate) * f32::powi(f, 2));
-                learning_rate.apply_inplace(|f| *f *= decay_rate);
-                learning_rate.sum_assign(&learning_update);
+                accumulator.apply_inplace(|f| *f *= decay_rate);
+                accumulator.sum_assign(&learning_update);
             }
             _ => {
                 println!("Cannot compute adaptive update on an global learning rate configuration, try using .update_global() instead");
@@ -155,11 +155,10 @@ impl LearningDecayType {
         }
     }
 
-    pub fn scale_adaptive(&self, update: &mut DataContainer, learning_rate: &DataContainer) {
+    pub fn scale_adaptive(&self, update: &mut DataContainer, accumulator: &DataContainer) {
         match self {
             LearningDecayType::RMSProp { global_rate, .. } => {
-                let scale =
-                    learning_rate.apply_elementwise(|f| *global_rate / f32::sqrt(DELTA + f));
+                let scale = accumulator.apply_elementwise(|f| *global_rate / f32::sqrt(DELTA + f));
 
                 update.times_assign(&scale);
             }

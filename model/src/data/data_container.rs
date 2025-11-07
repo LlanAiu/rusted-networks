@@ -75,6 +75,10 @@ impl DataContainer {
         DataContainer::Parameter(Data::zero_dim(dim))
     }
 
+    pub fn one_dim(dim: &[usize]) -> DataContainer {
+        DataContainer::Parameter(Data::one_dim(dim))
+    }
+
     pub fn from_dim(dim: &[usize], data: Vec<f32>, container_type: ContainerType) -> DataContainer {
         let data = Data::from_dim(dim, data);
 
