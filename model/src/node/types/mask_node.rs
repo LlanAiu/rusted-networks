@@ -105,3 +105,25 @@ impl<'a> Node<'a> for MaskNode<'a> {
         LearnedParams::null()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        node::{types::mask_node::MaskNode, Node},
+        regularization::dropout::NetworkMode,
+    };
+
+    #[test]
+    fn sampling_test() {
+        let mut mask = MaskNode::new(vec![10], 0.5);
+        mask.set_mode(NetworkMode::Train);
+        mask.apply_operation();
+
+        println!("Training mask: {:?}", mask.get_data());
+
+        mask.set_mode(NetworkMode::Inference);
+        mask.apply_operation();
+
+        println!("Inference mask: {:?}", mask.get_data());
+    }
+}

@@ -65,6 +65,10 @@ where
         this_ref.borrow_mut().add_input(&this_ref, input);
     }
 
+    pub fn update_mode(&self, new_mode: NetworkMode) {
+        self.get_ref().borrow_mut().update_mode(new_mode);
+    }
+
     pub fn get_ref(&self) -> UnitRef<'a> {
         Rc::clone(&self.unit) as Rc<RefCell<dyn Unit<'a> + 'a>>
     }

@@ -13,7 +13,7 @@ use crate::{
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::{
-        dropout::NetworkMaskType,
+        dropout::{NetworkMaskType, NetworkMode},
         penalty::{PenaltyConfig, PenaltyType},
     },
     unit::{
@@ -74,6 +74,8 @@ impl<'a> RegressorNetwork<'a> {
 
 impl Network for RegressorNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
+        self.input.update_mode(NetworkMode::Inference);
+
         self.input.borrow_mut().set_input_data(input);
 
         let inference_ref = self.inference.borrow();
@@ -87,6 +89,8 @@ impl Network for RegressorNetwork<'_> {
     }
 
     fn train(&mut self, input: DataContainer, response: DataContainer) {
+        self.input.update_mode(NetworkMode::Train);
+
         self.input.borrow().set_input_data(input);
         self.loss.borrow().set_expected_response(response);
 

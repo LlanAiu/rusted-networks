@@ -1,12 +1,12 @@
 // builtin
+use core::panic;
 
 // external
+use ndarray_rand::rand_distr::num_traits::clamp;
 
 // internal
 
-use core::panic;
-
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum NetworkMode {
     Inference,
     Train,
@@ -27,16 +27,14 @@ impl UnitMaskType {
             panic!("[MASK] Invalid mask probability - must be in (0, 1]!");
         }
         UnitMaskType::Dropout {
-            keep_probability: probability,
+            keep_probability: clamp(probability, 0.0, 1.0),
         }
     }
 
     pub fn probability(&self) -> f32 {
         match self {
             UnitMaskType::None => 1.0,
-            UnitMaskType::Dropout {
-                keep_probability: probability,
-            } => *probability,
+            UnitMaskType::Dropout { keep_probability } => *keep_probability,
         }
     }
 }
@@ -58,8 +56,8 @@ impl NetworkMaskType {
             panic!("[MASK] Invalid mask probability - must be in (0, 1]!");
         }
         NetworkMaskType::Dropout {
-            input_keep_p,
-            hidden_keep_p,
+            input_keep_p: clamp(input_keep_p, 0.0, 1.0),
+            hidden_keep_p: clamp(hidden_keep_p, 0.0, 1.0),
         }
     }
 

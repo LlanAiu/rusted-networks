@@ -14,7 +14,7 @@ use crate::{
     },
     optimization::{learning_decay::LearningDecayType, momentum::DescentType},
     regularization::{
-        dropout::NetworkMaskType,
+        dropout::{NetworkMaskType, NetworkMode},
         penalty::{PenaltyConfig, PenaltyType},
     },
     unit::{
@@ -79,6 +79,8 @@ impl<'a> ClassifierNetwork<'a> {
 
 impl Network for ClassifierNetwork<'_> {
     fn predict(&self, input: DataContainer) -> DataContainer {
+        self.input.update_mode(NetworkMode::Inference);
+
         self.input.borrow_mut().set_input_data(input);
 
         let inference_ref = self.inference.borrow();
@@ -92,6 +94,8 @@ impl Network for ClassifierNetwork<'_> {
     }
 
     fn train(&mut self, input: DataContainer, response: DataContainer) {
+        self.input.update_mode(NetworkMode::Train);
+
         self.time_step += 1;
 
         self.input.borrow().set_input_data(input);
@@ -135,7 +139,7 @@ mod tests {
             vec![2],
             vec![2],
             penalty_config,
-            NetworkMaskType::None,
+            NetworkMaskType::from_probabilities(0.8, 0.5),
             LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::nesterov(0.95),
         );
