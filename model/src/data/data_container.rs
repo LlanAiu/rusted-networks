@@ -439,7 +439,41 @@ impl DataContainer {
                 average.times_assign(&Data::ScalarF32(len_scale));
                 DataContainer::Parameter(average)
             }
-            _ => self.clone(),
+            _ => panic!(
+                "Invalid data format for operation [BATCH MEAN], wasn't DataContainer::Batch"
+            ),
+        }
+    }
+
+    pub fn variance_batch(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                if batch.len() == 0 {
+                    return DataContainer::Empty;
+                }
+                let mean = self.average_batch();
+
+                if let DataContainer::Parameter(mean_data) = &mean {
+                    let len_scale: f32 = 1.0 / batch.len() as f32;
+                    let mut sum: Data = batch[0].clone();
+                    sum.minus_assign(&mean_data);
+                    sum.apply_inplace(|f| *f = f32::powi(*f, 2));
+                    for i in 1..batch.len() {
+                        let data: &Data = batch.get(i).unwrap();
+                        let mut diff: Data = data.minus(&mean_data);
+
+                        diff.apply_inplace(|f| *f = f32::powi(*f, 2));
+                        sum.sum_assign(&diff);
+                    }
+                    sum.times_assign(&Data::ScalarF32(len_scale));
+                    return DataContainer::Parameter(sum);
+                }
+
+                DataContainer::Empty
+            }
+            _ => {
+                panic!("Invalid data format for operation [BATCH VAR], wasn't DataContainer::Batch")
+            }
         }
     }
 

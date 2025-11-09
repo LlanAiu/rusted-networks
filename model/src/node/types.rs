@@ -15,6 +15,7 @@ pub mod loss_node;
 pub mod mask_node;
 pub mod matrix_multiply_node;
 pub mod multiply_node;
+pub mod normalization_node;
 pub mod softmax_node;
 pub mod square_node;
 pub mod weight_node;
