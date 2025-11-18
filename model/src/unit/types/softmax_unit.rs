@@ -6,8 +6,10 @@
 use crate::{
     data::{data_container::DataContainer, Data},
     network::config_types::{
-        batch_norm_params::BatchNormParams, layer_params::LayerParams,
-        learned_params::LearnedParams, unit_params::UnitParams,
+        batch_norm_params::{BatchNormParams, NormParams},
+        layer_params::LayerParams,
+        learned_params::LearnedParams,
+        unit_params::UnitParams,
     },
     node::{
         types::{
@@ -17,7 +19,9 @@ use crate::{
         },
         NodeRef,
     },
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::BatchNormModule, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::dropout::{NetworkMode, UnitMaskType},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
@@ -26,6 +30,7 @@ pub struct SoftmaxUnit<'a> {
     base: UnitBase<'a>,
     weights: NodeRef<'a>,
     biases: NodeRef<'a>,
+    batch_norm: Option<BatchNormModule<'a>>,
     input_size: usize,
     output_size: usize,
     activation: String,
@@ -156,7 +161,11 @@ impl<'a> SoftmaxUnit<'a> {
     }
 
     pub fn get_batch_norm_params(&self) -> BatchNormParams {
-        todo!()
+        if let Option::Some(batch_norm) = &self.batch_norm {
+            return batch_norm.get_params();
+        }
+
+        BatchNormParams::null()
     }
 
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {

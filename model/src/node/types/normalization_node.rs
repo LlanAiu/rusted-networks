@@ -4,7 +4,7 @@
 
 // internal
 use crate::data::data_container::DataContainer;
-use crate::network::config_types::batch_norm_params::BatchNormParams;
+use crate::network::config_types::batch_norm_params::NormParams;
 use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::NodeType;
 use crate::node::{node_base::NodeBase, Node, NodeRef};
@@ -192,7 +192,7 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
     }
 
     fn save_parameters(&self) -> LearnedParams {
-        let params = BatchNormParams::new(&self.running_mean, &self.running_var, self.decay);
+        let params = NormParams::new(&self.running_mean, &self.running_var, self.decay);
 
         LearnedParams::new_batch_norm(params)
     }

@@ -3,14 +3,14 @@
 // external
 use serde::{Deserialize, Serialize};
 
-use crate::network::config_types::{batch_norm_params::BatchNormParams, layer_params::LayerParams};
+use crate::network::config_types::{batch_norm_params::NormParams, layer_params::LayerParams};
 
 // internal
 
 #[derive(Serialize, Deserialize)]
 pub enum LearnedParams {
     Layer { params: LayerParams },
-    BatchNorm { params: BatchNormParams },
+    BatchNorm { params: NormParams },
     None,
 }
 
@@ -23,7 +23,7 @@ impl LearnedParams {
         LearnedParams::Layer { params }
     }
 
-    pub fn new_batch_norm(params: BatchNormParams) -> LearnedParams {
+    pub fn new_batch_norm(params: NormParams) -> LearnedParams {
         LearnedParams::BatchNorm { params }
     }
 }

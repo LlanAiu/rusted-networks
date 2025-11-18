@@ -3,12 +3,48 @@
 // external
 use serde::{Deserialize, Serialize};
 
-use crate::data::{data_container::DataContainer, types::FlattenedData};
+use crate::{
+    data::{data_container::DataContainer, types::FlattenedData},
+    network::config_types::layer_params::LayerParams,
+};
 
 // internal
 
 #[derive(Serialize, Deserialize)]
 pub struct BatchNormParams {
+    is_null: bool,
+    normalization: NormParams,
+    scales: LayerParams,
+    shifts: LayerParams,
+}
+
+// TODO:
+impl BatchNormParams {
+    pub fn new(
+        normalization: NormParams,
+        scales: LayerParams,
+        shifts: LayerParams,
+    ) -> BatchNormParams {
+        BatchNormParams {
+            is_null: false,
+            normalization,
+            scales,
+            shifts,
+        }
+    }
+
+    pub fn null() -> BatchNormParams {
+        BatchNormParams {
+            is_null: true,
+            normalization: NormParams::null(),
+            scales: LayerParams::null(),
+            shifts: LayerParams::null(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NormParams {
     is_null: bool,
     dim: Vec<usize>,
     mean: Vec<f32>,
@@ -17,8 +53,8 @@ pub struct BatchNormParams {
 }
 
 // TODO:
-impl BatchNormParams {
-    pub fn new(mean: &DataContainer, variance: &DataContainer, decay: f32) -> BatchNormParams {
+impl NormParams {
+    pub fn new(mean: &DataContainer, variance: &DataContainer, decay: f32) -> NormParams {
         let dim = mean.dim().1.to_vec();
 
         let mean_flattened: FlattenedData = mean.flatten_to_vec();
@@ -26,7 +62,7 @@ impl BatchNormParams {
 
         if let FlattenedData::Singular(mean_vec) = mean_flattened {
             if let FlattenedData::Singular(variance_vec) = variance_flattened {
-                return BatchNormParams {
+                return NormParams {
                     is_null: false,
                     dim,
                     mean: mean_vec,
@@ -39,8 +75,8 @@ impl BatchNormParams {
         panic!("Invalid DataContainer format to coerce to parameters! Expected DataContainer::Parameter");
     }
 
-    pub fn null() -> BatchNormParams {
-        BatchNormParams {
+    pub fn null() -> NormParams {
+        NormParams {
             is_null: true,
             dim: Vec::new(),
             mean: Vec::new(),

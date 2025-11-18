@@ -12,6 +12,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 pub struct LayerParams {
+    is_null: bool,
     dim: Vec<usize>,
     parameters: Vec<f32>,
     momentum: MomentumParams,
@@ -21,6 +22,7 @@ pub struct LayerParams {
 impl LayerParams {
     pub fn null() -> LayerParams {
         LayerParams {
+            is_null: true,
             dim: Vec::new(),
             parameters: Vec::new(),
             momentum: MomentumParams::null(),
@@ -35,6 +37,7 @@ impl LayerParams {
         learning_rate: LearningRateParams,
     ) -> LayerParams {
         LayerParams {
+            is_null: false,
             dim,
             parameters,
             momentum,
@@ -44,6 +47,7 @@ impl LayerParams {
 
     pub fn new_from_parameters(dim: Vec<usize>, parameters: Vec<f32>) -> LayerParams {
         LayerParams {
+            is_null: false,
             dim,
             parameters,
             momentum: MomentumParams::null(),
