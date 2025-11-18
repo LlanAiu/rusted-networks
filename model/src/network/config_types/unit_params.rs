@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::config_types::learned_params::LearnedParams,
+    network::config_types::layer_params::LayerParams,
     regularization::dropout::UnitMaskType,
     unit::{
         types::{linear_unit::LinearUnit, softmax_unit::SoftmaxUnit},
@@ -22,8 +22,8 @@ pub enum UnitParams {
     Linear {
         input_size: usize,
         output_size: usize,
-        weights: LearnedParams,
-        biases: LearnedParams,
+        weights: LayerParams,
+        biases: LayerParams,
         activation: String,
         keep_probability: f32,
         is_inference: bool,
@@ -31,8 +31,8 @@ pub enum UnitParams {
     Softmax {
         input_size: usize,
         output_size: usize,
-        weights: LearnedParams,
-        biases: LearnedParams,
+        weights: LayerParams,
+        biases: LayerParams,
         activation: String,
         keep_probability: f32,
         is_inference: bool,
@@ -123,8 +123,8 @@ impl UnitParams {
         UnitParams::Linear {
             input_size,
             output_size,
-            weights: LearnedParams::new_from_parameters(weights_dim, weights),
-            biases: LearnedParams::new_from_parameters(biases_dim, biases),
+            weights: LayerParams::new_from_parameters(weights_dim, weights),
+            biases: LayerParams::new_from_parameters(biases_dim, biases),
             activation,
             keep_probability: mask_type.probability(),
             is_inference,
@@ -149,8 +149,8 @@ impl UnitParams {
         UnitParams::Softmax {
             input_size,
             output_size,
-            weights: LearnedParams::new_from_parameters(weights_dim, weights),
-            biases: LearnedParams::new_from_parameters(biases_dim, biases),
+            weights: LayerParams::new_from_parameters(weights_dim, weights),
+            biases: LayerParams::new_from_parameters(biases_dim, biases),
             activation,
             keep_probability: mask_type.probability(),
             is_inference,

@@ -6,6 +6,7 @@ use ndarray::Array1;
 // internal
 use crate::data::data_container::DataContainer;
 use crate::data::Data;
+use crate::network::config_types::layer_params::LayerParams;
 use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::node_base::adaptive_learning_base::NodeLearningDecay;
 use crate::node::node_base::momentum_base::NodeMomentum;
@@ -128,7 +129,8 @@ impl<'a> Node<'a> for BiasNode<'a> {
             let momentum = self.momentum_base.get_momentum_save();
             let learning_rate = self.learning_base.get_learning_rate_save();
 
-            return LearnedParams::new(dim, parameters, momentum, learning_rate);
+            let params = LayerParams::new(dim, parameters, momentum, learning_rate);
+            return LearnedParams::new_layer(params);
         }
 
         panic!("[BIAS] Unexpected data type for biases");

@@ -9,8 +9,10 @@ use crate::network::{
     types::{classifier::config::ClassifierConfig, regressor::config::RegressorConfig},
     Network,
 };
+pub mod batch_norm_params;
 pub mod hyper_params;
 pub mod input_params;
+pub mod layer_params;
 pub mod learned_params;
 pub mod loss_params;
 pub mod regularization_params;

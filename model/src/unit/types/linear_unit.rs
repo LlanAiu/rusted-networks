@@ -8,7 +8,9 @@ use std::usize;
 // internal
 use crate::{
     data::{data_container::DataContainer, Data},
-    network::config_types::{learned_params::LearnedParams, unit_params::UnitParams},
+    network::config_types::{
+        layer_params::LayerParams, learned_params::LearnedParams, unit_params::UnitParams,
+    },
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
@@ -135,19 +137,27 @@ impl<'a> LinearUnit<'a> {
         panic!("Mismatched unit parameter types for initialization: expected UnitParams::Linear but got {},", config.type_name());
     }
 
-    pub fn get_weights_params(&self) -> LearnedParams {
-        self.weights.borrow().save_parameters()
+    pub fn get_weights_params(&self) -> LayerParams {
+        let weights_params = self.weights.borrow().save_parameters();
+        if let LearnedParams::Layer { params } = weights_params {
+            return params;
+        }
+        panic!("Got invalid LearnedParams format for layer weights!");
     }
 
-    pub fn get_biases_params(&self) -> LearnedParams {
-        self.biases.borrow().save_parameters()
+    pub fn get_biases_params(&self) -> LayerParams {
+        let biases_params = self.biases.borrow().save_parameters();
+        if let LearnedParams::Layer { params } = biases_params {
+            return params;
+        }
+        panic!("Got invalid LearnedParams format for layer biases!");
     }
 
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {
         &self.weights
     }
 
-    pub fn set_biases(&self, data: &LearnedParams) {
+    pub fn set_biases(&self, data: &LayerParams) {
         let biases: DataContainer = data.get_parameters();
         let momentum: DataContainer = data.get_momentum();
         let learning_rate: DataContainer = data.get_learning_rate();
@@ -161,7 +171,7 @@ impl<'a> LinearUnit<'a> {
         }
     }
 
-    pub fn set_weights(&self, data: &LearnedParams) {
+    pub fn set_weights(&self, data: &LayerParams) {
         let weights = data.get_parameters();
         let momentum = data.get_momentum();
         let learning_rate = data.get_learning_rate();

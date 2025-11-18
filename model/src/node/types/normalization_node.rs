@@ -191,7 +191,6 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
     }
 
     fn save_parameters(&self) -> LearnedParams {
-        println!("[BATCH NORM] Unsupported Operation: Cannot save parameters of an operation node");
-        LearnedParams::null()
+        todo!()
     }
 }
