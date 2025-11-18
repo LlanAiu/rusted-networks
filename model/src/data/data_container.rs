@@ -10,6 +10,7 @@ use crate::data::{
         sum_assign::ContainerSumAssign, times::ContainerTimes, times_assign::ContainerTimesAssign,
         transpose::ContainerTranspose,
     },
+    types::FlattenedData,
     Data,
 };
 pub mod operations;
@@ -488,6 +489,23 @@ impl DataContainer {
             DataContainer::Inference(data) => (1, data.dim()),
             DataContainer::Parameter(data) => (1, data.dim()),
             DataContainer::Empty => (0, &[]),
+        }
+    }
+
+    pub fn flatten_to_vec(&self) -> FlattenedData {
+        match self {
+            DataContainer::Batch(batch) => {
+                let mut flattened: Vec<Vec<f32>> = Vec::new();
+
+                for data in batch {
+                    flattened.push(data.flatten_to_vec());
+                }
+
+                FlattenedData::Batch(flattened)
+            }
+            DataContainer::Inference(data) => FlattenedData::Singular(data.flatten_to_vec()),
+            DataContainer::Parameter(data) => FlattenedData::Singular(data.flatten_to_vec()),
+            _ => FlattenedData::None,
         }
     }
 }

@@ -6,7 +6,8 @@
 use crate::{
     data::{data_container::DataContainer, Data},
     network::config_types::{
-        layer_params::LayerParams, learned_params::LearnedParams, unit_params::UnitParams,
+        batch_norm_params::BatchNormParams, layer_params::LayerParams,
+        learned_params::LearnedParams, unit_params::UnitParams,
     },
     node::{
         types::{
@@ -32,7 +33,6 @@ pub struct SoftmaxUnit<'a> {
 }
 
 impl<'a> SoftmaxUnit<'a> {
-    // TODO: update config to handle dropout parameters
     pub fn new(
         function: &str,
         input_size: usize,
@@ -153,6 +153,10 @@ impl<'a> SoftmaxUnit<'a> {
             return params;
         }
         panic!("Got invalid LearnedParams format for layer biases!");
+    }
+
+    pub fn get_batch_norm_params(&self) -> BatchNormParams {
+        todo!()
     }
 
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {

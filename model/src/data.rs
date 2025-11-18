@@ -1,5 +1,4 @@
 // builtin
-
 use core::panic;
 
 // external
@@ -17,6 +16,7 @@ use crate::data::operations::{
 };
 pub mod data_container;
 pub mod operations;
+pub mod types;
 
 #[derive(Debug, Clone)]
 pub enum Data {
@@ -374,6 +374,17 @@ impl Data {
             Data::VectorF32(vec) => vec.shape(),
             Data::MatrixF32(matrix) => matrix.shape(),
             Data::None => &[],
+        }
+    }
+
+    pub fn flatten_to_vec(&self) -> Vec<f32> {
+        match self {
+            Data::VectorF32(vec) => vec.to_vec(),
+            Data::MatrixF32(matrix) => matrix.flatten().to_vec(),
+            _ => {
+                println!("Cannot flatten data that has dimension less than 1!");
+                Vec::new()
+            }
         }
     }
 }
