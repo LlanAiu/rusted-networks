@@ -46,6 +46,52 @@ impl<'a> NormalizationNode<'a> {
             mode: NetworkMode::None,
         }
     }
+
+    fn normalize_train(&mut self, mut data: DataContainer) {
+        let mean = data.average_batch();
+        let mut variance: DataContainer = data.variance_batch();
+
+        let inverse_scale = variance.apply_elementwise(|f| 1.0 / f32::sqrt(f + DELTA));
+        data.minus_assign(&mean);
+        data.times_assign(&inverse_scale);
+        self.base.set_data(data);
+
+        self.update_running_mean(&mean);
+        self.update_running_variance(&variance);
+
+        variance.apply_inplace(|f| *f = f32::sqrt(*f + DELTA));
+        self.scale = variance;
+    }
+
+    fn update_running_mean(&mut self, mean: &DataContainer) {
+        if self.running_mean.dim().1.len() != mean.dim().1.len() {
+            self.running_mean = mean.apply_elementwise(|f| f * self.decay);
+        } else {
+            self.running_mean.apply_inplace(|f| *f *= self.decay);
+            let mean_update = mean.apply_elementwise(|f| f * (1.0 - self.decay));
+            self.running_mean.sum_assign(&mean_update);
+        }
+    }
+
+    fn update_running_variance(&mut self, variance: &DataContainer) {
+        if self.running_var.dim().1.len() != variance.dim().1.len() {
+            self.running_var = variance.apply_elementwise(|f| f * self.decay);
+        } else {
+            self.running_var.apply_inplace(|f| *f *= self.decay);
+            let var_update = variance.apply_elementwise(|f| f * (1.0 - self.decay));
+            self.running_var.sum_assign(&var_update);
+        }
+    }
+
+    fn normalize_inference(&mut self, mut data: DataContainer) {
+        data.minus_assign(&self.running_mean);
+        let inverse_std_dev = self
+            .running_var
+            .apply_elementwise(|f| 1.0 / f32::sqrt(f + DELTA));
+        data.times_assign(&inverse_std_dev);
+
+        self.base.set_data(data);
+    }
 }
 
 impl<'a> Node<'a> for NormalizationNode<'a> {
@@ -89,44 +135,14 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
         }
 
         let mut input_ref = inputs.get(0).unwrap().borrow_mut();
-        let mut data = input_ref.get_data();
+        let data = input_ref.get_data();
 
         if self.mode == NetworkMode::Train {
-            let mut mean = data.average_batch();
-            let mut variance: DataContainer = data.variance_batch();
-
-            let inverse_scale = variance.apply_elementwise(|f| 1.0 / f32::sqrt(f + DELTA));
-            data.minus_assign(&mean);
-            data.times_assign(&inverse_scale);
-
-            self.base.set_data(data);
-
-            if self.running_mean.dim().1.len() != mean.dim().1.len() {
-                self.running_mean = mean.apply_elementwise(|f| f * self.decay);
-            } else {
-                self.running_mean.apply_inplace(|f| *f *= self.decay);
-                mean.apply_inplace(|f| *f *= 1.0 - self.decay);
-                self.running_mean.sum_assign(&mean);
-            }
-
-            if self.running_var.dim().1.len() != variance.dim().1.len() {
-                self.running_var = mean.apply_elementwise(|f| f * self.decay);
-            } else {
-                self.running_var.apply_inplace(|f| *f *= self.decay);
-                let var_update = variance.apply_elementwise(|f| f * (1.0 - self.decay));
-                self.running_var.sum_assign(&var_update);
-            }
-
-            variance.apply_inplace(|f| *f = f32::sqrt(*f + DELTA));
-            self.scale = variance;
+            self.normalize_train(data);
         } else if self.mode == NetworkMode::Inference {
-            data.minus_assign(&self.running_mean);
-            let inverse_std_dev = self
-                .running_var
-                .apply_elementwise(|f| 1.0 / f32::sqrt(f + DELTA));
-            data.times_assign(&inverse_std_dev);
-
-            self.base.set_data(data);
+            self.normalize_inference(data);
+        } else {
+            panic!("[BATCH NORM] Tried to run batch norm in NetworkMode::None!")
         }
     }
 
