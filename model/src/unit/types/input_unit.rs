@@ -49,7 +49,7 @@ impl<'a> InputUnit<'a> {
         }
 
         InputUnit {
-            base: UnitBase::new(&input_ref, &output_ref, mask, false),
+            base: UnitBase::new(&input_ref, &output_ref, mask, Option::None, false),
             input: input_ref,
             input_size,
             mask_type,

@@ -27,7 +27,7 @@ pub enum UnitParams {
         biases: LayerParams,
         activation: String,
         keep_probability: f32,
-        is_inference: bool,
+        is_last_layer: bool,
         norm_params: BatchNormParams,
     },
     Softmax {
@@ -37,7 +37,7 @@ pub enum UnitParams {
         biases: LayerParams,
         activation: String,
         keep_probability: f32,
-        is_inference: bool,
+        is_last_layer: bool,
         norm_params: BatchNormParams,
     },
 }
@@ -83,7 +83,7 @@ impl UnitParams {
             weights,
             biases,
             activation,
-            is_inference: unit.borrow().is_inference(),
+            is_last_layer: unit.borrow().is_last_layer(),
             keep_probability: unit.borrow().get_mask_type().probability(),
             norm_params,
         }
@@ -108,7 +108,7 @@ impl UnitParams {
             weights,
             biases,
             activation,
-            is_inference: unit.borrow().is_inference(),
+            is_last_layer: unit.borrow().is_last_layer(),
             keep_probability: unit.borrow().get_mask_type().probability(),
             norm_params,
         }
@@ -143,7 +143,7 @@ impl UnitParams {
             biases: LayerParams::new_from_parameters(biases_dim, biases),
             activation,
             keep_probability: mask_type.probability(),
-            is_inference,
+            is_last_layer: is_inference,
             norm_params,
         }
     }
@@ -178,7 +178,7 @@ impl UnitParams {
             activation,
             keep_probability: mask_type.probability(),
             norm_params,
-            is_inference,
+            is_last_layer: is_inference,
         }
     }
 

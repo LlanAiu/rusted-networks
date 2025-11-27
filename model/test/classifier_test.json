@@ -12,108 +12,176 @@
         "input_size": 1,
         "output_size": 2,
         "weights": {
+          "is_null": false,
           "dim": [
             2,
             1
           ],
           "parameters": [
-            -16.074444,
-            16.004253
+            -13.473896,
+            3.1705089
           ],
           "momentum": {
             "momentum": [
-              0.000083679945,
-              -0.00003928097
+              0.000066333836,
+              -0.000006912855
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.00030542965,
-              0.0000066684274
+              0.000018053397,
+              1.1553443e-7
             ]
           }
         },
         "biases": {
+          "is_null": false,
           "dim": [
             2
           ],
           "parameters": [
-            5.4154706,
-            -1.3940898
+            -3.3757553,
+            1.970933
           ],
           "momentum": {
             "momentum": [
-              0.000033602337,
-              0.0000297582
+              0.00005032643,
+              -0.000006187306
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.0005564661,
-              0.00026551262
+              0.000042517717,
+              1.3252753e-7
             ]
           }
         },
         "activation": "relu",
         "keep_probability": 0.5,
-        "is_inference": false
+        "is_inference": false,
+        "norm_params": {
+          "is_null": true,
+          "normalization": {
+            "is_null": true,
+            "dim": [],
+            "mean": [],
+            "variance": [],
+            "decay": 0.0
+          },
+          "scales": {
+            "is_null": true,
+            "dim": [],
+            "parameters": [],
+            "momentum": {
+              "momentum": []
+            },
+            "learning_rate": {
+              "adaptive_rate": []
+            }
+          },
+          "shifts": {
+            "is_null": true,
+            "dim": [],
+            "parameters": [],
+            "momentum": {
+              "momentum": []
+            },
+            "learning_rate": {
+              "adaptive_rate": []
+            }
+          }
+        }
       },
       {
         "unit_type": "Softmax",
         "input_size": 2,
         "output_size": 2,
         "weights": {
+          "is_null": false,
           "dim": [
             2,
             2
           ],
           "parameters": [
-            13.988608,
-            -0.86984557,
-            -13.854191,
-            0.7632829
+            2.640807,
+            -5.822997,
+            -2.9936414,
+            6.39396
           ],
           "momentum": {
             "momentum": [
-              -0.000021318458,
-              0.00011619,
-              0.000021318458,
-              -0.00011618805
+              0.00000534007,
+              0.000012957899,
+              -0.000005340076,
+              -0.000012957899
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.0000010369284,
-              0.000014774331,
-              0.0000010369279,
-              0.000014774331
+              6.731087e-7,
+              0.0000037428117,
+              6.731087e-7,
+              0.0000037428117
             ]
           }
         },
         "biases": {
+          "is_null": false,
           "dim": [
             2
           ],
           "parameters": [
-            3.0695844,
-            -3.0695896
+            -0.6069865,
+            0.60698867
           ],
           "momentum": {
             "momentum": [
-              0.1532599,
-              -0.15325987
+              -0.08540273,
+              0.08540273
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.10239178,
-              0.102391794
+              0.08763381,
+              0.0876338
             ]
           }
         },
         "activation": "none",
         "keep_probability": 0.5,
-        "is_inference": true
+        "is_inference": true,
+        "norm_params": {
+          "is_null": true,
+          "normalization": {
+            "is_null": true,
+            "dim": [],
+            "mean": [],
+            "variance": [],
+            "decay": 0.0
+          },
+          "scales": {
+            "is_null": true,
+            "dim": [],
+            "parameters": [],
+            "momentum": {
+              "momentum": []
+            },
+            "learning_rate": {
+              "adaptive_rate": []
+            }
+          },
+          "shifts": {
+            "is_null": true,
+            "dim": [],
+            "parameters": [],
+            "momentum": {
+              "momentum": []
+            },
+            "learning_rate": {
+              "adaptive_rate": []
+            }
+          }
+        }
       }
     ],
     "loss": {
@@ -133,7 +201,8 @@
         "Nesterov": {
           "decay": 0.95
         }
-      }
+      },
+      "normalization_type": "None"
     },
     "regularization": {
       "norm_penalty": "None"

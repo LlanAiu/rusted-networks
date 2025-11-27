@@ -14,8 +14,9 @@ pub struct UnitBase<'a> {
     input_node: NodeRef<'a>,
     output_node: NodeRef<'a>,
     mask_node: Option<NodeRef<'a>>,
+    norm_node: Option<NodeRef<'a>>,
     mode: NetworkMode,
-    is_inference: bool,
+    is_last_layer: bool,
 }
 
 impl<'a> UnitBase<'a> {
@@ -23,12 +24,19 @@ impl<'a> UnitBase<'a> {
         input: &NodeRef<'a>,
         output: &NodeRef<'a>,
         mask: Option<&NodeRef<'a>>,
-        is_inference: bool,
+        norm: Option<&NodeRef<'a>>,
+        is_last_layer: bool,
     ) -> UnitBase<'a> {
         let mut mask_node: Option<NodeRef<'a>> = Option::None;
 
-        if let Option::Some(node) = mask {
-            mask_node = Option::Some(NodeRef::clone(node))
+        if let Option::Some(mask_ref) = mask {
+            mask_node = Option::Some(NodeRef::clone(mask_ref))
+        }
+
+        let mut norm_node: Option<NodeRef<'a>> = Option::None;
+
+        if let Option::Some(norm_ref) = norm {
+            norm_node = Option::Some(NodeRef::clone(norm_ref))
         }
 
         UnitBase {
@@ -37,12 +45,9 @@ impl<'a> UnitBase<'a> {
             input_node: NodeRef::clone(input),
             output_node: NodeRef::clone(output),
             mask_node,
-            is_inference,
-            mode: if is_inference {
-                NetworkMode::Inference
-            } else {
-                NetworkMode::None
-            },
+            norm_node,
+            is_last_layer,
+            mode: NetworkMode::None,
         }
     }
 
@@ -71,20 +76,20 @@ impl<'a> UnitBase<'a> {
         &self.output_node
     }
 
-    pub fn is_inference(&self) -> bool {
-        self.is_inference
+    pub fn is_last_layer(&self) -> bool {
+        self.is_last_layer
     }
 
     pub fn update_mode(&mut self, new_mode: NetworkMode) {
-        if self.is_inference {
-            return;
-        }
-
         if new_mode != self.mode {
             self.mode = new_mode;
 
             if let Option::Some(mask) = &self.mask_node {
                 mask.borrow_mut().set_mode(new_mode)
+            }
+
+            if let Option::Some(norm) = &self.norm_node {
+                norm.borrow_mut().set_mode(new_mode)
             }
         }
     }

@@ -146,10 +146,10 @@ mod tests {
             vec![2],
             vec![2],
             penalty_config,
-            NetworkMaskType::from_probabilities(0.8, 0.5),
+            NetworkMaskType::none(),
             LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::nesterov(0.95),
-            NormalizationType::none(),
+            NormalizationType::batch_norm(0.95),
         );
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);

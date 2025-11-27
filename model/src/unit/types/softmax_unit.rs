@@ -50,7 +50,7 @@ impl<'a> SoftmaxUnit<'a> {
         mask_type: UnitMaskType,
         normalization_type: NormalizationType,
         norm_params: &NormParams,
-        is_inference: bool,
+        is_last_layer: bool,
     ) -> SoftmaxUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
             input_size,
@@ -79,11 +79,12 @@ impl<'a> SoftmaxUnit<'a> {
 
         let mut raw_output_ref: &NodeRef = &activation_ref;
         let mut norm_module: Option<BatchNormModule> = Option::None;
+        let mut norm: Option<&NodeRef> = Option::None;
 
         let norm_add_ref: NodeRef;
+        let norm_ref: NodeRef;
 
         if let NormalizationType::BatchNorm { decay } = &normalization_type {
-            let norm_ref: NodeRef;
             if norm_params.is_null() {
                 norm_ref = NodeRef::new(NormalizationNode::new(*decay));
             } else {
@@ -122,6 +123,7 @@ impl<'a> SoftmaxUnit<'a> {
 
             let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
             norm_module = Option::Some(module);
+            norm = Option::Some(&norm_ref);
         }
 
         softmax_ref
@@ -134,7 +136,7 @@ impl<'a> SoftmaxUnit<'a> {
         let mask_ref: NodeRef;
         let multiply_ref: NodeRef;
 
-        if !is_inference {
+        if !is_last_layer {
             if let UnitMaskType::Dropout {
                 keep_probability: probability,
             } = &mask_type
@@ -156,7 +158,7 @@ impl<'a> SoftmaxUnit<'a> {
         }
 
         SoftmaxUnit {
-            base: UnitBase::new(&matmul_ref, output_ref, mask, is_inference),
+            base: UnitBase::new(&matmul_ref, output_ref, mask, norm, is_last_layer),
             weights: weights_ref,
             biases: biases_ref,
             input_size,
@@ -180,7 +182,7 @@ impl<'a> SoftmaxUnit<'a> {
             weights,
             biases,
             keep_probability,
-            is_inference,
+            is_last_layer,
             norm_params,
         } = config
         {
@@ -193,7 +195,7 @@ impl<'a> SoftmaxUnit<'a> {
                 UnitMaskType::from_keep_probability(*keep_probability),
                 normalization_type,
                 norm_params.get_normalization(),
-                *is_inference,
+                *is_last_layer,
             );
 
             unit.set_weights(weights);
@@ -311,8 +313,8 @@ impl<'a> SoftmaxUnit<'a> {
         &self.mask_type
     }
 
-    pub fn is_inference(&self) -> bool {
-        self.base.is_inference()
+    pub fn is_last_layer(&self) -> bool {
+        self.base.is_last_layer()
     }
 }
 
