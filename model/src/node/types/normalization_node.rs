@@ -85,9 +85,6 @@ impl<'a> NormalizationNode<'a> {
     }
 
     fn normalize_inference(&mut self, mut data: DataContainer) {
-        println!("Running mean: {:?}", self.running_mean);
-        println!("Running variance: {:?}", self.running_var);
-
         data.minus_assign(&self.running_mean);
         let inverse_std_dev = self
             .running_var
@@ -107,7 +104,7 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
         if self.base.get_inputs().len() == 0 {
             self.base.add_input(this, input);
         } else {
-            println!("[BATCH NORM] Node's maximum input capacity reached (1). Skipping assignment, consider using an extra node instead.");
+            println!("[NORMALIZE] Node's maximum input capacity reached (1). Skipping assignment, consider using an extra node instead.");
         }
     }
 
@@ -146,12 +143,12 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
         } else if self.mode == NetworkMode::Inference {
             self.normalize_inference(data);
         } else {
-            panic!("[BATCH NORM] Tried to run batch norm in NetworkMode::None!")
+            panic!("[NORMALIZE] Tried to run batch norm in NetworkMode::None!")
         }
     }
 
     fn set_data(&mut self, _data: DataContainer) {
-        panic!("[BATCH NORM] Unsupported Operation: Cannot set data of an operation node");
+        panic!("[NORMALIZE] Unsupported Operation: Cannot set data of an operation node");
     }
 
     fn add_gradient(&mut self, grad: &DataContainer) {
@@ -185,12 +182,12 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
     }
 
     fn set_momentum(&mut self, _momentum: DataContainer) {
-        println!("[BATCH NORM] Unsupported Operation: Cannot set momentum of an operation node");
+        println!("[NORMALIZE] Unsupported Operation: Cannot set momentum of an operation node");
     }
 
     fn set_learning_rate(&mut self, _learning_rate: DataContainer) {
         println!(
-            "[BATCH NORM] Unsupported Operation: Cannot set learning rate of an operation node"
+            "[NORMALIZE] Unsupported Operation: Cannot set learning rate of an operation node"
         );
     }
 
@@ -215,7 +212,7 @@ mod tests {
     };
 
     #[test]
-    pub fn test_normalization() {
+    fn test_normalization() {
         let norm: NodeRef = NodeRef::new(NormalizationNode::new(0.95));
 
         let input: NodeRef = NodeRef::new(InputNode::new(vec![5]));
