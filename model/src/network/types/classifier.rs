@@ -12,7 +12,9 @@ use crate::{
         types::classifier::{builder::build_from_config, config::ClassifierConfig},
         Network,
     },
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::{
         dropout::{NetworkMaskType, NetworkMode},
         penalty::{PenaltyConfig, PenaltyType},
@@ -36,6 +38,7 @@ pub struct ClassifierNetwork<'a> {
     penalty_type: PenaltyType,
     decay_type: LearningDecayType,
     descent_type: DescentType,
+    normalization_type: NormalizationType,
     time_step: usize,
 }
 
@@ -48,6 +51,7 @@ impl<'a> ClassifierNetwork<'a> {
         mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        normalization_type: NormalizationType,
     ) -> ClassifierNetwork<'a> {
         let config: ClassifierConfig = ClassifierConfig::new(
             input_size,
@@ -57,6 +61,7 @@ impl<'a> ClassifierNetwork<'a> {
             mask_type,
             decay_type,
             descent_type,
+            normalization_type,
         );
 
         ClassifierNetwork::from_config(config)
@@ -126,7 +131,9 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+        optimization::{
+            batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+        },
         regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     };
 
@@ -142,6 +149,7 @@ mod tests {
             NetworkMaskType::from_probabilities(0.8, 0.5),
             LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::nesterov(0.95),
+            NormalizationType::none(),
         );
 
         let test_arr: Array1<f32> = arr1(&[-0.7]);

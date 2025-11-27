@@ -1,9 +1,9 @@
 // builtin
 
 // external
+use serde::{Deserialize, Serialize};
 
 // internal
-
 use crate::{
     data::data_container::DataContainer,
     network::config_types::{
@@ -13,7 +13,7 @@ use crate::{
     node::NodeRef,
 };
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum NormalizationType {
     BatchNorm { decay: f32 },
     None,
@@ -30,7 +30,6 @@ impl NormalizationType {
 }
 
 pub struct BatchNormModule<'a> {
-    decay: f32,
     normalization: NodeRef<'a>,
     scales: NodeRef<'a>,
     shifts: NodeRef<'a>,
@@ -38,13 +37,11 @@ pub struct BatchNormModule<'a> {
 
 impl<'a> BatchNormModule<'a> {
     pub fn new(
-        decay: f32,
         normalization: &NodeRef<'a>,
         scales: &NodeRef<'a>,
         shifts: &NodeRef<'a>,
     ) -> BatchNormModule<'a> {
         BatchNormModule {
-            decay,
             normalization: NodeRef::clone(normalization),
             scales: NodeRef::clone(scales),
             shifts: NodeRef::clone(shifts),

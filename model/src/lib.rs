@@ -20,7 +20,9 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+        optimization::{
+            batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+        },
         regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     };
 
@@ -33,9 +35,10 @@ mod tests {
             vec![2],
             vec![5],
             penalty_config,
-            NetworkMaskType::None,
+            NetworkMaskType::none(),
             LearningDecayType::constant(0.001),
-            DescentType::Base,
+            DescentType::none(),
+            NormalizationType::none(),
         );
 
         let input_arr1: Array1<f32> = arr1(&[0.4, 0.1, 1.0]);

@@ -16,7 +16,9 @@ use crate::{
         },
         types::classifier::ClassifierNetwork,
     },
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::{
         dropout::{NetworkMaskType, UnitMaskType},
         penalty::PenaltyConfig,
@@ -42,6 +44,7 @@ impl ClassifierConfig {
         mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        normalization_type: NormalizationType,
     ) -> ClassifierConfig {
         if input_size.len() != 1 || output_size.len() != 1 {
             panic!("[SIMPLE_CLASSIFIER] Invalid input / output dimensions for network type, expected 1 and 1 but got {} and {}.", input_size.len(), output_size.len());
@@ -55,7 +58,8 @@ impl ClassifierConfig {
             output_size,
         };
 
-        let params: HyperParams = HyperParams::new(decay_type, descent_type);
+        let params: HyperParams =
+            HyperParams::new(decay_type, descent_type, normalization_type.clone());
 
         let mut units: Vec<UnitParams> = Vec::new();
         let mut prev_width: usize = input_usize;
@@ -67,6 +71,7 @@ impl ClassifierConfig {
                 unit_size,
                 "relu",
                 UnitMaskType::from_keep_probability(keep_probability),
+                normalization_type.clone(),
                 false,
             );
             units.push(unit);
@@ -78,6 +83,7 @@ impl ClassifierConfig {
             output_usize,
             "none",
             UnitMaskType::from_keep_probability(keep_probability),
+            normalization_type,
             true,
         );
         units.push(inference_unit);
@@ -107,8 +113,11 @@ impl ClassifierConfig {
         }
         units.push(UnitParams::from_softmax_unit(&network.inference));
 
-        let params: HyperParams =
-            HyperParams::new(network.decay_type.clone(), network.descent_type.clone());
+        let params: HyperParams = HyperParams::new(
+            network.decay_type.clone(),
+            network.descent_type.clone(),
+            network.normalization_type.clone(),
+        );
 
         let regularization: RegularizationParams =
             RegularizationParams::new(network.penalty_type.clone());

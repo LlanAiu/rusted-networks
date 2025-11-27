@@ -6,7 +6,9 @@
 use crate::{import_csv::load_data_from_csv, types::HandwrittenExample};
 use model::{
     network::types::classifier::ClassifierNetwork,
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     trainer::{trainer_params::TrainerConfig, SupervisedTrainer},
 };
@@ -23,6 +25,7 @@ pub fn train_dataset() {
         NetworkMaskType::None,
         LearningDecayType::rms_prop(0.01, 0.9),
         DescentType::nesterov(0.5),
+        NormalizationType::none(),
     );
 
     let train: Vec<HandwrittenExample> =
@@ -43,7 +46,9 @@ mod tests {
     use model::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+        optimization::{
+            batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+        },
         regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
         trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
@@ -61,6 +66,7 @@ mod tests {
             NetworkMaskType::None,
             LearningDecayType::rms_prop(0.01, 0.95),
             DescentType::nesterov(0.95),
+            NormalizationType::none(),
         );
 
         let data =
@@ -126,6 +132,7 @@ mod tests {
             NetworkMaskType::from_probabilities(0.8, 0.5),
             LearningDecayType::rms_prop(0.01, 0.9),
             DescentType::nesterov(0.5),
+            NormalizationType::none(),
         );
 
         let train: Vec<HandwrittenExample> =
@@ -188,6 +195,7 @@ mod tests {
             NetworkMaskType::None,
             LearningDecayType::constant(0.01),
             DescentType::nesterov(0.95),
+            NormalizationType::none(),
         );
 
         let train: Vec<HandwrittenExample> =

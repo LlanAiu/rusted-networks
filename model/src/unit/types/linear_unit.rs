@@ -35,7 +35,6 @@ pub struct LinearUnit<'a> {
     base: UnitBase<'a>,
     weights: NodeRef<'a>,
     biases: NodeRef<'a>,
-    normalization_type: NormalizationType,
     norm_module: Option<BatchNormModule<'a>>,
     input_size: usize,
     output_size: usize,
@@ -122,7 +121,7 @@ impl<'a> LinearUnit<'a> {
 
             output_ref = &norm_add_ref;
 
-            let module = BatchNormModule::new(*decay, &norm_ref, &scale_ref, &shift_ref);
+            let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
             norm_module = Option::Some(module);
         }
 
@@ -159,7 +158,6 @@ impl<'a> LinearUnit<'a> {
             input_size,
             output_size,
             activation: function.to_string(),
-            normalization_type,
             norm_module,
             mask_type,
         }

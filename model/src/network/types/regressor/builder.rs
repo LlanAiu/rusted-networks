@@ -9,7 +9,9 @@ use crate::{
         types::regressor::{config::RegressorConfig, RegressorNetwork},
     },
     node::NodeRef,
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::penalty::{PenaltyConfig, PenaltyContainer},
     unit::{
         types::{input_unit::InputUnit, linear_unit::LinearUnit, loss_unit::LossUnit},
@@ -20,6 +22,7 @@ use crate::{
 pub fn build_from_config<'a>(config: RegressorConfig) -> RegressorNetwork<'a> {
     let decay_type: &LearningDecayType = config.params().decay_type();
     let descent_type: &DescentType = config.params().descent_type();
+    let normalization_type: &NormalizationType = config.params().normalization_type();
     let penalty_config: PenaltyConfig = config.regularization().get_config();
 
     let input: UnitContainer<InputUnit> =
@@ -41,6 +44,7 @@ pub fn build_from_config<'a>(config: RegressorConfig) -> RegressorNetwork<'a> {
         penalty_type: penalty_config.get_type(),
         decay_type: decay_type.clone(),
         descent_type: descent_type.clone(),
+        normalization_type: normalization_type.clone(),
         time_step: config.timestep(),
     }
 }
@@ -56,6 +60,7 @@ fn build_hidden_units<'a>(
 ) {
     let decay_type: &LearningDecayType = config.params().decay_type();
     let descent_type: &DescentType = config.params().descent_type();
+    let normalization_type: &NormalizationType = config.params().normalization_type();
     let hidden_len: usize = config.units().len();
     let units: &Vec<UnitParams> = config.units();
 
@@ -69,6 +74,7 @@ fn build_hidden_units<'a>(
             hidden_config,
             decay_type.clone(),
             descent_type.clone(),
+            normalization_type.clone(),
         ));
 
         let penalty: PenaltyContainer = build_penalty(
@@ -106,6 +112,7 @@ fn build_inference<'a>(
 ) -> (UnitContainer<'a, LinearUnit<'a>>, PenaltyContainer<'a>) {
     let decay_type: &LearningDecayType = config.params().decay_type();
     let descent_type: &DescentType = config.params().descent_type();
+    let normalization_type: &NormalizationType = config.params().normalization_type();
     let hidden_len: usize = config.units().len();
     let inference_config = config.units().get(hidden_len - 1).unwrap();
 
@@ -113,6 +120,7 @@ fn build_inference<'a>(
         inference_config,
         decay_type.clone(),
         descent_type.clone(),
+        normalization_type.clone(),
     ));
 
     let inference_penalty: PenaltyContainer = build_penalty(
