@@ -6,8 +6,10 @@
 use crate::{
     data::{data_container::DataContainer, Data},
     network::config_types::{
-        batch_norm_params::BatchNormParams, layer_params::LayerParams,
-        learned_params::LearnedParams, unit_params::UnitParams,
+        batch_norm_params::{BatchNormParams, NormParams},
+        layer_params::LayerParams,
+        learned_params::LearnedParams,
+        unit_params::UnitParams,
     },
     node::{
         types::{
@@ -40,7 +42,7 @@ pub struct SoftmaxUnit<'a> {
 }
 
 impl<'a> SoftmaxUnit<'a> {
-    pub fn new(
+    fn new(
         function: &str,
         input_size: usize,
         output_size: usize,
@@ -48,6 +50,7 @@ impl<'a> SoftmaxUnit<'a> {
         descent_type: DescentType,
         mask_type: UnitMaskType,
         normalization_type: NormalizationType,
+        norm_params: &NormParams,
         is_inference: bool,
     ) -> SoftmaxUnit<'a> {
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
@@ -81,7 +84,16 @@ impl<'a> SoftmaxUnit<'a> {
         let norm_add_ref: NodeRef;
 
         if let NormalizationType::BatchNorm { decay } = &normalization_type {
-            let norm_ref = NodeRef::new(NormalizationNode::new(*decay));
+            let norm_ref: NodeRef;
+            if norm_params.is_null() {
+                norm_ref = NodeRef::new(NormalizationNode::new(*decay));
+            } else {
+                let mean = norm_params.get_mean();
+                let variance = norm_params.get_variance();
+                let decay = norm_params.get_decay();
+                norm_ref = NodeRef::new(NormalizationNode::from_parameters(mean, variance, decay));
+            }
+
             let scale_ref = NodeRef::new(WeightNode::new_vec(
                 output_size,
                 decay_type.clone(),
@@ -109,7 +121,7 @@ impl<'a> SoftmaxUnit<'a> {
 
             raw_output_ref = &norm_add_ref;
 
-            let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
+            let module = BatchNormModule::new(*decay, &norm_ref, &scale_ref, &shift_ref);
             norm_module = Option::Some(module);
         }
 
@@ -171,6 +183,7 @@ impl<'a> SoftmaxUnit<'a> {
             biases,
             keep_probability,
             is_inference,
+            norm_params,
         } = config
         {
             let unit: SoftmaxUnit = Self::new(
@@ -181,11 +194,14 @@ impl<'a> SoftmaxUnit<'a> {
                 descent_type,
                 UnitMaskType::from_keep_probability(*keep_probability),
                 normalization_type,
+                norm_params.get_normalization(),
                 *is_inference,
             );
 
             unit.set_weights(weights);
             unit.set_biases(biases);
+
+            unit.set_normalization(norm_params);
 
             return unit;
         }
@@ -246,6 +262,16 @@ impl<'a> SoftmaxUnit<'a> {
         }
         if !matches!(&learning_rate, DataContainer::Empty) {
             self.weights.borrow_mut().set_learning_rate(learning_rate);
+        }
+    }
+
+    pub fn set_normalization(&self, norm_params: &BatchNormParams) {
+        if !norm_params.is_null() {
+            if let Option::Some(module) = &self.norm_module {
+                module.set_parameters(norm_params);
+                return;
+            }
+            println!("Detected BatchNormParams wasn't null but couldn't find BatchNormModule -- skipping assignment");
         }
     }
 

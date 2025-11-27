@@ -5,7 +5,11 @@
 // internal
 
 use crate::{
-    network::config_types::{batch_norm_params::BatchNormParams, learned_params::LearnedParams},
+    data::data_container::DataContainer,
+    network::config_types::{
+        batch_norm_params::BatchNormParams, layer_params::LayerParams,
+        learned_params::LearnedParams,
+    },
     node::NodeRef,
 };
 
@@ -26,6 +30,7 @@ impl NormalizationType {
 }
 
 pub struct BatchNormModule<'a> {
+    decay: f32,
     normalization: NodeRef<'a>,
     scales: NodeRef<'a>,
     shifts: NodeRef<'a>,
@@ -33,11 +38,13 @@ pub struct BatchNormModule<'a> {
 
 impl<'a> BatchNormModule<'a> {
     pub fn new(
+        decay: f32,
         normalization: &NodeRef<'a>,
         scales: &NodeRef<'a>,
         shifts: &NodeRef<'a>,
     ) -> BatchNormModule<'a> {
         BatchNormModule {
+            decay,
             normalization: NodeRef::clone(normalization),
             scales: NodeRef::clone(scales),
             shifts: NodeRef::clone(shifts),
@@ -64,5 +71,27 @@ impl<'a> BatchNormModule<'a> {
 
         println!("Invalid LearnedParams type from saved parameters");
         BatchNormParams::null()
+    }
+
+    pub fn set_parameters(&self, params: &BatchNormParams) {
+        let scales = params.get_scales();
+        let shifts = params.get_shifts();
+
+        Self::set_node_parameters(&self.scales, scales);
+        Self::set_node_parameters(&self.shifts, shifts);
+    }
+
+    fn set_node_parameters(node: &NodeRef<'a>, params: &LayerParams) {
+        let parameters = params.get_parameters();
+        let momentum = params.get_momentum();
+        let learning_rate = params.get_learning_rate();
+
+        node.borrow_mut().set_data(parameters);
+        if !matches!(&momentum, DataContainer::Empty) {
+            node.borrow_mut().set_momentum(momentum);
+        }
+        if !matches!(&learning_rate, DataContainer::Empty) {
+            node.borrow_mut().set_learning_rate(learning_rate);
+        }
     }
 }
