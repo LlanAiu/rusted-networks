@@ -79,7 +79,7 @@ mod tests {
     #[test]
     fn penalty_test() {
         let mut unit: L1PenaltyUnit = L1PenaltyUnit::new(1.0);
-        let weight: NodeRef = NodeRef::new(WeightNode::new(
+        let weight: NodeRef = NodeRef::new(WeightNode::new_matrix(
             4,
             2,
             LearningDecayType::constant(0.001),
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn penalty_backprop() {
         let mut unit: L1PenaltyUnit = L1PenaltyUnit::new(1.0);
-        let weight: NodeRef = NodeRef::new(WeightNode::new(
+        let weight: NodeRef = NodeRef::new(WeightNode::new_matrix(
             4,
             2,
             LearningDecayType::constant(1.0),

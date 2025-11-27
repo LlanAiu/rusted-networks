@@ -9,6 +9,22 @@ use crate::{
     node::NodeRef,
 };
 
+#[derive(Clone)]
+pub enum NormalizationType {
+    BatchNorm { decay: f32 },
+    None,
+}
+
+impl NormalizationType {
+    pub fn none() -> NormalizationType {
+        NormalizationType::None
+    }
+
+    pub fn batch_norm(decay: f32) -> NormalizationType {
+        NormalizationType::BatchNorm { decay }
+    }
+}
+
 pub struct BatchNormModule<'a> {
     normalization: NodeRef<'a>,
     scales: NodeRef<'a>,

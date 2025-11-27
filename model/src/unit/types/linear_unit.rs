@@ -44,7 +44,7 @@ impl<'a> LinearUnit<'a> {
         mask_type: UnitMaskType,
         is_inference: bool,
     ) -> LinearUnit<'a> {
-        let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
+        let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
             input_size,
             output_size,
             decay_type.clone(),
