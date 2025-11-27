@@ -112,11 +112,13 @@ impl NormParams {
     }
 
     pub fn new_from_parameters(dim: Vec<usize>, decay: f32) -> NormParams {
+        let total_size = dim.iter().product();
+
         NormParams {
             is_null: false,
             dim,
-            mean: Vec::new(),
-            variance: Vec::new(),
+            mean: vec![0.0; total_size],
+            variance: vec![1.0; total_size],
             decay,
         }
     }

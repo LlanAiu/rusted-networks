@@ -4,7 +4,7 @@
       "input_size": [
         1
       ],
-      "keep_probability": 0.8
+      "keep_probability": 0.9
     },
     "units": [
       {
@@ -18,19 +18,19 @@
             1
           ],
           "parameters": [
-            -13.473896,
-            3.1705089
+            -26.598888,
+            -5.7922316
           ],
           "momentum": {
             "momentum": [
-              0.000066333836,
-              -0.000006912855
+              0.065750964,
+              0.002331884
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.000018053397,
-              1.1553443e-7
+              41044670.0,
+              0.0000556041
             ]
           }
         },
@@ -40,38 +40,51 @@
             2
           ],
           "parameters": [
-            -3.3757553,
-            1.970933
+            16.936182,
+            -6.8838253
           ],
           "momentum": {
             "momentum": [
-              0.00005032643,
-              -0.000006187306
+              -0.057997353,
+              0.0022989586
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.000042517717,
-              1.3252753e-7
+              99681640.0,
+              0.00008081691
             ]
           }
         },
         "activation": "relu",
-        "keep_probability": 0.5,
-        "is_inference": false,
+        "keep_probability": 0.8,
+        "is_last_layer": false,
         "norm_params": {
-          "is_null": true,
+          "is_null": false,
           "normalization": {
-            "is_null": true,
-            "dim": [],
-            "mean": [],
-            "variance": [],
-            "decay": 0.0
+            "is_null": false,
+            "dim": [
+              2
+            ],
+            "mean": [
+              0.0,
+              0.0
+            ],
+            "variance": [
+              1.0,
+              1.0
+            ],
+            "decay": 0.95
           },
           "scales": {
-            "is_null": true,
-            "dim": [],
-            "parameters": [],
+            "is_null": false,
+            "dim": [
+              2
+            ],
+            "parameters": [
+              1.0,
+              1.0
+            ],
             "momentum": {
               "momentum": []
             },
@@ -80,9 +93,14 @@
             }
           },
           "shifts": {
-            "is_null": true,
-            "dim": [],
-            "parameters": [],
+            "is_null": false,
+            "dim": [
+              2
+            ],
+            "parameters": [
+              0.0,
+              0.0
+            ],
             "momentum": {
               "momentum": []
             },
@@ -103,25 +121,25 @@
             2
           ],
           "parameters": [
-            2.640807,
-            -5.822997,
-            -2.9936414,
-            6.39396
+            40.342163,
+            -9.46997,
+            -35.233265,
+            7.469163
           ],
           "momentum": {
             "momentum": [
-              0.00000534007,
-              0.000012957899,
-              -0.000005340076,
-              -0.000012957899
+              -0.016844006,
+              0.00002032775,
+              0.01668948,
+              -0.000017122058
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              6.731087e-7,
-              0.0000037428117,
-              6.731087e-7,
-              0.0000037428117
+              3969601.8,
+              3.501565e-8,
+              1037978.44,
+              3.6764084e-7
             ]
           }
         },
@@ -131,54 +149,84 @@
             2
           ],
           "parameters": [
-            -0.6069865,
-            0.60698867
+            4.471871,
+            1.0323758
           ],
           "momentum": {
             "momentum": [
-              -0.08540273,
-              0.08540273
+              -0.008579761,
+              0.008346016
             ]
           },
           "learning_rate": {
             "adaptive_rate": [
-              0.08763381,
-              0.0876338
+              4444.091,
+              1160.351
             ]
           }
         },
         "activation": "none",
-        "keep_probability": 0.5,
-        "is_inference": true,
+        "keep_probability": 0.8,
+        "is_last_layer": true,
         "norm_params": {
-          "is_null": true,
+          "is_null": false,
           "normalization": {
-            "is_null": true,
-            "dim": [],
-            "mean": [],
-            "variance": [],
-            "decay": 0.0
+            "is_null": false,
+            "dim": [
+              2
+            ],
+            "mean": [
+              781.6962,
+              -675.78625
+            ],
+            "variance": [
+              619270.2,
+              470162.4
+            ],
+            "decay": 0.95
           },
           "scales": {
-            "is_null": true,
-            "dim": [],
-            "parameters": [],
+            "is_null": false,
+            "dim": [
+              2
+            ],
+            "parameters": [
+              12.686837,
+              8.00141
+            ],
             "momentum": {
-              "momentum": []
+              "momentum": [
+                0.0043089488,
+                -0.011349383
+              ]
             },
             "learning_rate": {
-              "adaptive_rate": []
+              "adaptive_rate": [
+                0.0000053102262,
+                0.0000064065034
+              ]
             }
           },
           "shifts": {
-            "is_null": true,
-            "dim": [],
-            "parameters": [],
+            "is_null": false,
+            "dim": [
+              2
+            ],
+            "parameters": [
+              1.767113,
+              -1.7671087
+            ],
             "momentum": {
-              "momentum": []
+              "momentum": [
+                0.02168268,
+                -0.021682702
+              ]
             },
             "learning_rate": {
-              "adaptive_rate": []
+              "adaptive_rate": [
+                0.042453602,
+                0.04245361
+              ]
             }
           }
         }
@@ -202,7 +250,11 @@
           "decay": 0.95
         }
       },
-      "normalization_type": "None"
+      "normalization_type": {
+        "BatchNorm": {
+          "decay": 0.95
+        }
+      }
     },
     "regularization": {
       "norm_penalty": "None"

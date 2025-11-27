@@ -146,7 +146,7 @@ mod tests {
             vec![2],
             vec![2],
             penalty_config,
-            NetworkMaskType::none(),
+            NetworkMaskType::from_probabilities(0.9, 0.8),
             LearningDecayType::rms_prop(0.05, 0.95),
             DescentType::nesterov(0.95),
             NormalizationType::batch_norm(0.95),
