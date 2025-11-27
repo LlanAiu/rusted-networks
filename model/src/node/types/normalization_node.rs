@@ -65,7 +65,7 @@ impl<'a> NormalizationNode<'a> {
     }
 
     fn update_running_mean(&mut self, mean: &DataContainer) {
-        if self.running_mean.dim().1.len() != mean.dim().1.len() {
+        if self.running_mean.dim() != mean.dim() {
             self.running_mean = mean.apply_elementwise(|f| f * self.decay);
         } else {
             self.running_mean.apply_inplace(|f| *f *= self.decay);
@@ -75,7 +75,7 @@ impl<'a> NormalizationNode<'a> {
     }
 
     fn update_running_variance(&mut self, variance: &DataContainer) {
-        if self.running_var.dim().1.len() != variance.dim().1.len() {
+        if self.running_var.dim() != variance.dim() {
             self.running_var = variance.apply_elementwise(|f| f * self.decay);
         } else {
             self.running_var.apply_inplace(|f| *f *= self.decay);
@@ -85,6 +85,9 @@ impl<'a> NormalizationNode<'a> {
     }
 
     fn normalize_inference(&mut self, mut data: DataContainer) {
+        println!("Running mean: {:?}", self.running_mean);
+        println!("Running variance: {:?}", self.running_var);
+
         data.minus_assign(&self.running_mean);
         let inverse_std_dev = self
             .running_var
@@ -195,5 +198,68 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
         let params = NormParams::new(&self.running_mean, &self.running_var, self.decay);
 
         LearnedParams::new_batch_norm(params)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ndarray::arr1;
+
+    use crate::{
+        data::{data_container::DataContainer, Data},
+        node::{
+            types::{input_node::InputNode, normalization_node::NormalizationNode},
+            NodeRef,
+        },
+        regularization::dropout::NetworkMode,
+    };
+
+    #[test]
+    pub fn test_normalization() {
+        let norm: NodeRef = NodeRef::new(NormalizationNode::new(0.95));
+
+        let input: NodeRef = NodeRef::new(InputNode::new(vec![5]));
+
+        norm.borrow_mut().add_input(&norm, &input);
+        norm.borrow_mut().set_mode(NetworkMode::Train);
+
+        let data: Vec<Data> = vec![
+            Data::VectorF32(arr1(&[1.0, 3.0, 1.0, 2.0, 3.0])),
+            Data::VectorF32(arr1(&[2.0, 2.0, 3.0, 1.0, 1.0])),
+            Data::VectorF32(arr1(&[3.0, 1.0, 2.0, 3.0, 2.0])),
+        ];
+
+        let batch: DataContainer = DataContainer::Batch(data);
+        input.borrow_mut().set_data(batch);
+
+        norm.borrow_mut().apply_operation();
+
+        let output: DataContainer = norm.borrow_mut().get_data();
+        println!("Normalized Output {:?}", output);
+
+        let data2: Vec<Data> = vec![
+            Data::VectorF32(arr1(&[2.0, 6.0, 2.0, 4.0, 6.0])),
+            Data::VectorF32(arr1(&[4.0, 4.0, 6.0, 2.0, 2.0])),
+            Data::VectorF32(arr1(&[6.0, 2.0, 4.0, 6.0, 4.0])),
+        ];
+
+        let batch2: DataContainer = DataContainer::Batch(data2);
+        input.borrow_mut().set_data(batch2);
+
+        norm.borrow_mut().apply_operation();
+
+        let output2: DataContainer = norm.borrow_mut().get_data();
+        println!("Normalized Output 2 {:?}", output2);
+
+        norm.borrow_mut().set_mode(NetworkMode::Inference);
+
+        let inference: DataContainer =
+            DataContainer::Inference(Data::VectorF32(arr1(&[1.0, 3.0, 1.0, 2.0, 3.0])));
+        input.borrow_mut().set_data(inference);
+
+        norm.borrow_mut().apply_operation();
+
+        let inference_output: DataContainer = norm.borrow_mut().get_data();
+        println!("Inference Normalized Output {:?}", inference_output);
     }
 }
