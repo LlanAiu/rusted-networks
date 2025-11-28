@@ -22,10 +22,10 @@ pub fn train_dataset() {
         vec![10],
         vec![50],
         penalty_config,
-        NetworkMaskType::None,
+        NetworkMaskType::none(),
         LearningDecayType::rms_prop(0.01, 0.9),
-        DescentType::nesterov(0.5),
-        NormalizationType::none(),
+        DescentType::nesterov(0.4),
+        NormalizationType::batch_norm(0.8),
     );
 
     let train: Vec<HandwrittenExample> =
@@ -33,7 +33,7 @@ pub fn train_dataset() {
     let test: Vec<HandwrittenExample> =
         load_data_from_csv("../data/mnist_test.csv", 0, 10000).expect("Failed to read data");
 
-    let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
+    let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 16, train, test);
 
     let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
         SupervisedTrainer::new(classifier, config);
@@ -132,7 +132,7 @@ mod tests {
             NetworkMaskType::from_probabilities(0.8, 0.5),
             LearningDecayType::rms_prop(0.01, 0.9),
             DescentType::nesterov(0.5),
-            NormalizationType::none(),
+            NormalizationType::batch_norm(0.9),
         );
 
         let train: Vec<HandwrittenExample> =
