@@ -425,6 +425,26 @@ impl DataContainer {
         }
     }
 
+    pub fn sum_batch(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                if batch.len() == 0 {
+                    return DataContainer::Empty;
+                }
+                let mut sum: Data = batch[0].clone();
+                for i in 1..batch.len() {
+                    let data: &Data = batch.get(i).unwrap();
+                    sum.sum_assign(data);
+                }
+
+                DataContainer::Parameter(sum)
+            }
+            _ => {
+                panic!("Invalid data format for operation [BATCH SUM], wasn't DataContainer::Batch")
+            }
+        }
+    }
+
     pub fn average_batch(&self) -> DataContainer {
         match self {
             DataContainer::Batch(batch) => {

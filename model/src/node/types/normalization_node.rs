@@ -156,6 +156,7 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
         self.base.add_to_gradient(grad);
     }
 
+    //TODO: fix this gradient calculation
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
 
