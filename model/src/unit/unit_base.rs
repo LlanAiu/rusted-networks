@@ -21,29 +21,27 @@ pub struct UnitBase<'a> {
 
 impl<'a> UnitBase<'a> {
     pub fn new(
-        input: &NodeRef<'a>,
-        output: &NodeRef<'a>,
-        mask: Option<&NodeRef<'a>>,
-        norm: Option<&NodeRef<'a>>,
+        input: NodeRef<'a>,
+        output: NodeRef<'a>,
+        mask: Option<NodeRef<'a>>,
+        norm: Option<NodeRef<'a>>,
         is_last_layer: bool,
     ) -> UnitBase<'a> {
         let mut mask_node: Option<NodeRef<'a>> = Option::None;
-
         if let Option::Some(mask_ref) = mask {
-            mask_node = Option::Some(NodeRef::clone(mask_ref))
+            mask_node = Option::Some(mask_ref)
         }
 
         let mut norm_node: Option<NodeRef<'a>> = Option::None;
-
         if let Option::Some(norm_ref) = norm {
-            norm_node = Option::Some(NodeRef::clone(norm_ref))
+            norm_node = Option::Some(norm_ref)
         }
 
         UnitBase {
             inputs: Vec::new(),
             outputs: Vec::new(),
-            input_node: NodeRef::clone(input),
-            output_node: NodeRef::clone(output),
+            input_node: input,
+            output_node: output,
             mask_node,
             norm_node,
             is_last_layer,
