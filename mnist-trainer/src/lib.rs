@@ -23,9 +23,9 @@ pub fn train_dataset() {
         vec![50],
         penalty_config,
         NetworkMaskType::none(),
-        LearningDecayType::rms_prop(0.01, 0.9),
-        DescentType::nesterov(0.4),
-        NormalizationType::batch_norm(0.8),
+        LearningDecayType::constant(0.04),
+        DescentType::none(),
+        NormalizationType::batch_norm(0.9),
     );
 
     let train: Vec<HandwrittenExample> =
@@ -49,7 +49,10 @@ mod tests {
         optimization::{
             batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
         },
-        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
         trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
 
@@ -123,15 +126,16 @@ mod tests {
 
     #[test]
     fn small_dataset_init() {
-        let penalty_config: PenaltyConfig = PenaltyConfig::none();
+        let l2_builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.008);
+        let penalty_config: PenaltyConfig = PenaltyConfig::new(l2_builder);
         let classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![784],
             vec![10],
             vec![50],
             penalty_config,
-            NetworkMaskType::from_probabilities(0.8, 0.5),
+            NetworkMaskType::none(),
             LearningDecayType::rms_prop(0.01, 0.9),
-            DescentType::nesterov(0.5),
+            DescentType::nesterov(0.4),
             NormalizationType::batch_norm(0.9),
         );
 

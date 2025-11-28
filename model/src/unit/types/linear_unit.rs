@@ -74,58 +74,62 @@ impl<'a> LinearUnit<'a> {
         add_ref.borrow_mut().add_input(&add_ref, &matmul_ref);
         add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
 
-        activation_ref
-            .borrow_mut()
-            .add_input(&activation_ref, &add_ref);
-
-        let mut output_ref: &NodeRef = &activation_ref;
+        let mut output_ref: &NodeRef = &add_ref;
         let mut norm_module: Option<BatchNormModule> = Option::None;
         let mut norm: Option<&NodeRef> = Option::None;
 
         let norm_add_ref: NodeRef;
         let norm_ref: NodeRef;
 
-        if let NormalizationType::BatchNorm { decay } = &normalization_type {
-            if norm_params.is_null() {
-                norm_ref = NodeRef::new(NormalizationNode::new(*decay));
-            } else {
-                let mean = norm_params.get_mean();
-                let variance = norm_params.get_variance();
-                let decay = norm_params.get_decay();
-                norm_ref = NodeRef::new(NormalizationNode::from_parameters(mean, variance, decay));
+        if !is_last_layer {
+            if let NormalizationType::BatchNorm { decay } = &normalization_type {
+                if norm_params.is_null() {
+                    norm_ref = NodeRef::new(NormalizationNode::new(*decay));
+                } else {
+                    let mean = norm_params.get_mean();
+                    let variance = norm_params.get_variance();
+                    let decay = norm_params.get_decay();
+                    norm_ref =
+                        NodeRef::new(NormalizationNode::from_parameters(mean, variance, decay));
+                }
+
+                let scale_ref = NodeRef::new(WeightNode::new_vec(
+                    output_size,
+                    decay_type.clone(),
+                    descent_type.clone(),
+                ));
+                let shift_ref = NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
+                let norm_multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
+                norm_add_ref = NodeRef::new(AddNode::new());
+
+                norm_ref.borrow_mut().add_input(&norm_ref, &output_ref);
+
+                norm_multiply_ref
+                    .borrow_mut()
+                    .add_input(&norm_multiply_ref, &norm_ref);
+                norm_multiply_ref
+                    .borrow_mut()
+                    .add_input(&norm_multiply_ref, &scale_ref);
+
+                norm_add_ref
+                    .borrow_mut()
+                    .add_input(&norm_add_ref, &norm_multiply_ref);
+                norm_add_ref
+                    .borrow_mut()
+                    .add_input(&norm_add_ref, &shift_ref);
+
+                output_ref = &norm_add_ref;
+
+                let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
+                norm_module = Option::Some(module);
+                norm = Option::Some(&norm_ref);
             }
-
-            let scale_ref = NodeRef::new(WeightNode::new_vec(
-                output_size,
-                decay_type.clone(),
-                descent_type.clone(),
-            ));
-            let shift_ref = NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
-            let norm_multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
-            norm_add_ref = NodeRef::new(AddNode::new());
-
-            norm_ref.borrow_mut().add_input(&norm_ref, &activation_ref);
-
-            norm_multiply_ref
-                .borrow_mut()
-                .add_input(&norm_multiply_ref, &norm_ref);
-            norm_multiply_ref
-                .borrow_mut()
-                .add_input(&norm_multiply_ref, &scale_ref);
-
-            norm_add_ref
-                .borrow_mut()
-                .add_input(&norm_add_ref, &norm_multiply_ref);
-            norm_add_ref
-                .borrow_mut()
-                .add_input(&norm_add_ref, &shift_ref);
-
-            output_ref = &norm_add_ref;
-
-            let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
-            norm_module = Option::Some(module);
-            norm = Option::Some(&norm_ref);
         }
+
+        activation_ref
+            .borrow_mut()
+            .add_input(&activation_ref, output_ref);
+        output_ref = &activation_ref;
 
         let mut mask: Option<&NodeRef> = Option::None;
 
@@ -262,7 +266,7 @@ impl<'a> LinearUnit<'a> {
     }
 
     pub fn set_normalization(&self, norm_params: &BatchNormParams) {
-        if !norm_params.is_null() {
+        if !norm_params.is_null() && !self.is_last_layer() {
             if let Option::Some(module) = &self.norm_module {
                 module.set_parameters(norm_params);
                 return;
