@@ -3,7 +3,6 @@
 // external
 
 // internal
-
 use crate::{
     network::config_types::{batch_norm_params::NormParams, unit_params::UnitParams},
     node::{
@@ -74,7 +73,8 @@ fn create_linear_unit<'a>(
     norm_params: &NormParams,
     is_last_layer: bool,
 ) -> LinearUnit<'a> {
-    let create_batch_norm: bool = normalization_type.is_batch_norm_enabled() && !is_last_layer;
+    let batch_norm_enabled: bool = normalization_type.is_batch_norm_enabled() && !is_last_layer;
+    let mut output_ref: NodeRef;
 
     let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
         input_size,
@@ -86,71 +86,34 @@ fn create_linear_unit<'a>(
     let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
 
     matmul_ref.borrow_mut().add_input(&matmul_ref, &weights_ref);
-
-    let mut output_ref: NodeRef = NodeRef::clone(&matmul_ref);
+    output_ref = NodeRef::clone(&matmul_ref);
 
     let mut biases: Option<NodeRef> = Option::None;
-
-    let (biases_ref, add_ref) = create_biases(
-        NodeRef::clone(&output_ref),
-        output_size,
-        &decay_type,
-        &descent_type,
-    );
-
-    if !create_batch_norm {
+    if !batch_norm_enabled {
+        let (biases_ref, out_ref) = create_biases(
+            NodeRef::clone(&output_ref),
+            output_size,
+            &decay_type,
+            &descent_type,
+        );
         biases = Option::Some(biases_ref);
-        output_ref = NodeRef::clone(&add_ref);
+        output_ref = NodeRef::clone(&out_ref);
     }
 
     let mut norm_module: Option<BatchNormModule> = Option::None;
     let mut norm: Option<NodeRef> = Option::None;
-
-    let norm_add_ref: NodeRef;
-    let norm_ref: NodeRef;
-
-    if create_batch_norm {
-        if let NormalizationType::BatchNorm { decay } = &normalization_type {
-            if norm_params.is_null() {
-                norm_ref = NodeRef::new(NormalizationNode::new(*decay));
-            } else {
-                let mean = norm_params.get_mean();
-                let variance = norm_params.get_variance();
-                let decay = norm_params.get_decay();
-                norm_ref = NodeRef::new(NormalizationNode::from_parameters(mean, variance, decay));
-            }
-
-            let scale_ref = NodeRef::new(WeightNode::new_vec(
-                output_size,
-                decay_type.clone(),
-                descent_type.clone(),
-            ));
-            let shift_ref = NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
-            let norm_multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
-            norm_add_ref = NodeRef::new(AddNode::new());
-
-            norm_ref.borrow_mut().add_input(&norm_ref, &output_ref);
-
-            norm_multiply_ref
-                .borrow_mut()
-                .add_input(&norm_multiply_ref, &norm_ref);
-            norm_multiply_ref
-                .borrow_mut()
-                .add_input(&norm_multiply_ref, &scale_ref);
-
-            norm_add_ref
-                .borrow_mut()
-                .add_input(&norm_add_ref, &norm_multiply_ref);
-            norm_add_ref
-                .borrow_mut()
-                .add_input(&norm_add_ref, &shift_ref);
-
-            output_ref = NodeRef::clone(&norm_add_ref);
-
-            let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
-            norm_module = Option::Some(module);
-            norm = Option::Some(norm_ref);
-        }
+    if batch_norm_enabled {
+        let (module, out_ref, norm_ref) = create_batch_norm(
+            NodeRef::clone(&output_ref),
+            &normalization_type,
+            norm_params,
+            output_size,
+            &decay_type,
+            &descent_type,
+        );
+        output_ref = NodeRef::clone(&out_ref);
+        norm_module = Option::Some(module);
+        norm = Option::Some(norm_ref);
     }
 
     activation_ref
@@ -159,29 +122,11 @@ fn create_linear_unit<'a>(
     output_ref = NodeRef::clone(&activation_ref);
 
     let mut mask: Option<NodeRef> = Option::None;
-
-    let mask_ref: NodeRef;
-    let multiply_ref: NodeRef;
-
     if !is_last_layer {
-        if let UnitMaskType::Dropout {
-            keep_probability: probability,
-        } = &mask_type
-        {
-            mask_ref = NodeRef::new(MaskNode::new(vec![output_size], *probability));
-            multiply_ref = NodeRef::new(MultiplyNode::new());
-
-            multiply_ref
-                .borrow_mut()
-                .add_input(&multiply_ref, &output_ref);
-
-            multiply_ref
-                .borrow_mut()
-                .add_input(&multiply_ref, &mask_ref);
-
-            mask = Option::Some(mask_ref);
-            output_ref = NodeRef::clone(&multiply_ref);
-        }
+        let (mask_ref, out_ref) =
+            create_dropout(NodeRef::clone(&output_ref), &mask_type, output_size);
+        mask = Option::Some(mask_ref);
+        output_ref = NodeRef::clone(&out_ref);
     }
 
     LinearUnit {
@@ -213,4 +158,83 @@ fn create_biases<'a>(
     add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
 
     (biases_ref, add_ref)
+}
+
+fn create_batch_norm<'a>(
+    output: NodeRef<'a>,
+    normalization_type: &NormalizationType,
+    norm_params: &NormParams,
+    size: usize,
+    decay_type: &LearningDecayType,
+    descent_type: &DescentType,
+) -> (BatchNormModule<'a>, NodeRef<'a>, NodeRef<'a>) {
+    if let NormalizationType::BatchNorm { decay } = normalization_type {
+        let norm_ref: NodeRef;
+        if norm_params.is_null() {
+            norm_ref = NodeRef::new(NormalizationNode::new(*decay));
+        } else {
+            let mean = norm_params.get_mean();
+            let variance = norm_params.get_variance();
+            let decay = norm_params.get_decay();
+            norm_ref = NodeRef::new(NormalizationNode::from_parameters(mean, variance, decay));
+        }
+
+        let scale_ref = NodeRef::new(WeightNode::new_vec(
+            size,
+            decay_type.clone(),
+            descent_type.clone(),
+        ));
+        let shift_ref = NodeRef::new(BiasNode::new(
+            size,
+            decay_type.clone(),
+            descent_type.clone(),
+        ));
+        let norm_multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
+        let norm_add_ref: NodeRef = NodeRef::new(AddNode::new());
+
+        norm_ref.borrow_mut().add_input(&norm_ref, &output);
+
+        norm_multiply_ref
+            .borrow_mut()
+            .add_input(&norm_multiply_ref, &norm_ref);
+        norm_multiply_ref
+            .borrow_mut()
+            .add_input(&norm_multiply_ref, &scale_ref);
+
+        norm_add_ref
+            .borrow_mut()
+            .add_input(&norm_add_ref, &norm_multiply_ref);
+        norm_add_ref
+            .borrow_mut()
+            .add_input(&norm_add_ref, &shift_ref);
+
+        let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
+        return (module, norm_add_ref, norm_ref);
+    }
+
+    panic!("Tried to create batch norm module with a NormalizationType::None configuration!");
+}
+
+fn create_dropout<'a>(
+    output: NodeRef<'a>,
+    mask_type: &UnitMaskType,
+    size: usize,
+) -> (NodeRef<'a>, NodeRef<'a>) {
+    if let UnitMaskType::Dropout {
+        keep_probability: probability,
+    } = mask_type
+    {
+        let mask_ref: NodeRef = NodeRef::new(MaskNode::new(vec![size], *probability));
+        let multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
+
+        multiply_ref.borrow_mut().add_input(&multiply_ref, &output);
+
+        multiply_ref
+            .borrow_mut()
+            .add_input(&multiply_ref, &mask_ref);
+
+        return (mask_ref, multiply_ref);
+    }
+
+    panic!("Tried to create dropout module with a UnitMaskType::None configuration!");
 }
