@@ -176,7 +176,6 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
             self.base.reset_gradient();
             return;
         }
-
         let input = self.base.get_inputs().get(0).unwrap();
 
         let grad = self.base.get_gradient();
