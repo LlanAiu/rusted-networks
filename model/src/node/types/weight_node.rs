@@ -179,29 +179,18 @@ impl<'a> Node<'a> for WeightNode<'a> {
         let container = self.base.get_data();
 
         if let DataContainer::Parameter(data) = container {
-            match data {
-                Data::VectorF32(vec) => {
-                    let parameters: Vec<f32> = vec.to_vec();
+            let dim: Vec<usize> = self.dim.clone();
+            let momentum = self.momentum_base.get_momentum_save();
+            let learning_rate = self.learning_base.get_learning_rate_save();
 
-                    let dim: Vec<usize> = self.dim.clone();
-                    let momentum = self.momentum_base.get_momentum_save();
-                    let learning_rate = self.learning_base.get_learning_rate_save();
-
-                    let params = LayerParams::new(dim, parameters, momentum, learning_rate);
-                    return LearnedParams::new_layer(params);
-                }
-                Data::MatrixF32(matrix) => {
-                    let parameters = matrix.flatten().to_vec();
-
-                    let dim: Vec<usize> = self.dim.clone();
-                    let momentum = self.momentum_base.get_momentum_save();
-                    let learning_rate = self.learning_base.get_learning_rate_save();
-
-                    let params = LayerParams::new(dim, parameters, momentum, learning_rate);
-                    return LearnedParams::new_layer(params);
-                }
+            let parameters: Vec<f32> = match data {
+                Data::VectorF32(vec) => vec.to_vec(),
+                Data::MatrixF32(matrix) => matrix.flatten().to_vec(),
                 _ => panic!("[WEIGHT] Unexpected data type for weights!"),
-            }
+            };
+
+            let params = LayerParams::new(dim, parameters, momentum, learning_rate);
+            return LearnedParams::new_layer(params);
         }
 
         panic!("[WEIGHT] Unexpected data type for weights!");
