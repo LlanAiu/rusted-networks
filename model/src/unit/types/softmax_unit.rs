@@ -5,16 +5,26 @@
 // internal
 use crate::{
     data::{data_container::DataContainer, Data},
-    network::config_types::{learned_params::LearnedParams, unit_params::UnitParams},
+    network::config_types::{
+        batch_norm_params::{BatchNormParams, NormParams},
+        layer_params::LayerParams,
+        learned_params::LearnedParams,
+        unit_params::UnitParams,
+    },
     node::{
         types::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
             mask_node::MaskNode, matrix_multiply_node::MatrixMultiplyNode,
-            multiply_node::MultiplyNode, softmax_node::SoftmaxNode, weight_node::WeightNode,
+            multiply_node::MultiplyNode, normalization_node::NormalizationNode,
+            softmax_node::SoftmaxNode, weight_node::WeightNode,
         },
         NodeRef,
     },
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::{BatchNormModule, NormalizationType},
+        learning_decay::LearningDecayType,
+        momentum::DescentType,
+    },
     regularization::dropout::{NetworkMode, UnitMaskType},
     unit::{unit_base::UnitBase, Unit, UnitRef},
 };
@@ -23,6 +33,7 @@ pub struct SoftmaxUnit<'a> {
     base: UnitBase<'a>,
     weights: NodeRef<'a>,
     biases: NodeRef<'a>,
+    norm_module: Option<BatchNormModule<'a>>,
     input_size: usize,
     output_size: usize,
     activation: String,
@@ -30,23 +41,28 @@ pub struct SoftmaxUnit<'a> {
 }
 
 impl<'a> SoftmaxUnit<'a> {
-    // TODO: update config to handle dropout parameters
-    pub fn new(
+    fn new(
         function: &str,
         input_size: usize,
         output_size: usize,
         decay_type: LearningDecayType,
         descent_type: DescentType,
         mask_type: UnitMaskType,
-        is_inference: bool,
+        normalization_type: NormalizationType,
+        norm_params: &NormParams,
+        is_last_layer: bool,
     ) -> SoftmaxUnit<'a> {
-        let weights_ref: NodeRef = NodeRef::new(WeightNode::new(
+        let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
             input_size,
             output_size,
             decay_type.clone(),
             descent_type.clone(),
         ));
-        let biases_ref = NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
+        let biases_ref = NodeRef::new(BiasNode::new(
+            output_size,
+            decay_type.clone(),
+            descent_type.clone(),
+        ));
         let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
         let add_ref: NodeRef = NodeRef::new(AddNode::new());
         let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
@@ -57,13 +73,66 @@ impl<'a> SoftmaxUnit<'a> {
         add_ref.borrow_mut().add_input(&add_ref, &matmul_ref);
         add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
 
+        let mut raw_output_ref: &NodeRef = &add_ref;
+        let mut norm_module: Option<BatchNormModule> = Option::None;
+        let mut norm: Option<&NodeRef> = Option::None;
+
+        let norm_add_ref: NodeRef;
+        let norm_ref: NodeRef;
+
+        if !is_last_layer {
+            if let NormalizationType::BatchNorm { decay } = &normalization_type {
+                if norm_params.is_null() {
+                    norm_ref = NodeRef::new(NormalizationNode::new(*decay));
+                } else {
+                    let mean = norm_params.get_mean();
+                    let variance = norm_params.get_variance();
+                    let decay = norm_params.get_decay();
+                    norm_ref =
+                        NodeRef::new(NormalizationNode::from_parameters(mean, variance, decay));
+                }
+
+                let scale_ref = NodeRef::new(WeightNode::new_vec(
+                    output_size,
+                    decay_type.clone(),
+                    descent_type.clone(),
+                ));
+                let shift_ref = NodeRef::new(BiasNode::new(output_size, decay_type, descent_type));
+                let norm_multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
+                norm_add_ref = NodeRef::new(AddNode::new());
+
+                norm_ref.borrow_mut().add_input(&norm_ref, &raw_output_ref);
+
+                norm_multiply_ref
+                    .borrow_mut()
+                    .add_input(&norm_multiply_ref, &norm_ref);
+                norm_multiply_ref
+                    .borrow_mut()
+                    .add_input(&norm_multiply_ref, &scale_ref);
+
+                norm_add_ref
+                    .borrow_mut()
+                    .add_input(&norm_add_ref, &norm_multiply_ref);
+                norm_add_ref
+                    .borrow_mut()
+                    .add_input(&norm_add_ref, &shift_ref);
+
+                raw_output_ref = &norm_add_ref;
+
+                let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
+                norm_module = Option::Some(module);
+                norm = Option::Some(&norm_ref);
+            }
+        }
+
         activation_ref
             .borrow_mut()
-            .add_input(&activation_ref, &add_ref);
+            .add_input(&activation_ref, raw_output_ref);
+        raw_output_ref = &activation_ref;
 
         softmax_ref
             .borrow_mut()
-            .add_input(&softmax_ref, &activation_ref);
+            .add_input(&softmax_ref, raw_output_ref);
 
         let mut output_ref: &NodeRef = &softmax_ref;
         let mut mask: Option<&NodeRef> = Option::None;
@@ -71,7 +140,7 @@ impl<'a> SoftmaxUnit<'a> {
         let mask_ref: NodeRef;
         let multiply_ref: NodeRef;
 
-        if !is_inference {
+        if !is_last_layer {
             if let UnitMaskType::Dropout {
                 keep_probability: probability,
             } = &mask_type
@@ -93,12 +162,13 @@ impl<'a> SoftmaxUnit<'a> {
         }
 
         SoftmaxUnit {
-            base: UnitBase::new(&matmul_ref, output_ref, mask, is_inference),
+            base: UnitBase::new(&matmul_ref, output_ref, mask, norm, is_last_layer),
             weights: weights_ref,
             biases: biases_ref,
             input_size,
             output_size,
             activation: function.to_string(),
+            norm_module,
             mask_type,
         }
     }
@@ -107,6 +177,7 @@ impl<'a> SoftmaxUnit<'a> {
         config: &UnitParams,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        normalization_type: NormalizationType,
     ) -> SoftmaxUnit<'a> {
         if let UnitParams::Softmax {
             input_size,
@@ -115,7 +186,8 @@ impl<'a> SoftmaxUnit<'a> {
             weights,
             biases,
             keep_probability,
-            is_inference,
+            is_last_layer,
+            norm_params,
         } = config
         {
             let unit: SoftmaxUnit = Self::new(
@@ -125,11 +197,15 @@ impl<'a> SoftmaxUnit<'a> {
                 decay_type,
                 descent_type,
                 UnitMaskType::from_keep_probability(*keep_probability),
-                *is_inference,
+                normalization_type,
+                norm_params.get_normalization(),
+                *is_last_layer,
             );
 
             unit.set_weights(weights);
             unit.set_biases(biases);
+
+            unit.set_normalization(norm_params);
 
             return unit;
         }
@@ -137,19 +213,35 @@ impl<'a> SoftmaxUnit<'a> {
         panic!("Mismatched unit parameter types for initialization: expected UnitParams::Softmax but got {},", config.type_name());
     }
 
-    pub fn get_weights_params(&self) -> LearnedParams {
-        self.weights.borrow().save_parameters()
+    pub fn get_weights_params(&self) -> LayerParams {
+        let weights_params = self.weights.borrow().save_parameters();
+        if let LearnedParams::Layer { params } = weights_params {
+            return params;
+        }
+        panic!("Got invalid LearnedParams format for layer weights!");
     }
 
-    pub fn get_biases_params(&self) -> LearnedParams {
-        self.biases.borrow().save_parameters()
+    pub fn get_biases_params(&self) -> LayerParams {
+        let biases_params = self.biases.borrow().save_parameters();
+        if let LearnedParams::Layer { params } = biases_params {
+            return params;
+        }
+        panic!("Got invalid LearnedParams format for layer biases!");
+    }
+
+    pub fn get_batch_norm_params(&self) -> BatchNormParams {
+        if let Option::Some(batch_norm) = &self.norm_module {
+            return batch_norm.get_params();
+        }
+
+        BatchNormParams::null()
     }
 
     pub fn get_weights_ref(&self) -> &NodeRef<'a> {
         &self.weights
     }
 
-    pub fn set_biases(&self, data: &LearnedParams) {
+    pub fn set_biases(&self, data: &LayerParams) {
         let biases: DataContainer = data.get_parameters();
         let momentum: DataContainer = data.get_momentum();
         let learning_rate: DataContainer = data.get_learning_rate();
@@ -163,7 +255,7 @@ impl<'a> SoftmaxUnit<'a> {
         }
     }
 
-    pub fn set_weights(&self, data: &LearnedParams) {
+    pub fn set_weights(&self, data: &LayerParams) {
         let weights = data.get_parameters();
         let momentum = data.get_momentum();
         let learning_rate = data.get_learning_rate();
@@ -174,6 +266,16 @@ impl<'a> SoftmaxUnit<'a> {
         }
         if !matches!(&learning_rate, DataContainer::Empty) {
             self.weights.borrow_mut().set_learning_rate(learning_rate);
+        }
+    }
+
+    pub fn set_normalization(&self, norm_params: &BatchNormParams) {
+        if !norm_params.is_null() && !self.is_last_layer() {
+            if let Option::Some(module) = &self.norm_module {
+                module.set_parameters(norm_params);
+                return;
+            }
+            println!("Detected BatchNormParams wasn't null but couldn't find BatchNormModule -- skipping assignment");
         }
     }
 
@@ -215,8 +317,8 @@ impl<'a> SoftmaxUnit<'a> {
         &self.mask_type
     }
 
-    pub fn is_inference(&self) -> bool {
-        self.base.is_inference()
+    pub fn is_last_layer(&self) -> bool {
+        self.base.is_last_layer()
     }
 }
 

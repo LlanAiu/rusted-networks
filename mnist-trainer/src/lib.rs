@@ -6,7 +6,9 @@
 use crate::{import_csv::load_data_from_csv, types::HandwrittenExample};
 use model::{
     network::types::classifier::ClassifierNetwork,
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
     trainer::{trainer_params::TrainerConfig, SupervisedTrainer},
 };
@@ -20,22 +22,23 @@ pub fn train_dataset() {
         vec![10],
         vec![50],
         penalty_config,
-        NetworkMaskType::None,
-        LearningDecayType::constant(0.01),
-        DescentType::nesterov(0.95),
+        NetworkMaskType::none(),
+        LearningDecayType::constant(0.04),
+        DescentType::none(),
+        NormalizationType::batch_norm(0.9),
     );
 
     let train: Vec<HandwrittenExample> =
-        load_data_from_csv("../data/mnist_train.csv", 0, 250).expect("Failed to read data");
+        load_data_from_csv("../data/mnist_train.csv", 0, 60000).expect("Failed to read data");
     let test: Vec<HandwrittenExample> =
-        load_data_from_csv("../data/mnist_test.csv", 0, 50).expect("Failed to read data");
+        load_data_from_csv("../data/mnist_test.csv", 0, 10000).expect("Failed to read data");
 
-    let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 4, train, test);
+    let config: TrainerConfig<HandwrittenExample> = TrainerConfig::new(5, 16, train, test);
 
     let mut trainer: SupervisedTrainer<ClassifierNetwork, HandwrittenExample> =
         SupervisedTrainer::new(classifier, config);
 
-    trainer.train("test/mnist_build_test.json");
+    trainer.train("test/mnist_config.json");
 }
 
 #[cfg(test)]
@@ -43,8 +46,13 @@ mod tests {
     use model::{
         data::{data_container::DataContainer, Data},
         network::{types::classifier::ClassifierNetwork, Network},
-        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
-        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
+        optimization::{
+            batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+        },
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
         trainer::{examples::SupervisedExample, trainer_params::TrainerConfig, SupervisedTrainer},
     };
 
@@ -59,8 +67,9 @@ mod tests {
             vec![50],
             penalty_config,
             NetworkMaskType::None,
-            LearningDecayType::constant(0.01),
-            DescentType::Base,
+            LearningDecayType::rms_prop(0.01, 0.95),
+            DescentType::nesterov(0.95),
+            NormalizationType::none(),
         );
 
         let data =
@@ -117,15 +126,17 @@ mod tests {
 
     #[test]
     fn small_dataset_init() {
-        let penalty_config: PenaltyConfig = PenaltyConfig::none();
+        let l2_builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.008);
+        let penalty_config: PenaltyConfig = PenaltyConfig::new(l2_builder);
         let classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![784],
             vec![10],
             vec![50],
             penalty_config,
-            NetworkMaskType::None,
-            LearningDecayType::constant(0.01),
-            DescentType::nesterov(0.95),
+            NetworkMaskType::none(),
+            LearningDecayType::rms_prop(0.01, 0.9),
+            DescentType::nesterov(0.4),
+            NormalizationType::batch_norm(0.9),
         );
 
         let train: Vec<HandwrittenExample> =
@@ -188,6 +199,7 @@ mod tests {
             NetworkMaskType::None,
             LearningDecayType::constant(0.01),
             DescentType::nesterov(0.95),
+            NormalizationType::none(),
         );
 
         let train: Vec<HandwrittenExample> =
@@ -208,7 +220,6 @@ mod tests {
         let classifier: ClassifierNetwork =
             ClassifierNetwork::load_from_file("test/mnist_med.json");
 
-        // JUST RAN -- change offset to 40000 before running again
         let train: Vec<HandwrittenExample> =
             load_data_from_csv("../data/mnist_train.csv", 35000, 5000)
                 .expect("Failed to read data");

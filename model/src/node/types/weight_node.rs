@@ -2,13 +2,14 @@
 
 // external
 
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 
 // internal
 use crate::data::data_container::DataContainer;
 use crate::data::Data;
+use crate::network::config_types::layer_params::LayerParams;
 use crate::network::config_types::learned_params::LearnedParams;
 use crate::node::node_base::adaptive_learning_base::NodeLearningDecay;
 use crate::node::node_base::momentum_base::NodeMomentum;
@@ -20,13 +21,13 @@ use crate::regularization::dropout::NetworkMode;
 
 pub struct WeightNode<'a> {
     base: NodeBase<'a>,
-    dim: (usize, usize),
+    dim: Vec<usize>,
     momentum_base: NodeMomentum,
     learning_base: NodeLearningDecay,
 }
 
 impl<'a> WeightNode<'a> {
-    pub fn new(
+    pub fn new_matrix(
         input_size: usize,
         output_size: usize,
         decay_type: LearningDecayType,
@@ -34,7 +35,8 @@ impl<'a> WeightNode<'a> {
     ) -> WeightNode<'a> {
         let mut base = NodeBase::new();
 
-        let initial_weights: DataContainer = Self::get_initial_weights(input_size, output_size);
+        let initial_weights: DataContainer =
+            Self::get_initial_weights_matrix(input_size, output_size);
         base.set_data(initial_weights);
 
         let momentum_base = NodeMomentum::new(descent_type);
@@ -42,17 +44,44 @@ impl<'a> WeightNode<'a> {
 
         WeightNode {
             base,
-            dim: (output_size, input_size),
+            dim: vec![output_size, input_size],
             momentum_base,
             learning_base,
         }
     }
 
-    pub fn get_initial_weights(input_size: usize, output_size: usize) -> DataContainer {
+    fn get_initial_weights_matrix(input_size: usize, output_size: usize) -> DataContainer {
         let scale = f32::sqrt(6.0 / (input_size + output_size) as f32);
         let initial_weights: Array2<f32> =
             Array2::random((output_size, input_size), Uniform::new(-scale, scale));
         DataContainer::Parameter(Data::MatrixF32(initial_weights))
+    }
+
+    pub fn new_vec(
+        size: usize,
+        decay_type: LearningDecayType,
+        descent_type: DescentType,
+    ) -> WeightNode<'a> {
+        let mut base = NodeBase::new();
+
+        let initial_weights: DataContainer = Self::get_initial_weights_vec(size);
+        base.set_data(initial_weights);
+
+        let momentum_base = NodeMomentum::new(descent_type);
+        let learning_base = NodeLearningDecay::new(decay_type);
+
+        WeightNode {
+            base,
+            dim: vec![size],
+            momentum_base,
+            learning_base,
+        }
+    }
+
+    fn get_initial_weights_vec(size: usize) -> DataContainer {
+        let scale = f32::sqrt(6.0 / size as f32);
+        let initial_weights: Array1<f32> = Array1::random(size, Uniform::new(-scale, scale));
+        DataContainer::Parameter(Data::VectorF32(initial_weights))
     }
 }
 
@@ -76,14 +105,31 @@ impl<'a> Node<'a> for WeightNode<'a> {
     }
 
     fn set_data(&mut self, input: DataContainer) {
-        if let DataContainer::Parameter(Data::MatrixF32(matrix)) = input {
-            if matrix.dim() == self.dim {
-                let container = DataContainer::Parameter(Data::MatrixF32(matrix));
-                self.base.set_data(container);
-                return;
+        if let DataContainer::Parameter(data) = input {
+            match data {
+                Data::VectorF32(vec) => {
+                    let check: bool = self.dim.len() == 1 && vec.dim() == self.dim[0];
+                    if check {
+                        let container = DataContainer::Parameter(Data::VectorF32(vec));
+                        self.base.set_data(container);
+                        return;
+                    }
+                }
+                Data::MatrixF32(matrix) => {
+                    let check: bool = self.dim.len() == 2
+                        && matrix.dim().0 == self.dim[0]
+                        && matrix.dim().1 == self.dim[1];
+                    if check {
+                        let container = DataContainer::Parameter(Data::MatrixF32(matrix));
+                        self.base.set_data(container);
+                        return;
+                    }
+                }
+                _ => {
+                    println!("[WEIGHT] type or dimension mismatch, skipping reassignment");
+                }
             }
         }
-        println!("[WEIGHT] type or dimension mismatch, skipping reassignment");
     }
 
     fn get_data(&mut self) -> DataContainer {
@@ -130,16 +176,32 @@ impl<'a> Node<'a> for WeightNode<'a> {
     }
 
     fn save_parameters(&self) -> LearnedParams {
-        let data = self.base.get_data();
+        let container = self.base.get_data();
 
-        if let DataContainer::Parameter(Data::MatrixF32(matrix)) = data {
-            let parameters = matrix.flatten().to_vec();
+        if let DataContainer::Parameter(data) = container {
+            match data {
+                Data::VectorF32(vec) => {
+                    let parameters: Vec<f32> = vec.to_vec();
 
-            let dim: Vec<usize> = vec![self.dim.0, self.dim.1];
-            let momentum = self.momentum_base.get_momentum_save();
-            let learning_rate = self.learning_base.get_learning_rate_save();
+                    let dim: Vec<usize> = self.dim.clone();
+                    let momentum = self.momentum_base.get_momentum_save();
+                    let learning_rate = self.learning_base.get_learning_rate_save();
 
-            return LearnedParams::new(dim, parameters, momentum, learning_rate);
+                    let params = LayerParams::new(dim, parameters, momentum, learning_rate);
+                    return LearnedParams::new_layer(params);
+                }
+                Data::MatrixF32(matrix) => {
+                    let parameters = matrix.flatten().to_vec();
+
+                    let dim: Vec<usize> = self.dim.clone();
+                    let momentum = self.momentum_base.get_momentum_save();
+                    let learning_rate = self.learning_base.get_learning_rate_save();
+
+                    let params = LayerParams::new(dim, parameters, momentum, learning_rate);
+                    return LearnedParams::new_layer(params);
+                }
+                _ => panic!("[WEIGHT] Unexpected data type for weights!"),
+            }
         }
 
         panic!("[WEIGHT] Unexpected data type for weights!");

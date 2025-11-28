@@ -10,6 +10,7 @@ use crate::data::{
         sum_assign::ContainerSumAssign, times::ContainerTimes, times_assign::ContainerTimesAssign,
         transpose::ContainerTranspose,
     },
+    types::FlattenedData,
     Data,
 };
 pub mod operations;
@@ -73,6 +74,10 @@ impl DataContainer {
 
     pub fn zero_dim(dim: &[usize]) -> DataContainer {
         DataContainer::Parameter(Data::zero_dim(dim))
+    }
+
+    pub fn one_dim(dim: &[usize]) -> DataContainer {
+        DataContainer::Parameter(Data::one_dim(dim))
     }
 
     pub fn from_dim(dim: &[usize], data: Vec<f32>, container_type: ContainerType) -> DataContainer {
@@ -420,6 +425,26 @@ impl DataContainer {
         }
     }
 
+    pub fn sum_batch(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                if batch.len() == 0 {
+                    return DataContainer::Empty;
+                }
+                let mut sum: Data = batch[0].clone();
+                for i in 1..batch.len() {
+                    let data: &Data = batch.get(i).unwrap();
+                    sum.sum_assign(data);
+                }
+
+                DataContainer::Parameter(sum)
+            }
+            _ => {
+                panic!("Invalid data format for operation [BATCH SUM], wasn't DataContainer::Batch")
+            }
+        }
+    }
+
     pub fn average_batch(&self) -> DataContainer {
         match self {
             DataContainer::Batch(batch) => {
@@ -435,7 +460,41 @@ impl DataContainer {
                 average.times_assign(&Data::ScalarF32(len_scale));
                 DataContainer::Parameter(average)
             }
-            _ => self.clone(),
+            _ => panic!(
+                "Invalid data format for operation [BATCH MEAN], wasn't DataContainer::Batch"
+            ),
+        }
+    }
+
+    pub fn variance_batch(&self) -> DataContainer {
+        match self {
+            DataContainer::Batch(batch) => {
+                if batch.len() == 0 {
+                    return DataContainer::Empty;
+                }
+                let mean = self.average_batch();
+
+                if let DataContainer::Parameter(mean_data) = &mean {
+                    let len_scale: f32 = 1.0 / batch.len() as f32;
+                    let mut sum: Data = batch[0].clone();
+                    sum.minus_assign(&mean_data);
+                    sum.apply_inplace(|f| *f = f32::powi(*f, 2));
+                    for i in 1..batch.len() {
+                        let data: &Data = batch.get(i).unwrap();
+                        let mut diff: Data = data.minus(&mean_data);
+
+                        diff.apply_inplace(|f| *f = f32::powi(*f, 2));
+                        sum.sum_assign(&diff);
+                    }
+                    sum.times_assign(&Data::ScalarF32(len_scale));
+                    return DataContainer::Parameter(sum);
+                }
+
+                DataContainer::Empty
+            }
+            _ => {
+                panic!("Invalid data format for operation [BATCH VAR], wasn't DataContainer::Batch")
+            }
         }
     }
 
@@ -450,6 +509,23 @@ impl DataContainer {
             DataContainer::Inference(data) => (1, data.dim()),
             DataContainer::Parameter(data) => (1, data.dim()),
             DataContainer::Empty => (0, &[]),
+        }
+    }
+
+    pub fn flatten_to_vec(&self) -> FlattenedData {
+        match self {
+            DataContainer::Batch(batch) => {
+                let mut flattened: Vec<Vec<f32>> = Vec::new();
+
+                for data in batch {
+                    flattened.push(data.flatten_to_vec());
+                }
+
+                FlattenedData::Batch(flattened)
+            }
+            DataContainer::Inference(data) => FlattenedData::Singular(data.flatten_to_vec()),
+            DataContainer::Parameter(data) => FlattenedData::Singular(data.flatten_to_vec()),
+            _ => FlattenedData::None,
         }
     }
 }

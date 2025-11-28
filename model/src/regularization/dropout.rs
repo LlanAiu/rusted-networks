@@ -49,6 +49,10 @@ pub enum NetworkMaskType {
 }
 
 impl NetworkMaskType {
+    pub fn none() -> NetworkMaskType {
+        NetworkMaskType::None
+    }
+
     pub fn from_probabilities(input_keep_p: f32, hidden_keep_p: f32) -> NetworkMaskType {
         if input_keep_p >= 1.0 && hidden_keep_p >= 1.0 {
             return NetworkMaskType::None;

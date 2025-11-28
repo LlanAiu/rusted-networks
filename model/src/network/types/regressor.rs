@@ -11,7 +11,9 @@ use crate::{
         types::regressor::{builder::build_from_config, config::RegressorConfig},
         Network,
     },
-    optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+    optimization::{
+        batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+    },
     regularization::{
         dropout::{NetworkMaskType, NetworkMode},
         penalty::{PenaltyConfig, PenaltyType},
@@ -32,6 +34,7 @@ pub struct RegressorNetwork<'a> {
     penalty_type: PenaltyType,
     decay_type: LearningDecayType,
     descent_type: DescentType,
+    normalization_type: NormalizationType,
     time_step: usize,
 }
 
@@ -44,6 +47,7 @@ impl<'a> RegressorNetwork<'a> {
         mask_type: NetworkMaskType,
         decay_type: LearningDecayType,
         descent_type: DescentType,
+        normalization_type: NormalizationType,
     ) -> RegressorNetwork<'a> {
         let config: RegressorConfig = RegressorConfig::new(
             input_size,
@@ -53,6 +57,7 @@ impl<'a> RegressorNetwork<'a> {
             mask_type,
             decay_type,
             descent_type,
+            normalization_type,
         );
         RegressorNetwork::from_config(config)
     }
@@ -117,7 +122,9 @@ mod tests {
     use crate::{
         data::{data_container::DataContainer, Data},
         network::{types::regressor::RegressorNetwork, Network},
-        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+        optimization::{
+            batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+        },
         regularization::{
             dropout::NetworkMaskType,
             penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
@@ -157,6 +164,7 @@ mod tests {
             NetworkMaskType::None,
             LearningDecayType::constant(0.005),
             DescentType::Base,
+            NormalizationType::none(),
         );
 
         let mut rng = rand::thread_rng();

@@ -132,7 +132,9 @@ mod tests {
 
     use crate::{
         network::types::regressor::RegressorNetwork,
-        optimization::{learning_decay::LearningDecayType, momentum::DescentType},
+        optimization::{
+            batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
+        },
         regularization::{
             dropout::NetworkMaskType,
             penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
@@ -168,6 +170,7 @@ mod tests {
             NetworkMaskType::None,
             LearningDecayType::constant(0.001),
             DescentType::nesterov(0.95),
+            NormalizationType::none(),
         );
 
         let train_config: TrainerConfig<QuadraticExample> = TrainerConfig::new(25, 16, train, test);

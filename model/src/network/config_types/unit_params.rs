@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 // internal
 use crate::{
     data::data_container::DataContainer,
-    network::config_types::learned_params::LearnedParams,
+    network::config_types::{batch_norm_params::BatchNormParams, layer_params::LayerParams},
+    optimization::batch_norm::NormalizationType,
     regularization::dropout::UnitMaskType,
     unit::{
         types::{linear_unit::LinearUnit, softmax_unit::SoftmaxUnit},
@@ -22,20 +23,22 @@ pub enum UnitParams {
     Linear {
         input_size: usize,
         output_size: usize,
-        weights: LearnedParams,
-        biases: LearnedParams,
+        weights: LayerParams,
+        biases: LayerParams,
         activation: String,
         keep_probability: f32,
-        is_inference: bool,
+        is_last_layer: bool,
+        norm_params: BatchNormParams,
     },
     Softmax {
         input_size: usize,
         output_size: usize,
-        weights: LearnedParams,
-        biases: LearnedParams,
+        weights: LayerParams,
+        biases: LayerParams,
         activation: String,
         keep_probability: f32,
-        is_inference: bool,
+        is_last_layer: bool,
+        norm_params: BatchNormParams,
     },
 }
 
@@ -72,14 +75,17 @@ impl UnitParams {
 
         let activation = unit_ref.get_activation().to_string();
 
+        let norm_params = unit_ref.get_batch_norm_params();
+
         UnitParams::Linear {
             input_size,
             output_size,
             weights,
             biases,
             activation,
-            is_inference: unit.borrow().is_inference(),
+            is_last_layer: unit.borrow().is_last_layer(),
             keep_probability: unit.borrow().get_mask_type().probability(),
+            norm_params,
         }
     }
 
@@ -94,14 +100,17 @@ impl UnitParams {
 
         let activation = unit_ref.get_activation().to_string();
 
+        let norm_params = unit_ref.get_batch_norm_params();
+
         UnitParams::Softmax {
             input_size,
             output_size,
             weights,
             biases,
             activation,
-            is_inference: unit.borrow().is_inference(),
+            is_last_layer: unit.borrow().is_last_layer(),
             keep_probability: unit.borrow().get_mask_type().probability(),
+            norm_params,
         }
     }
 
@@ -110,7 +119,8 @@ impl UnitParams {
         output_size: usize,
         activation_function: &str,
         mask_type: UnitMaskType,
-        is_inference: bool,
+        normalization_type: NormalizationType,
+        is_last_layer: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
         let biases_dim: Vec<usize> = vec![output_size];
@@ -120,14 +130,21 @@ impl UnitParams {
 
         let activation = activation_function.to_string();
 
+        let norm_params: BatchNormParams = UnitParams::generate_new_norm_params(
+            normalization_type,
+            vec![output_size],
+            output_size,
+        );
+
         UnitParams::Linear {
             input_size,
             output_size,
-            weights: LearnedParams::new_from_parameters(weights_dim, weights),
-            biases: LearnedParams::new_from_parameters(biases_dim, biases),
+            weights: LayerParams::new_from_parameters(weights_dim, weights),
+            biases: LayerParams::new_from_parameters(biases_dim, biases),
             activation,
             keep_probability: mask_type.probability(),
-            is_inference,
+            is_last_layer,
+            norm_params,
         }
     }
 
@@ -136,24 +153,32 @@ impl UnitParams {
         output_size: usize,
         activation_function: &str,
         mask_type: UnitMaskType,
-        is_inference: bool,
+        normalization_type: NormalizationType,
+        is_last_layer: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
         let biases_dim: Vec<usize> = vec![output_size];
 
-        let weights = UnitParams::generate_new_weights(input_size, output_size);
+        let weights: Vec<f32> = UnitParams::generate_new_weights(input_size, output_size);
         let biases: Vec<f32> = vec![0.0; output_size];
 
-        let activation = activation_function.to_string();
+        let activation: String = activation_function.to_string();
+
+        let norm_params: BatchNormParams = UnitParams::generate_new_norm_params(
+            normalization_type,
+            vec![output_size],
+            output_size,
+        );
 
         UnitParams::Softmax {
             input_size,
             output_size,
-            weights: LearnedParams::new_from_parameters(weights_dim, weights),
-            biases: LearnedParams::new_from_parameters(biases_dim, biases),
+            weights: LayerParams::new_from_parameters(weights_dim, weights),
+            biases: LayerParams::new_from_parameters(biases_dim, biases),
             activation,
             keep_probability: mask_type.probability(),
-            is_inference,
+            norm_params,
+            is_last_layer,
         }
     }
 
@@ -163,5 +188,21 @@ impl UnitParams {
             Array1::random(output_size * input_size, Uniform::new(-scale, scale));
 
         initial_weights.to_vec()
+    }
+
+    fn generate_new_norm_params(
+        normalization_type: NormalizationType,
+        dim: Vec<usize>,
+        size: usize,
+    ) -> BatchNormParams {
+        match normalization_type {
+            NormalizationType::BatchNorm { decay } => {
+                let scales: Vec<f32> = vec![1.0; size];
+                let shifts: Vec<f32> = vec![0.0; size];
+
+                BatchNormParams::new_from_parameters(dim, decay, scales, shifts)
+            }
+            NormalizationType::None => BatchNormParams::null(),
+        }
     }
 }
