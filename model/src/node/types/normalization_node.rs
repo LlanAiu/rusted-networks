@@ -2,6 +2,7 @@
 
 // external
 
+use crate::data::Data;
 // internal
 use crate::data::data_container::DataContainer;
 use crate::network::config_types::batch_norm_params::NormParams;
@@ -14,8 +15,11 @@ const DELTA: f32 = 1e-6;
 
 pub struct NormalizationNode<'a> {
     base: NodeBase<'a>,
-    scale: DataContainer,
+    mean: DataContainer,
+    variance: DataContainer,
+    centered: DataContainer,
     running_mean: DataContainer,
+    batch_size: usize,
     running_var: DataContainer,
     decay: f32,
     mode: NetworkMode,
@@ -25,7 +29,10 @@ impl<'a> NormalizationNode<'a> {
     pub fn new(decay: f32) -> NormalizationNode<'a> {
         NormalizationNode {
             base: NodeBase::new(),
-            scale: DataContainer::Empty,
+            mean: DataContainer::Empty,
+            variance: DataContainer::Empty,
+            centered: DataContainer::Empty,
+            batch_size: 0,
             running_mean: DataContainer::zero(),
             running_var: DataContainer::one(),
             decay,
@@ -40,7 +47,10 @@ impl<'a> NormalizationNode<'a> {
     ) -> NormalizationNode<'a> {
         NormalizationNode {
             base: NodeBase::new(),
-            scale: DataContainer::Empty,
+            mean: DataContainer::Empty,
+            variance: DataContainer::Empty,
+            centered: DataContainer::Empty,
+            batch_size: 0,
             running_mean: mean,
             running_var: variance,
             decay,
@@ -49,8 +59,11 @@ impl<'a> NormalizationNode<'a> {
     }
 
     fn normalize_train(&mut self, mut data: DataContainer) {
+        self.batch_size = data.dim().0;
+
         let mean = data.average_batch();
-        let mut variance: DataContainer = data.variance_batch();
+        let centered = data.minus(&mean);
+        let variance: DataContainer = data.variance_batch();
 
         let inverse_scale = variance.apply_elementwise(|f| 1.0 / f32::sqrt(f + DELTA));
         data.minus_assign(&mean);
@@ -60,8 +73,9 @@ impl<'a> NormalizationNode<'a> {
         self.update_running_mean(&mean);
         self.update_running_variance(&variance);
 
-        variance.apply_inplace(|f| *f = f32::sqrt(*f + DELTA));
-        self.scale = variance;
+        self.variance = variance;
+        self.mean = mean;
+        self.centered = centered;
     }
 
     fn update_running_mean(&mut self, mean: &DataContainer) {
@@ -156,19 +170,39 @@ impl<'a> Node<'a> for NormalizationNode<'a> {
         self.base.add_to_gradient(grad);
     }
 
-    //TODO: fix this gradient calculation
     fn apply_jacobian(&mut self) {
         self.base.reset_grad_count();
+        if self.base.get_inputs().len() == 0 {
+            self.base.reset_gradient();
+            return;
+        }
 
-        for node in self.get_inputs() {
-            let grad = self.base.get_gradient();
-            let scaled = grad.times(&self.scale);
+        let input = self.base.get_inputs().get(0).unwrap();
 
-            node.borrow_mut().add_gradient(&scaled);
+        let grad = self.base.get_gradient();
+        let var_inv = self.variance.apply_elementwise(|f| 1.0 / (f + DELTA));
+        let std_inv = self
+            .variance
+            .apply_elementwise(|f| 1.0 / f32::sqrt(f + DELTA));
+        let batch_size_inv =
+            DataContainer::Parameter(Data::ScalarF32(1.0 / self.batch_size as f32));
 
-            if node.borrow().should_process_backprop() {
-                node.borrow_mut().apply_jacobian();
-            }
+        let mut centered_grad_proj = self.centered.times(grad).sum_batch();
+        centered_grad_proj = centered_grad_proj.times(&self.centered);
+        centered_grad_proj.times_assign(&var_inv);
+        centered_grad_proj.times_assign(&batch_size_inv);
+
+        let mut grad_mean = grad.sum_batch();
+        grad_mean.times_assign(&batch_size_inv);
+
+        let mut input_grad = grad.minus(&grad_mean);
+        input_grad.minus_assign(&centered_grad_proj);
+        input_grad.times_assign(&std_inv);
+
+        input.borrow_mut().add_gradient(&input_grad);
+
+        if input.borrow().should_process_backprop() {
+            input.borrow_mut().apply_jacobian();
         }
 
         self.base.reset_gradient();
