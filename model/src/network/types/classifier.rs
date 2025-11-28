@@ -134,12 +134,16 @@ mod tests {
         optimization::{
             batch_norm::NormalizationType, learning_decay::LearningDecayType, momentum::DescentType,
         },
-        regularization::{dropout::NetworkMaskType, penalty::PenaltyConfig},
+        regularization::{
+            dropout::NetworkMaskType,
+            penalty::{l2_penalty::builder::L2PenaltyBuilder, PenaltyConfig},
+        },
     };
 
     #[test]
     fn classification_test() {
-        let penalty_config: PenaltyConfig = PenaltyConfig::none();
+        let l2_builder: L2PenaltyBuilder = L2PenaltyBuilder::new(0.001);
+        let penalty_config: PenaltyConfig = PenaltyConfig::new(l2_builder);
 
         let mut classifier: ClassifierNetwork = ClassifierNetwork::new(
             vec![1],
@@ -148,7 +152,7 @@ mod tests {
             penalty_config,
             NetworkMaskType::from_probabilities(0.9, 0.9),
             LearningDecayType::rms_prop(0.05, 0.95),
-            DescentType::nesterov(0.5),
+            DescentType::nesterov(0.4),
             NormalizationType::batch_norm(0.95),
         );
 

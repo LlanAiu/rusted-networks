@@ -32,7 +32,7 @@ use crate::{
 pub struct SoftmaxUnit<'a> {
     base: UnitBase<'a>,
     weights: NodeRef<'a>,
-    biases: NodeRef<'a>,
+    biases: Option<NodeRef<'a>>,
     norm_module: Option<BatchNormModule<'a>>,
     input_size: usize,
     output_size: usize,
@@ -52,35 +52,46 @@ impl<'a> SoftmaxUnit<'a> {
         norm_params: &NormParams,
         is_last_layer: bool,
     ) -> SoftmaxUnit<'a> {
+        let create_batch_norm: bool = normalization_type.is_batch_norm_enabled() && !is_last_layer;
+
         let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
             input_size,
             output_size,
             decay_type.clone(),
             descent_type.clone(),
         ));
-        let biases_ref = NodeRef::new(BiasNode::new(
-            output_size,
-            decay_type.clone(),
-            descent_type.clone(),
-        ));
         let matmul_ref: NodeRef = NodeRef::new(MatrixMultiplyNode::new());
-        let add_ref: NodeRef = NodeRef::new(AddNode::new());
         let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
         let softmax_ref: NodeRef = NodeRef::new(SoftmaxNode::new());
 
         matmul_ref.borrow_mut().add_input(&matmul_ref, &weights_ref);
+        let mut raw_output_ref: &NodeRef = &matmul_ref;
 
-        add_ref.borrow_mut().add_input(&add_ref, &matmul_ref);
-        add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
+        let mut biases: Option<NodeRef> = Option::None;
+        let add_ref: NodeRef;
 
-        let mut raw_output_ref: &NodeRef = &add_ref;
+        if !create_batch_norm {
+            let biases_ref = NodeRef::new(BiasNode::new(
+                output_size,
+                decay_type.clone(),
+                descent_type.clone(),
+            ));
+            add_ref = NodeRef::new(AddNode::new());
+
+            add_ref.borrow_mut().add_input(&add_ref, &matmul_ref);
+            add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
+
+            biases = Option::Some(biases_ref);
+            raw_output_ref = &add_ref;
+        }
+
         let mut norm_module: Option<BatchNormModule> = Option::None;
         let mut norm: Option<&NodeRef> = Option::None;
 
         let norm_add_ref: NodeRef;
         let norm_ref: NodeRef;
 
-        if !is_last_layer {
+        if create_batch_norm {
             if let NormalizationType::BatchNorm { decay } = &normalization_type {
                 if norm_params.is_null() {
                     norm_ref = NodeRef::new(NormalizationNode::new(*decay));
@@ -164,7 +175,7 @@ impl<'a> SoftmaxUnit<'a> {
         SoftmaxUnit {
             base: UnitBase::new(&matmul_ref, output_ref, mask, norm, is_last_layer),
             weights: weights_ref,
-            biases: biases_ref,
+            biases,
             input_size,
             output_size,
             activation: function.to_string(),
@@ -222,11 +233,14 @@ impl<'a> SoftmaxUnit<'a> {
     }
 
     pub fn get_biases_params(&self) -> LayerParams {
-        let biases_params = self.biases.borrow().save_parameters();
-        if let LearnedParams::Layer { params } = biases_params {
-            return params;
+        if let Option::Some(biases) = &self.biases {
+            let biases_params = biases.borrow().save_parameters();
+            if let LearnedParams::Layer { params } = biases_params {
+                return params;
+            }
+            panic!("Got invalid LearnedParams format for layer biases!");
         }
-        panic!("Got invalid LearnedParams format for layer biases!");
+        LayerParams::null()
     }
 
     pub fn get_batch_norm_params(&self) -> BatchNormParams {
@@ -242,16 +256,18 @@ impl<'a> SoftmaxUnit<'a> {
     }
 
     pub fn set_biases(&self, data: &LayerParams) {
-        let biases: DataContainer = data.get_parameters();
-        let momentum: DataContainer = data.get_momentum();
-        let learning_rate: DataContainer = data.get_learning_rate();
+        if let Option::Some(biases) = &self.biases {
+            let parameters: DataContainer = data.get_parameters();
+            let momentum: DataContainer = data.get_momentum();
+            let learning_rate: DataContainer = data.get_learning_rate();
 
-        self.biases.borrow_mut().set_data(biases);
-        if !matches!(&momentum, DataContainer::Empty) {
-            self.biases.borrow_mut().set_momentum(momentum);
-        }
-        if !matches!(&learning_rate, DataContainer::Empty) {
-            self.biases.borrow_mut().set_learning_rate(learning_rate);
+            biases.borrow_mut().set_data(parameters);
+            if !matches!(&momentum, DataContainer::Empty) {
+                biases.borrow_mut().set_momentum(momentum);
+            }
+            if !matches!(&learning_rate, DataContainer::Empty) {
+                biases.borrow_mut().set_learning_rate(learning_rate);
+            }
         }
     }
 
@@ -299,13 +315,16 @@ impl<'a> SoftmaxUnit<'a> {
     }
 
     pub fn get_biases(&self) -> Vec<f32> {
-        let data = self.biases.borrow_mut().get_data();
+        if let Option::Some(biases) = &self.biases {
+            let data = biases.borrow_mut().get_data();
+            if let DataContainer::Parameter(Data::VectorF32(vec)) = data {
+                return vec.to_vec();
+            }
 
-        if let DataContainer::Parameter(Data::VectorF32(vec)) = data {
-            return vec.to_vec();
+            println!(
+                "Couldn't package biases for serialization due to invalid data container/type"
+            );
         }
-
-        println!("Couldn't package biases for serialization due to invalid data container/type");
         Vec::new()
     }
 

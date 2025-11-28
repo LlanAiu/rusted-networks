@@ -55,6 +55,10 @@ impl LayerParams {
         }
     }
 
+    pub fn is_null(&self) -> bool {
+        self.is_null
+    }
+
     pub fn get_parameters(&self) -> DataContainer {
         DataContainer::from_dim(&self.dim, self.parameters.clone(), ContainerType::Parameter)
     }

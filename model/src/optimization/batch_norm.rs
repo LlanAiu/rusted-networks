@@ -27,6 +27,13 @@ impl NormalizationType {
     pub fn batch_norm(decay: f32) -> NormalizationType {
         NormalizationType::BatchNorm { decay }
     }
+
+    pub fn is_batch_norm_enabled(&self) -> bool {
+        match self {
+            NormalizationType::BatchNorm { .. } => true,
+            NormalizationType::None => false,
+        }
+    }
 }
 
 pub struct BatchNormModule<'a> {

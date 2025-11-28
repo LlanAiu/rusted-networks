@@ -123,10 +123,18 @@ impl UnitParams {
         is_last_layer: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
-        let biases_dim: Vec<usize> = vec![output_size];
-
         let weights = UnitParams::generate_new_weights(input_size, output_size);
-        let biases: Vec<f32> = vec![0.0; output_size];
+
+        let biases: LayerParams;
+
+        let create_batch_norm = normalization_type.is_batch_norm_enabled() && !is_last_layer;
+        if create_batch_norm {
+            biases = LayerParams::null();
+        } else {
+            let biases_dim: Vec<usize> = vec![output_size];
+            let biases_params: Vec<f32> = vec![0.0; output_size];
+            biases = LayerParams::new_from_parameters(biases_dim, biases_params);
+        }
 
         let activation = activation_function.to_string();
 
@@ -140,7 +148,7 @@ impl UnitParams {
             input_size,
             output_size,
             weights: LayerParams::new_from_parameters(weights_dim, weights),
-            biases: LayerParams::new_from_parameters(biases_dim, biases),
+            biases,
             activation,
             keep_probability: mask_type.probability(),
             is_last_layer,
@@ -157,10 +165,18 @@ impl UnitParams {
         is_last_layer: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
-        let biases_dim: Vec<usize> = vec![output_size];
-
         let weights: Vec<f32> = UnitParams::generate_new_weights(input_size, output_size);
-        let biases: Vec<f32> = vec![0.0; output_size];
+
+        let biases: LayerParams;
+
+        let create_batch_norm = normalization_type.is_batch_norm_enabled() && !is_last_layer;
+        if create_batch_norm {
+            biases = LayerParams::null();
+        } else {
+            let biases_dim: Vec<usize> = vec![output_size];
+            let biases_params: Vec<f32> = vec![0.0; output_size];
+            biases = LayerParams::new_from_parameters(biases_dim, biases_params);
+        }
 
         let activation: String = activation_function.to_string();
 
@@ -174,7 +190,7 @@ impl UnitParams {
             input_size,
             output_size,
             weights: LayerParams::new_from_parameters(weights_dim, weights),
-            biases: LayerParams::new_from_parameters(biases_dim, biases),
+            biases,
             activation,
             keep_probability: mask_type.probability(),
             norm_params,
