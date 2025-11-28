@@ -42,7 +42,7 @@ impl<'a> LinearUnit<'a> {
     }
 
     pub fn get_weights_params(&self) -> LayerParams {
-        let weights_params = self.weights.borrow().save_parameters();
+        let weights_params: LearnedParams = self.weights.borrow().save_parameters();
         if let LearnedParams::Layer { params } = weights_params {
             return params;
         }
@@ -51,7 +51,7 @@ impl<'a> LinearUnit<'a> {
 
     pub fn get_biases_params(&self) -> LayerParams {
         if let Option::Some(biases) = &self.biases {
-            let biases_params = biases.borrow().save_parameters();
+            let biases_params: LearnedParams = biases.borrow().save_parameters();
             if let LearnedParams::Layer { params } = biases_params {
                 return params;
             }
@@ -89,9 +89,9 @@ impl<'a> LinearUnit<'a> {
     }
 
     pub fn set_weights(&self, data: &LayerParams) {
-        let weights = data.get_parameters();
-        let momentum = data.get_momentum();
-        let learning_rate = data.get_learning_rate();
+        let weights: DataContainer = data.get_parameters();
+        let momentum: DataContainer = data.get_momentum();
+        let learning_rate: DataContainer = data.get_learning_rate();
 
         self.weights.borrow_mut().set_data(weights);
         if !matches!(&momentum, DataContainer::Empty) {
@@ -122,7 +122,6 @@ impl<'a> LinearUnit<'a> {
 
     pub fn get_weights(&self) -> Vec<f32> {
         let data: DataContainer = self.weights.borrow_mut().get_data();
-
         if let DataContainer::Parameter(Data::MatrixF32(matrix)) = data {
             return matrix.flatten().to_vec();
         }

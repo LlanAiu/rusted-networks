@@ -10,7 +10,7 @@ use crate::{
             activation_node::ActivationNode, add_node::AddNode, bias_node::BiasNode,
             mask_node::MaskNode, matrix_multiply_node::MatrixMultiplyNode,
             multiply_node::MultiplyNode, normalization_node::NormalizationNode,
-            weight_node::WeightNode,
+            softmax_node::SoftmaxNode, weight_node::WeightNode,
         },
         NodeRef,
     },
@@ -20,27 +20,27 @@ use crate::{
         momentum::DescentType,
     },
     regularization::dropout::UnitMaskType,
-    unit::{types::linear_unit::LinearUnit, unit_base::UnitBase},
+    unit::{types::softmax_unit::SoftmaxUnit, unit_base::UnitBase},
 };
 
-pub fn build_linear_unit_from_config<'a>(
+pub fn build_softmax_unit_from_config<'a>(
     config: &UnitParams,
     decay_type: LearningDecayType,
     descent_type: DescentType,
     normalization_type: NormalizationType,
-) -> LinearUnit<'a> {
-    if let UnitParams::Linear {
+) -> SoftmaxUnit<'a> {
+    if let UnitParams::Softmax {
         input_size,
         output_size,
+        activation,
         weights,
         biases,
-        activation,
         keep_probability,
         is_last_layer,
         norm_params,
     } = config
     {
-        let unit: LinearUnit = create_linear_unit(
+        let unit: SoftmaxUnit = create_softmax_unit(
             activation,
             *input_size,
             *output_size,
@@ -54,15 +54,16 @@ pub fn build_linear_unit_from_config<'a>(
 
         unit.set_weights(weights);
         unit.set_biases(biases);
+
         unit.set_normalization(norm_params);
 
         return unit;
     }
 
-    panic!("Mismatched unit parameter types for initialization: expected UnitParams::Linear but got {},", config.type_name());
+    panic!("Mismatched unit parameter types for initialization: expected UnitParams::Softmax but got {},", config.type_name());
 }
 
-fn create_linear_unit<'a>(
+fn create_softmax_unit<'a>(
     function: &str,
     input_size: usize,
     output_size: usize,
@@ -72,7 +73,7 @@ fn create_linear_unit<'a>(
     normalization_type: NormalizationType,
     norm_params: &NormParams,
     is_last_layer: bool,
-) -> LinearUnit<'a> {
+) -> SoftmaxUnit<'a> {
     let batch_norm_enabled: bool = normalization_type.is_batch_norm_enabled() && !is_last_layer;
     let mut output_ref: NodeRef;
 
@@ -94,6 +95,7 @@ fn create_linear_unit<'a>(
             &decay_type,
             &descent_type,
         );
+
         biases = Option::Some(biases_ref);
         output_ref = NodeRef::clone(&out_ref);
     }
@@ -109,18 +111,24 @@ fn create_linear_unit<'a>(
             &decay_type,
             &descent_type,
         );
-        output_ref = NodeRef::clone(&out_ref);
         norm_module = Option::Some(module);
         norm = Option::Some(norm_ref);
+        output_ref = NodeRef::clone(&out_ref);
     }
 
     let activation_ref: NodeRef = NodeRef::new(ActivationNode::new(function));
     activation_ref
         .borrow_mut()
         .add_input(&activation_ref, &output_ref);
-    output_ref = NodeRef::clone(&activation_ref);
+
+    let softmax_ref: NodeRef = NodeRef::new(SoftmaxNode::new());
+    softmax_ref
+        .borrow_mut()
+        .add_input(&softmax_ref, &activation_ref);
+    output_ref = NodeRef::clone(&softmax_ref);
 
     let mut mask: Option<NodeRef> = Option::None;
+
     if !is_last_layer {
         let (mask_ref, out_ref) =
             create_dropout(NodeRef::clone(&output_ref), &mask_type, output_size);
@@ -128,7 +136,7 @@ fn create_linear_unit<'a>(
         output_ref = NodeRef::clone(&out_ref);
     }
 
-    LinearUnit {
+    SoftmaxUnit {
         base: UnitBase::new(matmul_ref, output_ref, mask, norm, is_last_layer),
         weights: weights_ref,
         biases,
@@ -208,7 +216,7 @@ fn create_batch_norm<'a>(
             .add_input(&norm_add_ref, &shift_ref);
 
         let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
-        return (module, norm_ref, norm_add_ref);
+        return (module, norm_add_ref, norm_ref);
     }
 
     panic!("Tried to create batch norm module with a NormalizationType::None configuration!");
