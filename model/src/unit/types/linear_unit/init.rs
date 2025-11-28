@@ -87,28 +87,24 @@ fn create_linear_unit<'a>(
 
     matmul_ref.borrow_mut().add_input(&matmul_ref, &weights_ref);
 
-    let mut output_ref: &NodeRef = &matmul_ref;
+    let mut output_ref: NodeRef = NodeRef::clone(&matmul_ref);
 
     let mut biases: Option<NodeRef> = Option::None;
-    let add_ref: NodeRef;
+
+    let (biases_ref, add_ref) = create_biases(
+        NodeRef::clone(&output_ref),
+        output_size,
+        &decay_type,
+        &descent_type,
+    );
 
     if !create_batch_norm {
-        let biases_ref: NodeRef = NodeRef::new(BiasNode::new(
-            output_size,
-            decay_type.clone(),
-            descent_type.clone(),
-        ));
-        add_ref = NodeRef::new(AddNode::new());
-
-        add_ref.borrow_mut().add_input(&add_ref, &matmul_ref);
-        add_ref.borrow_mut().add_input(&add_ref, &biases_ref);
-
         biases = Option::Some(biases_ref);
-        output_ref = &add_ref;
+        output_ref = NodeRef::clone(&add_ref);
     }
 
     let mut norm_module: Option<BatchNormModule> = Option::None;
-    let mut norm: Option<&NodeRef> = Option::None;
+    let mut norm: Option<NodeRef> = Option::None;
 
     let norm_add_ref: NodeRef;
     let norm_ref: NodeRef;
@@ -133,7 +129,7 @@ fn create_linear_unit<'a>(
             let norm_multiply_ref: NodeRef = NodeRef::new(MultiplyNode::new());
             norm_add_ref = NodeRef::new(AddNode::new());
 
-            norm_ref.borrow_mut().add_input(&norm_ref, output_ref);
+            norm_ref.borrow_mut().add_input(&norm_ref, &output_ref);
 
             norm_multiply_ref
                 .borrow_mut()
@@ -149,20 +145,20 @@ fn create_linear_unit<'a>(
                 .borrow_mut()
                 .add_input(&norm_add_ref, &shift_ref);
 
-            output_ref = &norm_add_ref;
+            output_ref = NodeRef::clone(&norm_add_ref);
 
             let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
             norm_module = Option::Some(module);
-            norm = Option::Some(&norm_ref);
+            norm = Option::Some(norm_ref);
         }
     }
 
     activation_ref
         .borrow_mut()
-        .add_input(&activation_ref, output_ref);
-    output_ref = &activation_ref;
+        .add_input(&activation_ref, &output_ref);
+    output_ref = NodeRef::clone(&activation_ref);
 
-    let mut mask: Option<&NodeRef> = Option::None;
+    let mut mask: Option<NodeRef> = Option::None;
 
     let mask_ref: NodeRef;
     let multiply_ref: NodeRef;
@@ -177,19 +173,19 @@ fn create_linear_unit<'a>(
 
             multiply_ref
                 .borrow_mut()
-                .add_input(&multiply_ref, output_ref);
+                .add_input(&multiply_ref, &output_ref);
 
             multiply_ref
                 .borrow_mut()
                 .add_input(&multiply_ref, &mask_ref);
 
-            mask = Option::Some(&mask_ref);
-            output_ref = &multiply_ref
+            mask = Option::Some(mask_ref);
+            output_ref = NodeRef::clone(&multiply_ref);
         }
     }
 
     LinearUnit {
-        base: UnitBase::new(&matmul_ref, output_ref, mask, norm, is_last_layer),
+        base: UnitBase::new(matmul_ref, output_ref, mask, norm, is_last_layer),
         weights: weights_ref,
         biases,
         input_size,
@@ -201,7 +197,7 @@ fn create_linear_unit<'a>(
 }
 
 fn create_biases<'a>(
-    prev_output: &'a NodeRef<'a>,
+    prev_output: NodeRef<'a>,
     size: usize,
     decay_type: &LearningDecayType,
     descent_type: &DescentType,

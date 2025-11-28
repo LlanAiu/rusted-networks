@@ -86,7 +86,7 @@ impl<'a> SoftmaxUnit<'a> {
         }
 
         let mut norm_module: Option<BatchNormModule> = Option::None;
-        let mut norm: Option<&NodeRef> = Option::None;
+        let mut norm: Option<NodeRef> = Option::None;
 
         let norm_add_ref: NodeRef;
         let norm_ref: NodeRef;
@@ -132,7 +132,7 @@ impl<'a> SoftmaxUnit<'a> {
 
                 let module = BatchNormModule::new(&norm_ref, &scale_ref, &shift_ref);
                 norm_module = Option::Some(module);
-                norm = Option::Some(&norm_ref);
+                norm = Option::Some(norm_ref);
             }
         }
 
@@ -146,7 +146,7 @@ impl<'a> SoftmaxUnit<'a> {
             .add_input(&softmax_ref, raw_output_ref);
 
         let mut output_ref: &NodeRef = &softmax_ref;
-        let mut mask: Option<&NodeRef> = Option::None;
+        let mut mask: Option<NodeRef> = Option::None;
 
         let mask_ref: NodeRef;
         let multiply_ref: NodeRef;
@@ -167,13 +167,19 @@ impl<'a> SoftmaxUnit<'a> {
                     .borrow_mut()
                     .add_input(&multiply_ref, &mask_ref);
 
-                mask = Option::Some(&mask_ref);
+                mask = Option::Some(mask_ref);
                 output_ref = &multiply_ref
             }
         }
 
         SoftmaxUnit {
-            base: UnitBase::new(&matmul_ref, output_ref, mask, norm, is_last_layer),
+            base: UnitBase::new(
+                matmul_ref,
+                NodeRef::clone(output_ref),
+                mask,
+                norm,
+                is_last_layer,
+            ),
             weights: weights_ref,
             biases,
             input_size,

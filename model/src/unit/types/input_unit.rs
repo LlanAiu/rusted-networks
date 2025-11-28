@@ -25,9 +25,9 @@ impl<'a> InputUnit<'a> {
     pub fn new(input_size: Vec<usize>, mask_type: UnitMaskType) -> InputUnit<'a> {
         let input_ref = NodeRef::new(InputNode::new(input_size.clone()));
 
-        let mut output_ref: &NodeRef = &input_ref;
+        let mut output_ref: NodeRef = NodeRef::clone(&input_ref);
 
-        let mut mask: Option<&NodeRef> = Option::None;
+        let mut mask: Option<NodeRef> = Option::None;
 
         let mask_ref: NodeRef;
         let multiply_ref: NodeRef;
@@ -44,12 +44,18 @@ impl<'a> InputUnit<'a> {
                 .borrow_mut()
                 .add_input(&multiply_ref, &mask_ref);
 
-            mask = Option::Some(&mask_ref);
-            output_ref = &multiply_ref
+            mask = Option::Some(mask_ref);
+            output_ref = NodeRef::clone(&multiply_ref);
         }
 
         InputUnit {
-            base: UnitBase::new(&input_ref, &output_ref, mask, Option::None, false),
+            base: UnitBase::new(
+                NodeRef::clone(&input_ref),
+                output_ref,
+                mask,
+                Option::None,
+                false,
+            ),
             input: input_ref,
             input_size,
             mask_type,
