@@ -74,6 +74,7 @@ fn create_linear_unit<'a>(
     is_last_layer: bool,
 ) -> LinearUnit<'a> {
     let batch_norm_enabled: bool = normalization_type.is_batch_norm_enabled() && !is_last_layer;
+    let dropout_enabled: bool = mask_type.is_dropout_enabled() && !is_last_layer;
     let mut output_ref: NodeRef;
 
     let weights_ref: NodeRef = NodeRef::new(WeightNode::new_matrix(
@@ -121,7 +122,7 @@ fn create_linear_unit<'a>(
     output_ref = NodeRef::clone(&activation_ref);
 
     let mut mask: Option<NodeRef> = Option::None;
-    if !is_last_layer {
+    if dropout_enabled {
         let (mask_ref, out_ref) =
             create_dropout(NodeRef::clone(&output_ref), &mask_type, output_size);
         mask = Option::Some(mask_ref);

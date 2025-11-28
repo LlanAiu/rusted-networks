@@ -37,6 +37,13 @@ impl UnitMaskType {
             UnitMaskType::Dropout { keep_probability } => *keep_probability,
         }
     }
+
+    pub fn is_dropout_enabled(&self) -> bool {
+        match self {
+            UnitMaskType::None => false,
+            UnitMaskType::Dropout { .. } => true,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -76,6 +83,13 @@ impl NetworkMaskType {
         match self {
             NetworkMaskType::None => 1.0,
             NetworkMaskType::Dropout { hidden_keep_p, .. } => *hidden_keep_p,
+        }
+    }
+
+    pub fn is_dropout_enabled(&self) -> bool {
+        match self {
+            NetworkMaskType::None => false,
+            NetworkMaskType::Dropout { .. } => true,
         }
     }
 }
