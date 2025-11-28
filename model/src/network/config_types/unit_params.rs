@@ -120,7 +120,7 @@ impl UnitParams {
         activation_function: &str,
         mask_type: UnitMaskType,
         normalization_type: NormalizationType,
-        is_inference: bool,
+        is_last_layer: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
         let biases_dim: Vec<usize> = vec![output_size];
@@ -143,7 +143,7 @@ impl UnitParams {
             biases: LayerParams::new_from_parameters(biases_dim, biases),
             activation,
             keep_probability: mask_type.probability(),
-            is_last_layer: is_inference,
+            is_last_layer,
             norm_params,
         }
     }
@@ -154,7 +154,7 @@ impl UnitParams {
         activation_function: &str,
         mask_type: UnitMaskType,
         normalization_type: NormalizationType,
-        is_inference: bool,
+        is_last_layer: bool,
     ) -> UnitParams {
         let weights_dim: Vec<usize> = vec![output_size, input_size];
         let biases_dim: Vec<usize> = vec![output_size];
@@ -178,7 +178,7 @@ impl UnitParams {
             activation,
             keep_probability: mask_type.probability(),
             norm_params,
-            is_last_layer: is_inference,
+            is_last_layer,
         }
     }
 

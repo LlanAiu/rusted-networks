@@ -142,7 +142,7 @@ impl<'a> LinearUnit<'a> {
 
                 multiply_ref
                     .borrow_mut()
-                    .add_input(&multiply_ref, &activation_ref);
+                    .add_input(&multiply_ref, &output_ref);
 
                 multiply_ref
                     .borrow_mut()

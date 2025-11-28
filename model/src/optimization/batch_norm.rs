@@ -13,7 +13,7 @@ use crate::{
     node::NodeRef,
 };
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum NormalizationType {
     BatchNorm { decay: f32 },
     None,
